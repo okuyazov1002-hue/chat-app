@@ -5,15 +5,12 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const { checkUser } = require('./users');
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Создаём нужные папки
 ['uploads','data'].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d); });
 
-// Хранилище данных
 const DB = {
   files: {
     wbs:       'data/wbs.json',
@@ -37,7 +34,6 @@ const DB = {
   }
 };
 
-// Загрузка файлов
 const storage = multer.diskStorage({
   destination: 'uploads/',
   filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
@@ -48,7 +44,6 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
 
-// Логин
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
   const user = checkUser(username, password);
@@ -56,16 +51,56 @@ app.post('/login', (req, res) => {
   else res.json({ ok: false });
 });
 
-// Загрузка файла
+// Разбор имени файла: HER01-AMK-EDG-L-GEN-00007
+function parseLetterCode(filename) {
+  const name = filename.replace(/\.[^/.]+$/, ''); // убираем расширение
+  const parts = name.split('-');
+  if (parts.length < 6) return null;
+  return {
+    project:  parts[0],           // HER01
+    sender:   parts[1],           // AMK
+    receiver: parts[2],           // EDG
+    type:     parts[3],           // L
+    stage:    parts[4],           // GEN
+    number:   parts.slice(5).join('-'), // 00007
+  };
+}
+
 app.post('/upload', upload.single('file'), (req, res) => {
+  const file = req.file;
+  const parsed = parseLetterCode(file.originalname);
+
+  // Если имя файла соответствует формату письма — добавляем в реестр
+  if (parsed) {
+    const letters = DB.read('letters');
+    const newLetter = {
+      id: Date.now(),
+      num: parsed.number,
+      code: file.originalname.replace(/\.[^/.]+$/, ''),
+      type: parsed.sender === 'AMK' ? 'in' : 'out',
+      date: new Date().toISOString().split('T')[0],
+      from: parsed.sender,
+      to: parsed.receiver,
+      subject: '',
+      project: parsed.project,
+      stage: parsed.stage,
+      status: 'new',
+      file: file.filename,
+      originalname: file.originalname,
+    };
+    letters.push(newLetter);
+    DB.write('letters', letters);
+    io.emit('letters_updated', letters);
+  }
+
   res.json({
-    filename: req.file.filename,
-    originalname: req.file.originalname,
-    size: req.file.size
+    filename: file.filename,
+    originalname: file.originalname,
+    size: file.size,
+    parsed: parsed
   });
 });
 
-// API для данных — GET (получить) и POST (сохранить)
 ['wbs', 'letters', 'docs', 'equipment'].forEach(key => {
   app.get(`/api/${key}`, (req, res) => {
     res.json(DB.read(key));
@@ -73,7 +108,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
   app.post(`/api/${key}`, (req, res) => {
     const ok = DB.write(key, req.body);
     if (ok) {
-      // Уведомляем всех пользователей об обновлении
       io.emit(`${key}_updated`, req.body);
       res.json({ ok: true });
     } else {
@@ -82,7 +116,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
   });
 });
 
-// Socket.io — чат
 io.on('connection', (socket) => {
   socket.on('message', (data) => io.emit('message', data));
   socket.on('file', (data) => io.emit('file', data));
