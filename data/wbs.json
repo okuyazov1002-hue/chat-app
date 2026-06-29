@@ -1,0 +1,110 @@
+[
+  {
+    "id": 1782712259643,
+    "parentId": null,
+    "type": "wbs",
+    "code": "1",
+    "name": "ДСОМК ",
+    "amount": "",
+    "status": "todo",
+    "dateStart": "",
+    "dateEnd": "",
+    "collapsed": false
+  },
+  {
+    "id": 1782712570189,
+    "parentId": 1782712259643,
+    "type": "wbs",
+    "code": "O.03",
+    "name": "Организационные работы",
+    "amount": "",
+    "status": "todo",
+    "dateStart": "",
+    "dateEnd": "",
+    "collapsed": false
+  },
+  {
+    "id": 1782712271283,
+    "parentId": 1782712264363,
+    "type": "wbs",
+    "code": "—.01.01",
+    "name": "Сернокислотный завод №5",
+    "amount": "",
+    "status": "todo",
+    "dateStart": "",
+    "dateEnd": "",
+    "collapsed": true
+  },
+  {
+    "id": 1782712274843,
+    "parentId": 1782712264363,
+    "type": "wbs",
+    "code": "—.01.02",
+    "name": "Кислородный завод №6",
+    "amount": "",
+    "status": "todo",
+    "dateStart": "",
+    "dateEnd": "",
+    "collapsed": true
+  },
+  {
+    "id": 1782712264363,
+    "parentId": 1782712259643,
+    "type": "wbs",
+    "code": "—.01",
+    "name": "Подготовительные работы",
+    "amount": "",
+    "status": "todo",
+    "dateStart": "",
+    "dateEnd": "",
+    "collapsed": false
+  },
+  {
+    "id": 1782712288603,
+    "parentId": 1782712259643,
+    "type": "wbs",
+    "code": "—.02",
+    "name": "Основные объекты",
+    "amount": "",
+    "status": "todo",
+    "dateStart": "",
+    "dateEnd": "",
+    "collapsed": false
+  },
+  {
+    "id": 1782712618846,
+    "parentId": 1782712259643,
+    "type": "wbs",
+    "code": "O.04",
+    "name": "Вспомогательные объекты",
+    "amount": "",
+    "status": "todo",
+    "dateStart": "",
+    "dateEnd": "",
+    "collapsed": false
+  },
+  {
+    "id": 1782712664078,
+    "parentId": 1782712264363,
+    "type": "wbs",
+    "code": "—.01.03",
+    "name": "Цех электролиза меди",
+    "amount": "",
+    "status": "todo",
+    "dateStart": "",
+    "dateEnd": "",
+    "collapsed": true
+  },
+  {
+    "id": 1782712704934,
+    "parentId": 1782712264363,
+    "type": "wbs",
+    "code": "—.01.04",
+    "name": "Металлургический цеха",
+    "amount": "",
+    "status": "todo",
+    "dateStart": "",
+    "dateEnd": "",
+    "collapsed": false
+  }
+]
