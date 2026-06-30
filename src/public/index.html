@@ -533,7 +533,7 @@ function renderDash(){
   document.getElementById('d-done').textContent=nodes.filter(n=>n.type==='work'&&n.status==='2').length;
   const dp=document.getElementById('dashProgs');
   if(!roots.length){dp.innerHTML='<div class="empty-tbl">Добавьте проекты в разделе «Информация по проектам»</div>';return;}
-  dp.innerHTML=roots.map(r=>{
+  dp.innerHTML=roots.filter(r=>gad(r.id).some(d=>d.type==="work")).map(r=>{
     const p=cpct(r.id),s=csum(r.id),o=cosv(r.id);
     const c=p>=100?'#1a9a5a':p>50?'#0d8a7a':p>20?'#c07820':'#c04040';
     return`<div class="prow"><span class="prow-name">${r.name||'Без названия'}</span><div class="pw"><div class="pf" style="width:${Math.min(p,100)}%;background:${c}"></div></div><span class="pp">${p.toFixed(1)}%</span><span style="font-size:10px;color:#5ab0a0;margin-left:6px;white-space:nowrap">${fmtMulti(s)}<br>освоено: ${fmtMulti(o)}</span></div>`;
