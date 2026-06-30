@@ -139,7 +139,20 @@ table.rt tr:hover td{background:#f5fcfa}
 <div class="saved" id="sv">💾 Сохранено</div>
 <div class="topbar">
   <h1>DSOMK — Система управления проектами</h1>
-  <div class="topbar-right"><span id="uLabel"></span><button class="logout" onclick="doLogout()">Выйти</button></div>
+  <div class="topbar-right"><span id="uLabel" onclick="openSettings()" style="cursor:pointer;text-decoration:underline"></span><button class="logout" onclick="doLogout()">Выйти</button></div>
+
+<div id="settingsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:white;padding:28px;border-radius:14px;width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.25)">
+    <h2 style="font-size:17px;color:#054e44;margin-bottom:16px">Смена пароля</h2>
+    <input id="oldPass" type="password" placeholder="Текущий пароль" style="width:100%;padding:9px 12px;border:1px solid #d0e8e4;border-radius:7px;font-size:13px;margin-bottom:9px;outline:none">
+    <input id="newPass" type="password" placeholder="Новый пароль" style="width:100%;padding:9px 12px;border:1px solid #d0e8e4;border-radius:7px;font-size:13px;margin-bottom:9px;outline:none">
+    <div id="pwErr" style="color:#c04040;font-size:12px;margin-bottom:10px;display:none"></div>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeSettings()" style="flex:1;padding:10px;background:#f0f0f0;color:#666;border:none;border-radius:7px;font-size:13px;cursor:pointer">Отмена</button>
+      <button onclick="submitPasswordChange()" style="flex:1;padding:10px;background:#0d8a7a;color:white;border:none;border-radius:7px;font-size:13px;cursor:pointer">Сохранить</button>
+    </div>
+  </div>
+</div>
 </div>
 <div class="main">
   <div class="sidebar">
@@ -288,6 +301,7 @@ async function doLogin(){
     myName=d.name;
     document.getElementById('ls').style.display='none';
     document.getElementById('uLabel').textContent=myName;
+    window.currentUsername=d.username;
     [nodes,letters,docs,equipment]=await Promise.all([api('wbs'),api('letters'),api('docs'),api('equipment')]);
     renderWBS();renderLetters();renderDocs();renderEq();renderDash();
   }else document.getElementById('er').style.display='block';
@@ -584,6 +598,27 @@ function sendMsg(){const inp=document.getElementById('mi');const text=inp.value.
 socket.on('message',data=>{const div=document.createElement('div');div.className='msg '+(data.name===myName?'own':'other');div.innerHTML=(data.name!==myName?'<div class="mname">'+data.name+'</div>':'')+data.text+'<div class="mtime">'+data.time+'</div>';document.getElementById('msgs').appendChild(div);document.getElementById('msgs').scrollTop=9999;});
 async function sendFile(file){if(!file||!myName)return;const fd=new FormData();fd.append('file',file);const r=await fetch('/upload',{method:'POST',body:fd});const d=await r.json();socket.emit('file',{name:myName,filename:d.filename,originalname:d.originalname,size:d.size,time:now()});}
 socket.on('file',data=>{const div=document.createElement('div');div.className='file-msg '+(data.name===myName?'own':'');const kb=Math.round(data.size/1024);div.innerHTML='📄 <div><b>'+data.originalname+'</b><br><small>'+kb+' КБ · '+data.name+'</small><br><a href="/uploads/'+data.filename+'" download style="color:#0d8a7a">скачать</a></div>';document.getElementById('msgs').appendChild(div);document.getElementById('msgs').scrollTop=9999;});
+
+/* ===== ACCOUNT SETTINGS ===== */
+function openSettings(){
+  document.getElementById('oldPass').value='';
+  document.getElementById('newPass').value='';
+  document.getElementById('pwErr').style.display='none';
+  document.getElementById('settingsModal').style.display='flex';
+}
+function closeSettings(){
+  document.getElementById('settingsModal').style.display='none';
+}
+async function submitPasswordChange(){
+  const oldPassword=document.getElementById('oldPass').value.trim();
+  const newPassword=document.getElementById('newPass').value.trim();
+  const err=document.getElementById('pwErr');
+  if(!oldPassword||!newPassword){err.textContent='Заполни оба поля';err.style.display='block';return;}
+  const r=await fetch('/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:window.currentUsername,oldPassword,newPassword})});
+  const d=await r.json();
+  if(d.ok){alert('✅ Пароль изменён');closeSettings();}
+  else{err.textContent=d.error||'Ошибка';err.style.display='block';}
+}
 </script>
 </body>
 </html>
