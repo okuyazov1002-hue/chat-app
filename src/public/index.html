@@ -337,6 +337,7 @@ function fmtMulti(obj){
   if(!keys.length)return "";
   return keys.map(k=>fmt(obj[k])+" "+k).join(" - ");
 }
+function toUSD(obj){const rEUR=parseFloat(document.getElementById("rateEUR").value)||1;const rUZS=parseFloat(document.getElementById("rateUZS").value)||0.00008;const rRUB=parseFloat(document.getElementById("rateRUB").value)||0.011;let total=0;Object.keys(obj).forEach(k=>{const v=obj[k];if(k==="USD")total+=v;else if(k==="EUR")total+=v*rEUR;else if(k==="UZS")total+=v*rUZS;else if(k==="RUB")total+=v*rRUB;});return total;}
 function cpct(id){
   const s=csum(id),o=cosv(id);
   let totalS=0,totalO=0;
@@ -538,7 +539,7 @@ function renderDash(){
   dp.innerHTML=roots.filter(r=>gad(r.id).some(d=>d.type==="work")).map(r=>{
     const p=cpct(r.id),s=csum(r.id),o=cosv(r.id);
     const c=p>=100?'#1a9a5a':p>50?'#0d8a7a':p>20?'#c07820':'#c04040';
-    return `<div class="prow"><span class="prow-name">${r.name||"Без названия"}</span><div class="pw"><div class="pf" style="width:${Math.min(p,100)}%;background:${c}"></div></div><span class="pp">${p.toFixed(1)}%</span><span style="font-size:10px;color:#5ab0a0;margin-left:6px;white-space:nowrap">${fmtMulti(s)}<br>освоено: ${fmtMulti(o)}</span></div><div style="margin-top:6px;padding-top:6px;border-top:1px solid #f0f5f3">${renderStageBars(r.id)}</div></div>`;
+    return `<div class="prow"><span class="prow-name">${r.name||"Без названия"}</span><div class="pw"><div class="pf" style="width:${Math.min(p,100)}%;background:${c}"></div></div><span class="pp">${p.toFixed(1)}%</span><span style="font-size:10px;color:#5ab0a0;margin-left:6px;white-space:nowrap">$${toUSD(s).toLocaleString("ru-RU",{maximumFractionDigits:0})}<br>${fmtMulti(s)}<br>освоено: ${fmtMulti(o)}</span></div><div style="margin-top:6px;padding-top:6px;border-top:1px solid #f0f5f3">${renderStageBars(r.id)}</div></div>`;
   }).join('');
 }
 
