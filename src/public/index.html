@@ -315,6 +315,7 @@ function ivis(n){if(!n.parentId)return true;const p=nodes.find(x=>x.id===n.paren
 function fmt(n){return n?Number(n).toLocaleString("ru-RU"):"";}
 function stageProgress(id){const works=gad(id).filter(d=>d.type==="work"&&d.stage);const result={};STAGES.forEach(s=>result[s]={total:0,done:0});works.forEach(w=>{if(result[w.stage]){result[w.stage].total++;if(w.status==="2")result[w.stage].done++;}});return result;}
 function pcol(p){return p===100?"#1a9a5a":p>0?"#1a6b9a":"#d0e8e0";}
+function renderStageBars(id){const sp=stageProgress(id);return STAGES.filter(s=>sp[s].total>0).map(s=>{const pct=Math.round(sp[s].done/sp[s].total*100);return "<div style=\"display:flex;gap:4px;margin-top:3px;font-size:9px;color:#7aa89a\"><span style=\"width:90px\">"+s+"</span><div style=\"flex:1;height:4px;background:#e0f0ec;border-radius:2px\"><div style=\"height:100%;width:"+pct+"%;background:#0d8a7a;border-radius:2px\"></div></div><span style=\"width:28px;text-align:right\">"+pct+"%</span></div>";}).join("");}
 function gadate(id,f){const w=gad(id).filter(d=>d.type==="work"&&d[f]);if(!w.length)return"";const ds=w.map(x=>x[f]).sort();return f==="dateStart"?ds[0]:ds[ds.length-1];}
 
 function csum(id){
@@ -537,7 +538,7 @@ function renderDash(){
   dp.innerHTML=roots.filter(r=>gad(r.id).some(d=>d.type==="work")).map(r=>{
     const p=cpct(r.id),s=csum(r.id),o=cosv(r.id);
     const c=p>=100?'#1a9a5a':p>50?'#0d8a7a':p>20?'#c07820':'#c04040';
-    return `<div class="prow"><span class="prow-name">${r.name||"Без названия"}</span><div class="pw"><div class="pf" style="width:${Math.min(p,100)}%;background:${c}"></div></div><span class="pp">${p.toFixed(1)}%</span><span style="font-size:10px;color:#5ab0a0;margin-left:6px;white-space:nowrap">${fmtMulti(s)}<br>освоено: ${fmtMulti(o)}</span></div>`;
+    return `<div class="prow"><span class="prow-name">${r.name||"Без названия"}</span><div class="pw"><div class="pf" style="width:${Math.min(p,100)}%;background:${c}"></div></div><span class="pp">${p.toFixed(1)}%</span><span style="font-size:10px;color:#5ab0a0;margin-left:6px;white-space:nowrap">${fmtMulti(s)}<br>освоено: ${fmtMulti(o)}</span></div><div style="margin-top:6px;padding-top:6px;border-top:1px solid #f0f5f3">${renderStageBars(r.id)}</div></div>`;
   }).join('');
 }
 
