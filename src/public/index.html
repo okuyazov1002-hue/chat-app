@@ -8,6 +8,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:sans-serif;background:#e8eef0;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+@media print{.topbar,.sidebar,.logout,#stageTable+button,button{display:none!important}.main{padding:0!important}.content{gap:6px!important}.dash-card,.section,.prow{box-shadow:none!important;border:1px solid #ccc!important}body{background:white!important}.page{display:none!important}.page.active{display:flex!important}}
 .topbar{background:#0d8a7a;color:white;padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:44px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
 .topbar h1{font-size:14px;font-weight:600}
 .topbar-right{display:flex;align-items:center;gap:10px;font-size:12px}
@@ -170,7 +171,7 @@ table.rt tr:hover td{background:#f5fcfa}
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
-      <div style="display:flex;align-items:center;justify-content:space-between"><div class="page-title">📊 Отчёт по проектам</div><div style="display:flex;align-items:center;gap:8px;font-size:9px;color:#7aa89a"><span>курсы:</span><span>EUR<input id="rateEUR" value="1.08" style="border:none;background:#f0f8f5;border-radius:3px;padding:1px 4px;font-size:9px;width:46px;color:#0a6050;text-align:right" onchange="renderDash()"></span><span>UZS<input id="rateUZS" value="0.000081" style="border:none;background:#f0f8f5;border-radius:3px;padding:1px 4px;font-size:9px;width:60px;color:#0a6050;text-align:right" onchange="renderDash()"></span><span>RUB<input id="rateRUB" value="0.011" style="border:none;background:#f0f8f5;border-radius:3px;padding:1px 4px;font-size:9px;width:46px;color:#0a6050;text-align:right" onchange="renderDash()"></span></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between"><div class="page-title">📊 Отчёт по проектам</div><div style="display:flex;align-items:center;gap:8px;font-size:9px;color:#7aa89a"><span>курсы:</span><span>EUR<input id="rateEUR" value="1.08" style="border:none;background:#f0f8f5;border-radius:3px;padding:1px 4px;font-size:9px;width:46px;color:#0a6050;text-align:right" onchange="renderDash()"></span><span>UZS<input id="rateUZS" value="0.000081" style="border:none;background:#f0f8f5;border-radius:3px;padding:1px 4px;font-size:9px;width:60px;color:#0a6050;text-align:right" onchange="renderDash()"></span><span>RUB<input id="rateRUB" value="0.011" style="border:none;background:#f0f8f5;border-radius:3px;padding:1px 4px;font-size:9px;width:46px;color:#0a6050;text-align:right" onchange="renderDash()"></span></div><button onclick="window.print()" style="background:#0d8a7a;color:white;border:none;border-radius:5px;padding:5px 12px;font-size:11px;cursor:pointer;margin-left:8px">🖨 Печать PDF</button></div>
       <div class="dash-scroll">
         <div class="dash-grid">
           <div class="dash-card"><div class="dash-num" id="d-total">0</div><div class="dash-lbl">Активных проектов</div></div>
