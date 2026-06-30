@@ -178,6 +178,7 @@ table.rt tr:hover td{background:#f5fcfa}
           <div class="dash-card" style="border-color:#c07820"><div class="dash-num" style="color:#7a4810" id="d-doing">0</div><div class="dash-lbl">Выполняется</div></div>
           <div class="dash-card" style="border-color:#1a9a5a"><div class="dash-num" style="color:#0a5a30" id="d-done">0</div><div class="dash-lbl">Завершено</div></div>
         </div>
+        <div class="section"><div class="sec-title">Сводка по этапам</div><div style="overflow:auto"><table id="stageTable" style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#0d8a7a"><th style="color:white;padding:7px 9px;text-align:left;font-size:10px">Этап</th><th style="color:white;padding:7px 9px;text-align:left;font-size:10px">Начало</th><th style="color:white;padding:7px 9px;text-align:left;font-size:10px">Окончание</th><th style="color:white;padding:7px 9px;text-align:left;font-size:10px">Итого в USD</th><th style="color:white;padding:7px 9px;text-align:left;font-size:10px">Прогресс</th></tr></thead><tbody id="stageTableBody"></tbody></table></div></div>
         <div class="prog-section">
           <h3>Прогресс по проектам</h3>
           <div id="dashProgs"><div class="empty-tbl">Добавьте проекты в разделе «Информация по проектам»</div></div>
@@ -541,8 +542,40 @@ function renderDash(){
     const c=p>=100?'#1a9a5a':p>50?'#0d8a7a':p>20?'#c07820':'#c04040';
     return `<div class="prow"><span class="prow-name">${r.name||"Без названия"}</span><div class="pw"><div class="pf" style="width:${Math.min(p,100)}%;background:${c}"></div></div><span class="pp">${p.toFixed(1)}%</span><span style="font-size:10px;color:#5ab0a0;margin-left:6px;white-space:nowrap">$${toUSD(s).toLocaleString("ru-RU",{maximumFractionDigits:0})}<br>${fmtMulti(s)}<br>освоено: ${fmtMulti(o)}</span></div><div style="margin-top:6px;padding-top:6px;border-top:1px solid #f0f5f3">${renderStageBars(r.id)}</div></div>`;
   }).join('');
+  renderStageTable();
 }
 
+function renderStageTable(){
+  const tbody=document.getElementById('stageTableBody');
+  if(!tbody)return;
+  const allWork=nodes.filter(n=>n.type==='work'&&n.stage);
+  const byStage={};
+  STAGES.forEach(s=>byStage[s]={works:[],dateStart:'',dateEnd:''});
+  allWork.forEach(w=>{
+    if(byStage[w.stage]){
+      byStage[w.stage].works.push(w);
+      if(w.dateStart&&(!byStage[w.stage].dateStart||w.dateStart<byStage[w.stage].dateStart))byStage[w.stage].dateStart=w.dateStart;
+      if(w.dateEnd&&(!byStage[w.stage].dateEnd||w.dateEnd>byStage[w.stage].dateEnd))byStage[w.stage].dateEnd=w.dateEnd;
+    }
+  });
+  const colors={'Подготовка':'#1a6b9a','Базовый инжиниринг':'#1a6b9a','Детальный инжиниринг':'#4a9ec8','Закупки':'#c0a020','Логистика':'#c0a020','Строительство':'#0d8a7a','Пусконаладка':'#1a9a5a','Проектирование':'#1a6b9a','Поставка':'#c0a020','Монтаж':'#0d8a7a'};
+  let html='';
+  STAGES.forEach(s=>{
+    const d=byStage[s];
+    if(!d.works.length)return;
+    let sum={};
+    d.works.forEach(w=>{
+      const c=w.currency||'USD';
+      const a=parseFloat(w.amount)||0;
+      if(a)sum[c]=(sum[c]||0)+a;
+    });
+    const done=d.works.filter(w=>w.status==='2').length;
+    const pct=Math.round(done/d.works.length*100);
+    const fd=dt=>dt?new Date(dt).toLocaleDateString('ru-RU'):'';
+    html+='<tr style="border-bottom:1px solid #f0f8f4"><td style="padding:8px 9px"><div style="display:flex;align-items:center;gap:6px;font-weight:500;color:#054e44"><div style="width:8px;height:8px;border-radius:50%;background:'+(colors[s]||'#999')+'"></div>'+s+'</div></td><td style="padding:8px 9px;color:#336858">'+fd(d.dateStart)+'</td><td style="padding:8px 9px;color:#336858">'+fd(d.dateEnd)+'</td><td style="padding:8px 9px;font-weight:700;color:#0a7060">$'+toUSD(sum).toLocaleString('ru-RU',{maximumFractionDigits:0})+'</td><td style="padding:8px 9px"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:#e0f0ec;border-radius:3px;overflow:hidden;max-width:60px"><div style="height:100%;border-radius:3px;width:'+pct+'%;background:'+(pct>=100?"#1a9a5a":pct>0?"#0d8a7a":"#c04040")+'"></div></div><span style="font-size:10px;color:#608878;font-weight:600">'+pct+'%</span></div></td></tr>';
+  });
+  tbody.innerHTML=html||'<tr><td colspan="5" style="padding:20px;text-align:center;color:#90b8b0;font-size:11px">Нет данных по этапам</td></tr>';
+}
 /* ===== LETTERS ===== */
 async function uploadLetter(file){
   if(!file)return;
