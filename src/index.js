@@ -5,7 +5,6 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const { MongoClient } = require('mongodb');
-const { checkUser } = require('./users');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,11 +15,23 @@ if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
 const MONGO_URI = process.env.MONGO_URI;
 let db;
 
+const DEFAULT_USERS = [
+  { username: 'admin', password: '1234', name: 'Администратор' },
+  { username: 'I.kenjibaev', password: '1234', name: 'Пользователь 1' },
+  { username: 'user2', password: 'pass2', name: 'Пользователь 2' },
+];
+
 async function connectDB() {
   const client = new MongoClient(MONGO_URI);
   await client.connect();
   db = client.db('dsomk');
   console.log('MongoDB подключена');
+
+  const count = await db.collection('users').countDocuments();
+  if (count === 0) {
+    await db.collection('users').insertMany(DEFAULT_USERS);
+    console.log('Пользователи по умолчанию добавлены');
+  }
 }
 
 const DB = {
@@ -58,11 +69,27 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
 
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  const user = checkUser(username, password);
-  if (user) res.json({ ok: true, name: user.name });
+  const user = await db.collection('users').findOne({ username, password });
+  if (user) res.json({ ok: true, name: user.name, username: user.username });
   else res.json({ ok: false });
+});
+
+app.post('/change-password', async (req, res) => {
+  const { username, oldPassword, newPassword } = req.body;
+  const user = await db.collection('users').findOne({ username, password: oldPassword });
+  if (!user) {
+    return res.json({ ok: false, error: 'Текущий пароль неверный' });
+  }
+  if (!newPassword || newPassword.length < 4) {
+    return res.json({ ok: false, error: 'Новый пароль должен быть не менее 4 символов' });
+  }
+  await db.collection('users').updateOne(
+    { username },
+    { $set: { password: newPassword } }
+  );
+  res.json({ ok: true });
 });
 
 function parseLetterCode(filename) {
