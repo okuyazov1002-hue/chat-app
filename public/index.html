@@ -313,35 +313,31 @@ function gad(id){let r=[];gch(id).forEach(c=>{r.push(c);r=r.concat(gad(c.id));})
 function gdp(id){let d=0,c=nodes.find(n=>n.id===id);while(c&&c.parentId){c=nodes.find(n=>n.id===c.parentId);d++;}return d;}
 
 function csum(id){
-  const n=nodes.find(n=>n.id===id);if(!n)return 0;
-  if(n.type==='work')return parseFloat(n.amount)||0;
-  return gch(id).reduce((s,c)=>s+csum(c.id),0);
+  const n=nodes.find(n=>n.id===id);if(!n)return {};
+  if(n.type==="work"){const c=n.currency||"USD";const a=parseFloat(n.amount)||0;return a?{[c]:a}:{};}
+  const res={};
+  gch(id).forEach(c=>{const r=csum(c.id);Object.keys(r).forEach(k=>{res[k]=(res[k]||0)+r[k];});});
+  return res;
 }
 function cosv(id){
-  const n=nodes.find(n=>n.id===id);if(!n)return 0;
-  if(n.type==='work')return parseFloat(n.osvoen)||0;
-  return gch(id).reduce((s,c)=>s+cosv(c.id),0);
+  const n=nodes.find(n=>n.id===id);if(!n)return {};
+  if(n.type==="work"){const c=n.currency||"USD";const a=parseFloat(n.osvoen)||0;return a?{[c]:a}:{};}
+  const res={};
+  gch(id).forEach(c=>{const r=cosv(c.id);Object.keys(r).forEach(k=>{res[k]=(res[k]||0)+r[k];});});
+  return res;
+}
+function fmtMulti(obj){
+  const keys=Object.keys(obj);
+  if(!keys.length)return "";
+  return keys.map(k=>fmt(obj[k])+" "+k).join(" - ");
 }
 function cpct(id){
   const s=csum(id),o=cosv(id);
-  if(!s)return 0;
-  return Math.round(o/s*10000)/100;
+  let totalS=0,totalO=0;
+  Object.keys(s).forEach(k=>{totalS+=s[k];totalO+=(o[k]||0);});
+  if(!totalS)return 0;
+  return Math.round(totalO/totalS*10000)/100;
 }
-function gadate(id,f){
-  const w=gad(id).filter(d=>d.type==='work'&&d[f]);
-  if(!w.length)return'';
-  const ds=w.map(x=>x[f]).sort();
-  return f==='dateStart'?ds[0]:ds[ds.length-1];
-}
-function ivis(n){
-  if(!n.parentId)return true;
-  const p=nodes.find(x=>x.id===n.parentId);
-  if(!p)return true;
-  if(p.collapsed)return false;
-  return ivis(p);
-}
-function pcol(p){return p>=100?'#1a9a5a':p>0?'#1a6b9a':'#d0e8e0';}
-function fmt(n){return n?Number(n).toLocaleString('ru-RU'):'';}
 function dcls(d){return['w0','w1','w2','w3','w4'][Math.min(d,4)];}
 
 /* ===== WBS ACTIONS ===== */
@@ -480,8 +476,8 @@ function rch(pid,depth){
         <td style="font-size:10px;color:#508870">${fd(as)}</td>
         <td style="font-size:10px;color:#508870">${fd(ae)}</td>
         <td class="tc"><select class="cur" onclick="event.stopPropagation()" onchange="updNode(${n.id},'currency',this.value)">${curs.map(c=>`<option value="${c}"${cur===c?' selected':''}>${c}</option>`).join('')}</select></td>
-        <td class="sauto">${fmt(sum)}</td>
-        <td class="sauto">${fmt(osv)}</td>
+        <td class="sauto">${fmtMulti(sum)}</td>
+        <td class="sauto">${fmtMulti(osv)}</td>
         <td></td>
         <td></td>
         <td class="pct-val">${pct>0?pct.toFixed(1)+'%':'0%'}</td>
@@ -536,7 +532,7 @@ function renderDash(){
   dp.innerHTML=roots.map(r=>{
     const p=cpct(r.id),s=csum(r.id),o=cosv(r.id);
     const c=p>=100?'#1a9a5a':p>50?'#0d8a7a':p>20?'#c07820':'#c04040';
-    return`<div class="prow"><span class="prow-name">${r.name||'Без названия'}</span><div class="pw"><div class="pf" style="width:${Math.min(p,100)}%;background:${c}"></div></div><span class="pp">${p.toFixed(1)}%</span><span style="font-size:10px;color:#5ab0a0;margin-left:6px;white-space:nowrap">${fmt(s)} / ${fmt(o)}</span></div>`;
+    return`<div class="prow"><span class="prow-name">${r.name||'Без названия'}</span><div class="pw"><div class="pf" style="width:${Math.min(p,100)}%;background:${c}"></div></div><span class="pp">${p.toFixed(1)}%</span><span style="font-size:10px;color:#5ab0a0;margin-left:6px;white-space:nowrap">${fmtMulti(s)}<br>освоено: ${fmtMulti(o)}</span></div>`;
   }).join('');
 }
 
@@ -622,7 +618,7 @@ function exportExcel(){
   function walk(pid,depth){
     gch(pid).forEach(n=>{
       if(n.type==='wbs'){
-        rows.push([depth+1,n.code||'',n.name||'',gadate(n.id,'dateStart'),gadate(n.id,'dateEnd'),n.currency||'USD',csum(n.id),cosv(n.id),'']);
+        rows.push([depth+1,n.code||'',n.name||'',gadate(n.id,'dateStart'),gadate(n.id,'dateEnd'),n.currency||'USD',fmtMulti(csum(n.id)),fmtMulti(cosv(n.id)),'']);
         walk(n.id,depth+1);
       }else{
         rows.push(['W',n.code||'',n.name||'',n.dateStart||'',n.dateEnd||'',n.currency||'USD',n.amount||0,n.osvoen||0,statusLabels[n.status]||'Не начато']);
