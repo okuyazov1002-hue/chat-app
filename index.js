@@ -4,33 +4,47 @@ const { Server } = require('socket.io');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const { MongoClient } = require('mongodb');
 const { checkUser } = require('./users');
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-['uploads','data'].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d); });
+if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
+
+const MONGO_URI = process.env.MONGO_URI;
+let db;
+
+async function connectDB() {
+  const client = new MongoClient(MONGO_URI);
+  await client.connect();
+  db = client.db('dsomk');
+  console.log('MongoDB подключена');
+}
 
 const DB = {
-  files: {
-    wbs:       'data/wbs.json',
-    letters:   'data/letters.json',
-    docs:      'data/docs.json',
-    equipment: 'data/equipment.json',
-  },
-  read(key) {
+  async read(key) {
     try {
-      if (fs.existsSync(this.files[key])) {
-        return JSON.parse(fs.readFileSync(this.files[key], 'utf8'));
-      }
-    } catch(e) {}
-    return [];
+      const doc = await db.collection('data').findOne({ _id: key });
+      return doc ? doc.value : [];
+    } catch(e) {
+      console.error('DB read error:', e);
+      return [];
+    }
   },
-  write(key, data) {
+  async write(key, data) {
     try {
-      fs.writeFileSync(this.files[key], JSON.stringify(data, null, 2));
+      await db.collection('data').updateOne(
+        { _id: key },
+        { $set: { value: data } },
+        { upsert: true }
+      );
       return true;
-    } catch(e) { return false; }
+    } catch(e) {
+      console.error('DB write error:', e);
+      return false;
+    }
   }
 };
 
@@ -51,28 +65,26 @@ app.post('/login', (req, res) => {
   else res.json({ ok: false });
 });
 
-// Разбор имени файла: HER01-AMK-EDG-L-GEN-00007
 function parseLetterCode(filename) {
-  const name = filename.replace(/\.[^/.]+$/, ''); // убираем расширение
+  const name = filename.replace(/\.[^/.]+$/, '');
   const parts = name.split('-');
   if (parts.length < 6) return null;
   return {
-    project:  parts[0],           // HER01
-    sender:   parts[1],           // AMK
-    receiver: parts[2],           // EDG
-    type:     parts[3],           // L
-    stage:    parts[4],           // GEN
-    number:   parts.slice(5).join('-'), // 00007
+    project:  parts[0],
+    sender:   parts[1],
+    receiver: parts[2],
+    type:     parts[3],
+    stage:    parts[4],
+    number:   parts.slice(5).join('-'),
   };
 }
 
-app.post('/upload', upload.single('file'), (req, res) => {
+app.post('/upload', upload.single('file'), async (req, res) => {
   const file = req.file;
   const parsed = parseLetterCode(file.originalname);
 
-  // Если имя файла соответствует формату письма — добавляем в реестр
   if (parsed) {
-    const letters = DB.read('letters');
+    const letters = await DB.read('letters');
     const newLetter = {
       id: Date.now(),
       num: parsed.number,
@@ -89,7 +101,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
       originalname: file.originalname,
     };
     letters.push(newLetter);
-    DB.write('letters', letters);
+    await DB.write('letters', letters);
     io.emit('letters_updated', letters);
   }
 
@@ -102,11 +114,11 @@ app.post('/upload', upload.single('file'), (req, res) => {
 });
 
 ['wbs', 'letters', 'docs', 'equipment'].forEach(key => {
-  app.get(`/api/${key}`, (req, res) => {
-    res.json(DB.read(key));
+  app.get(`/api/${key}`, async (req, res) => {
+    res.json(await DB.read(key));
   });
-  app.post(`/api/${key}`, (req, res) => {
-    const ok = DB.write(key, req.body);
+  app.post(`/api/${key}`, async (req, res) => {
+    const ok = await DB.write(key, req.body);
     if (ok) {
       io.emit(`${key}_updated`, req.body);
       res.json({ ok: true });
@@ -122,4 +134,10 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));
+
+connectDB().then(() => {
+  server.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));
+}).catch(err => {
+  console.error('Ошибка подключения к MongoDB:', err);
+  process.exit(1);
+});
