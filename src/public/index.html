@@ -189,19 +189,9 @@ table.rt tr:hover td{background:#f5fcfa}
     <div class="page" id="page-projects">
       <div class="page-title">📋 Информация по проектам — WBS</div>
       <div class="wbs-toolbar">
-        <button class="tbtn tbtn-up" onclick="moveNode(-1)">↑</button>
-        <button class="tbtn tbtn-dn" onclick="moveNode(1)">↓</button>
-        <button class="tbtn tbtn-del" onclick="delSelected()">✕ Удалить</button>
         <label class="upload-btn" style="cursor:pointer">📥 Загрузить Excel<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this.files[0])"></label>
         <button class="upload-btn" onclick="exportExcel()">📤 Скачать Excel</button>
-        <span id="selHint" style="font-size:10px;color:#90b0a8;font-style:italic">Выбери строку → нажми ⋯</span>
-        <div class="lvl-wrap">
-          <span>Свернуть:</span>
-          <button class="lvl-btn on" onclick="collapseToLevel(0,this)">Все</button>
-          <button class="lvl-btn" onclick="collapseToLevel(1,this)">1</button>
-          <button class="lvl-btn" onclick="collapseToLevel(2,this)">2</button>
-          <button class="lvl-btn" onclick="collapseToLevel(3,this)">3</button>
-          <button class="lvl-btn" onclick="collapseToLevel(4,this)">4</button>
+        <span id="selHint" style="font-size:10px;color:#90b0a8;font-style:italic">Выбери строку → нажми ⋯ или ПКМ</span>
         </div>
       </div>
       <div class="wbs-area">
@@ -435,6 +425,7 @@ function selRow(id){
 }
 
 function showCm(e,id){
+  e.preventDefault();
   e.stopPropagation();
   if(cm)cm.remove();
   selectedId=id;renderWBS();
@@ -445,6 +436,15 @@ function showCm(e,id){
   m.innerHTML=`
     <div class="ctx-item" onclick="addWBS();rmCm()">📁 Добавить WBS</div>
     <div class="ctx-item" onclick="addWork();rmCm()">🔧 Добавить работу</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" onclick="moveNode(-1);rmCm()">↑ Переместить вверх</div>
+    <div class="ctx-item" onclick="moveNode(1);rmCm()">↓ Переместить вниз</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" onclick="collapseToLevel(0);rmCm()">Развернуть все</div>
+    <div class="ctx-item" onclick="collapseToLevel(1);rmCm()">Свернуть до уровня 1</div>
+    <div class="ctx-item" onclick="collapseToLevel(2);rmCm()">Свернуть до уровня 2</div>
+    <div class="ctx-item" onclick="collapseToLevel(3);rmCm()">Свернуть до уровня 3</div>
+    <div class="ctx-item" onclick="collapseToLevel(4);rmCm()">Свернуть до уровня 4</div>
     <div class="ctx-sep"></div>
     <div class="ctx-item danger" onclick="delSelected();rmCm()">✕ Удалить</div>`;
   document.body.appendChild(m);cm=m;
@@ -472,7 +472,7 @@ function rch(pid,depth){
     if(n.type==='wbs'){
       const as=gadate(n.id,'dateStart'),ae=gadate(n.id,'dateEnd');
       const fd=d=>d?new Date(d).toLocaleDateString('ru-RU'):'';
-      html+=`<tr class="${dc}${sc}" onclick="selRow(${n.id})">
+      html+=`<tr class="${dc}${sc}" onclick="selRow(${n.id})" oncontextmenu="showCm(event,${n.id});return false">
         <td class="tc"><span class="lnum">${depth+1}</span></td>
         <td><span class="cpill" contenteditable="true" spellcheck="false" onclick="event.stopPropagation()" onblur="updNode(${n.id},'code',this.textContent.trim())">${n.code||'—'}</span></td>
         <td><span class="tri${n.collapsed?' cl':''}" onclick="event.stopPropagation();toggleCol(${n.id})">${hch?(n.collapsed?'▶':'▼'):'◆'}</span><input class="ni" id="ni_${n.id}" value="${n.name}" placeholder="Наименование..." onclick="event.stopPropagation()" onchange="updNode(${n.id},'name',this.value)"></td>
@@ -489,7 +489,7 @@ function rch(pid,depth){
       if(!n.collapsed)html+=rch(n.id,depth+1);
     } else {
       const stc=n.status==='2'?'s2':n.status==='1'?'s1':'s0';
-      html+=`<tr class="wk${sc}" onclick="selRow(${n.id})">
+      html+=`<tr class="wk${sc}" onclick="selRow(${n.id})" oncontextmenu="showCm(event,${n.id});return false">
         <td class="tc"><span class="wnum">W</span></td>
         <td><span class="cpill cpill-w" contenteditable="true" spellcheck="false" onclick="event.stopPropagation()" onblur="updNode(${n.id},'code',this.textContent.trim())">${n.code||'—'}</span></td>
         <td><input class="ni" id="ni_${n.id}" value="${n.name}" placeholder="Название работы..." onclick="event.stopPropagation()" onchange="updNode(${n.id},'name',this.value)"></td>
