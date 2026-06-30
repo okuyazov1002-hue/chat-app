@@ -311,6 +311,7 @@ socket.on('equipment_updated',d=>{equipment=d;renderEq();});
 function gch(pid){return nodes.filter(n=>n.parentId===pid);}
 function gad(id){let r=[];gch(id).forEach(c=>{r.push(c);r=r.concat(gad(c.id));});return r;}
 function gdp(id){let d=0,c=nodes.find(n=>n.id===id);while(c&&c.parentId){c=nodes.find(n=>n.id===c.parentId);d++;}return d;}
+function ivis(n){if(!n.parentId)return true;const p=nodes.find(x=>x.id===n.parentId);if(!p||p.collapsed)return false;return ivis(p);}
 
 function csum(id){
   const n=nodes.find(n=>n.id===id);if(!n)return {};
