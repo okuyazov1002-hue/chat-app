@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>DSOMK</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:sans-serif;background:#e8eef0;height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -557,8 +558,8 @@ function updateStageCards(){
   set('supply',g.supply);
   set('constr',g.construction);
 }
-let expandedProjectId=null;
-function toggleProjectExpand(id){expandedProjectId=expandedProjectId===id?null:id;renderDash();}
+let expandedProjects=new Set();
+function toggleProjectExpand(id){if(expandedProjects.has(id))expandedProjects.delete(id);else expandedProjects.add(id);renderDash();}
 function equipmentInfoForProject(projectId){
   const proj=nodes.find(n=>n.id===projectId);
   if(!proj)return null;
@@ -618,6 +619,151 @@ function renderProjectStageCards(projectId){
   }).join('');
   return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f5f3"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'+html+'</div></div>';
 }
+function toUSDsingle(cur,val){const o={};if(val)o[cur||'USD']=val;return toUSD(o);}
+function projMonths(projectId){
+  const works=gad(projectId).filter(n=>n.type==='work'&&n.dateStart&&n.dateEnd);
+  if(!works.length)return [];
+  const minStart=works.map(w=>w.dateStart).sort()[0];
+  let maxEnd=works.map(w=>w.dateEnd).sort().slice(-1)[0];
+  const today=new Date().toISOString().split('T')[0];
+  if(today.slice(0,7)>maxEnd.slice(0,7))maxEnd=today;
+  const start=new Date(minStart.slice(0,7)+'-01T00:00:00');
+  const end=new Date(maxEnd.slice(0,7)+'-01T00:00:00');
+  const months=[];
+  let cur=new Date(start);
+  let guard=0;
+  while(cur<=end&&guard<60){
+    months.push({y:cur.getFullYear(),m:cur.getMonth()+1});
+    cur.setMonth(cur.getMonth()+1);
+    guard++;
+  }
+  return months;
+}
+function monthIndexForDate(months,dateStr){
+  if(!dateStr||!months.length)return 0;
+  const y=parseInt(dateStr.slice(0,4)),m=parseInt(dateStr.slice(5,7));
+  let idx=months.findIndex(mo=>mo.y===y&&mo.m===m);
+  if(idx===-1){
+    if(y<months[0].y||(y===months[0].y&&m<months[0].m))idx=0;
+    else idx=months.length-1;
+  }
+  return idx;
+}
+function monthPlanSeries(projectId,months){
+  const works=gad(projectId).filter(n=>n.type==='work'&&n.dateStart&&n.dateEnd&&n.amount);
+  const arr=months.map(()=>0);
+  works.forEach(w=>{
+    const si=monthIndexForDate(months,w.dateStart);
+    const ei=monthIndexForDate(months,w.dateEnd);
+    const span=Math.max(1,ei-si+1);
+    const total=toUSDsingle(w.currency,parseFloat(w.amount)||0);
+    const per=total/span;
+    for(let i=si;i<=ei;i++)arr[i]+=per;
+  });
+  return arr;
+}
+function projFactTotal(projectId){
+  const works=gad(projectId).filter(n=>n.type==='work');
+  let sum={};
+  works.forEach(w=>{const c=w.currency||'USD';const a=parseFloat(w.osvoen)||0;if(a)sum[c]=(sum[c]||0)+a;});
+  return toUSD(sum);
+}
+function currentMonthIndex(months){
+  if(!months.length)return 0;
+  const now=new Date();
+  const y=now.getFullYear(),m=now.getMonth()+1;
+  let idx=months.findIndex(mo=>mo.y===y&&mo.m===m);
+  if(idx===-1){
+    if(y>months[months.length-1].y||(y===months[months.length-1].y&&m>months[months.length-1].m))idx=months.length-1;
+    else idx=0;
+  }
+  return idx;
+}
+window.__projChartData={};
+window.__chartInstances={};
+function renderProjectChartGanttHTML(projectId){
+  const months=projMonths(projectId);
+  if(!months.length)return '';
+  const planArr=monthPlanSeries(projectId,months);
+  const cumPlan=[];let rp=0;planArr.forEach(v=>{rp+=v;cumPlan.push(rp);});
+  const factTotal=projFactTotal(projectId);
+  const curIdx=currentMonthIndex(months);
+  const factArr=months.map((mo,i)=>i===curIdx?factTotal:0);
+  const cumFact=months.map((mo,i)=>i>=curIdx?factTotal:0);
+  const monthLabels=['Я','Ф','М','А','М','И','И','А','С','О','Н','Д'];
+  const canvasId='chart-'+projectId;
+  window.__projChartData[projectId]={labels:months.map(mo=>monthLabels[mo.m-1]),planArr,factArr,cumPlan,cumFact};
+  const ganttStages=[
+    {raw:'Базовый инжиниринг',label:'Баз. проект.'},
+    {raw:'Детальный инжиниринг',label:'Дет. проект.'},
+    {raw:'Закупки',label:'Поставка'},
+    {raw:'Логистика',label:'Логистика'},
+    {raw:'Строительство',label:'Строит. и монтаж'},
+    {raw:'Пусконаладка',label:'ПНР'}
+  ];
+  let yearSpans=[];
+  let curYear=null,curStart=0;
+  months.forEach((mo,i)=>{
+    if(mo.y!==curYear){
+      if(curYear!==null)yearSpans.push({y:curYear,start:curStart,span:i-curStart});
+      curYear=mo.y;curStart=i;
+    }
+  });
+  yearSpans.push({y:curYear,start:curStart,span:months.length-curStart});
+  let ganttHtml='<div style="display:grid;grid-template-columns:110px repeat('+months.length+',minmax(0,1fr));row-gap:5px;align-items:center;margin-top:2px">';
+  ganttHtml+='<span></span>';
+  yearSpans.forEach(ys=>{
+    ganttHtml+='<span style="grid-column:'+(ys.start+2)+' / span '+ys.span+';font-size:9px;color:#7aa89a;text-align:center;border-bottom:1px solid #e0ece8;padding-bottom:3px">'+ys.y+'</span>';
+  });
+  ganttHtml+='<span></span>';
+  months.forEach(mo=>{
+    ganttHtml+='<span style="font-size:8px;color:#a8c4bc;text-align:center">'+monthLabels[mo.m-1]+'</span>';
+  });
+  ganttStages.forEach(gs=>{
+    const w=gad(projectId).filter(n=>n.type==='work'&&n.stage===gs.raw);
+    ganttHtml+='<span style="font-size:9px;color:#508870;text-align:left;justify-self:start;padding-right:6px">'+gs.label+'</span>';
+    if(!w.length){ganttHtml+='<span></span>';return;}
+    const starts=w.filter(x=>x.dateStart).map(x=>x.dateStart).sort();
+    const ends=w.filter(x=>x.dateEnd).map(x=>x.dateEnd).sort();
+    const pStart=starts[0]||'';
+    const pEnd=ends.length?ends[ends.length-1]:'';
+    const startIdx=monthIndexForDate(months,pStart);
+    const endIdx=monthIndexForDate(months,pEnd);
+    const span=Math.max(1,endIdx-startIdx+1);
+    const done=w.filter(x=>x.status==='2').length;
+    const pct=w.length?Math.round(done/w.length*100):0;
+    ganttHtml+='<div style="grid-column:'+(startIdx+2)+' / span '+span+';background:#e0f0ec;height:11px;border-radius:3px;margin:0 2px;position:relative;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:#0d8a7a"></div></div>';
+  });
+  ganttHtml+='</div>';
+  return '<div style="background:#fafefd;border-radius:10px;border:1px solid #e0f0ec;padding:14px;margin-top:12px">'+
+    '<div style="display:flex;gap:14px;font-size:9px;color:#7aa89a;margin-bottom:8px">'+
+    '<span><span style="display:inline-block;width:9px;height:9px;background:#c8d4d0;border-radius:2px;margin-right:4px"></span>план (период)</span>'+
+    '<span><span style="display:inline-block;width:9px;height:9px;background:#1a9a5a;border-radius:2px;margin-right:4px"></span>факт (период)</span>'+
+    '<span><span style="display:inline-block;width:9px;height:2px;background:#1a6b9a;margin-right:4px;vertical-align:middle;display:inline-block"></span>накопл. факт</span>'+
+    '<span><span style="display:inline-block;width:9px;height:2px;border-top:2px dashed #999;margin-right:4px;vertical-align:middle;display:inline-block"></span>накопл. план</span>'+
+    '</div>'+
+    '<div style="position:relative;height:170px;margin-bottom:0;padding-left:112px"><canvas id="'+canvasId+'"></canvas></div>'+
+    ganttHtml+
+    '</div>';
+}
+function initExpandedCharts(){
+  if(typeof Chart==='undefined')return;
+  expandedProjects.forEach(id=>{
+    const data=window.__projChartData[id];
+    const canvas=document.getElementById('chart-'+id);
+    if(!data||!canvas)return;
+    if(window.__chartInstances[id]){window.__chartInstances[id].destroy();}
+    window.__chartInstances[id]=new Chart(canvas,{
+      data:{labels:data.labels,datasets:[
+        {type:'bar',label:'план',data:data.planArr,backgroundColor:'#c8d4d0',order:2,barPercentage:0.75},
+        {type:'bar',label:'факт',data:data.factArr,backgroundColor:'#1a9a5a',order:2,barPercentage:0.75},
+        {type:'line',label:'накопл. факт',data:data.cumFact,borderColor:'#1a6b9a',borderWidth:2,pointRadius:0,stepped:true,yAxisID:'y1',order:1},
+        {type:'line',label:'накопл. план',data:data.cumPlan,borderColor:'#999',borderDash:[4,3],borderWidth:2,pointRadius:0,tension:0.2,yAxisID:'y1',order:1}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{display:false}},y:{display:false},y1:{display:false,position:'right'}}}
+    });
+  });
+}
 function renderDash(){
   const roots=nodes.filter(n=>!n.parentId&&n.type==='wbs');
   updateStageCards();
@@ -626,7 +772,7 @@ function renderDash(){
   dp.innerHTML=roots.filter(r=>gad(r.id).some(d=>d.type==="work")).map(r=>{
     const p=cpct(r.id),s=csum(r.id);
     const c=p>=100?'#1a9a5a':p>50?'#0d8a7a':p>20?'#c07820':'#c04040';
-    const isOpen=expandedProjectId===r.id;
+    const isOpen=expandedProjects.has(r.id);
     return '<div class="prow" style="flex-direction:column;align-items:stretch">'+
       '<div style="display:flex;align-items:center;gap:8px">'+
       '<button onclick="toggleProjectExpand('+r.id+')" style="background:#f0f8f5;border:1px solid #b0ddd4;color:#0a7060;border-radius:4px;width:22px;height:22px;font-size:10px;cursor:pointer;flex-shrink:0">'+(isOpen?'▾':'▸')+'</button>'+
@@ -635,9 +781,10 @@ function renderDash(){
       '<span class="pp">'+p.toFixed(1)+'%</span>'+
       '<span style="font-size:10px;color:#5ab0a0;white-space:nowrap;flex-shrink:0">$'+toUSD(s).toLocaleString("ru-RU",{maximumFractionDigits:0})+'</span>'+
       '</div>'+
-      (isOpen?renderProjectStageCards(r.id):'')+
+      (isOpen?(renderProjectStageCards(r.id)+renderProjectChartGanttHTML(r.id)):'')+
       '</div>';
   }).join('');
+  setTimeout(initExpandedCharts,0);
 }
 
 function renderStageTable(){
