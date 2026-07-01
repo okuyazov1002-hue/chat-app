@@ -595,7 +595,7 @@ function makeResizable(table){
   if(!table)return;
   table.style.tableLayout='fixed';
   const ths=table.querySelectorAll('thead th');
-  ths.forEach(th=>{
+  ths.forEach((th,i)=>{
     th.style.position='relative';
     if(th.querySelector('.col-resize-handle'))return;
     const handle=document.createElement('span');
@@ -605,9 +605,18 @@ function makeResizable(table){
       e.preventDefault();e.stopPropagation();
       const startX=e.pageX;
       const startWidth=th.offsetWidth;
+      const nextTh=ths[i+1];
+      const nextStartWidth=nextTh?nextTh.offsetWidth:0;
       function onMove(e2){
-        const newWidth=Math.max(30,startWidth+(e2.pageX-startX));
-        th.style.width=newWidth+'px';
+        const diff=e2.pageX-startX;
+        const newWidth=Math.max(30,startWidth+diff);
+        if(nextTh){
+          const newNextWidth=Math.max(30,nextStartWidth-diff);
+          th.style.width=newWidth+'px';
+          nextTh.style.width=newNextWidth+'px';
+        } else {
+          th.style.width=newWidth+'px';
+        }
       }
       function onUp(){
         document.removeEventListener('mousemove',onMove);
