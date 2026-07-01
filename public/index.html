@@ -546,7 +546,7 @@ function mrch(stageKey,pid,depth){
         '<td class="tc"><span class="lnum">'+(depth+1)+'</span></td>'+
         '<td><span class="cpill" contenteditable="true" spellcheck="false" onclick="event.stopPropagation()" onblur="updM('+n.id+',\'code\',this.textContent.trim())">'+(n.code||'—')+'</span></td>'+
         '<td><span class="tri'+(n.collapsed?' cl':'')+'" onclick="event.stopPropagation();toggleMdrCol(\''+stageKey+'\','+n.id+')">'+(hch?(n.collapsed?'▶':'▼'):'◆')+'</span><input class="ni" id="mni_'+n.id+'" value="'+(n.name||'')+'" placeholder="Наименование..." onclick="event.stopPropagation()" onchange="updM('+n.id+',\'name\',this.value)"></td>'+
-        '<td></td><td></td><td></td><td class="tc"></td><td></td><td></td><td></td><td></td>'+
+        '<td></td><td></td><td></td><td></td><td class="tc"></td><td></td><td></td><td></td><td></td><td></td>'+
         '<td class="tc"><button class="mbtn" onclick="event.stopPropagation();showMdrCm(event,\''+stageKey+'\','+n.id+')">⋯</button></td>'+
       '</tr>';
       if(!n.collapsed)html+=mrch(stageKey,n.id,depth+1);
