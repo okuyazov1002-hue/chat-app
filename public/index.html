@@ -233,6 +233,11 @@ table.rt tr:hover td{background:#f5fcfa}
         <button class="upload-btn" onclick="showMdrFileMenu(event,'stage-1')">📁</button>
         <input type="file" id="mdrFileInput-stage-1" accept=".xlsx,.xls" style="display:none" onchange="importMdrExcel('stage-1',this.files[0])">
         <span style="font-size:10px;color:#90b0a8;font-style:italic">Выбери строку → нажми ⋯ или ПКМ</span>
+        <input type="text" id="mdr-search-stage-1" placeholder="🔍 Поиск..." style="border:1px solid #b0ddd4;border-radius:5px;padding:3px 8px;font-size:11px;outline:none;width:160px" oninput="filterMdr('stage-1')">
+        <select id="mdr-status-stage-1" style="border:1px solid #b0ddd4;border-radius:5px;padding:3px 6px;font-size:11px;outline:none" onchange="filterMdr('stage-1')">
+          <option value="">Все статусы</option>
+          <option>Не начато</option><option>IFR</option><option>IFA</option><option>IFD</option>
+        </select>
       </div>
       <div class="wbs-area" id="stage-1-area"></div>
     </div>
@@ -243,6 +248,11 @@ table.rt tr:hover td{background:#f5fcfa}
         <button class="upload-btn" onclick="showMdrFileMenu(event,'stage-2')">📁</button>
         <input type="file" id="mdrFileInput-stage-2" accept=".xlsx,.xls" style="display:none" onchange="importMdrExcel('stage-2',this.files[0])">
         <span style="font-size:10px;color:#90b0a8;font-style:italic">Выбери строку → нажми ⋯ или ПКМ</span>
+        <input type="text" id="mdr-search-stage-2" placeholder="🔍 Поиск..." style="border:1px solid #b0ddd4;border-radius:5px;padding:3px 8px;font-size:11px;outline:none;width:160px" oninput="filterMdr('stage-2')">
+        <select id="mdr-status-stage-2" style="border:1px solid #b0ddd4;border-radius:5px;padding:3px 6px;font-size:11px;outline:none" onchange="filterMdr('stage-2')">
+          <option value="">Все статусы</option>
+          <option>Не начато</option><option>IFR</option><option>IFA</option><option>IFC</option><option>AFC</option>
+        </select>
       </div>
       <div class="wbs-area" id="stage-2-area"></div>
     </div>
@@ -630,15 +640,36 @@ function makeResizable(table){
   });
 }
 function renderMdrPages(){renderMdrPage('stage-1');renderMdrPage('stage-2');}
+function filterMdr(stageKey){
+  const search=(document.getElementById('mdr-search-'+stageKey)||{}).value||'';
+  const status=(document.getElementById('mdr-status-'+stageKey)||{}).value||'';
+  const s=search.toLowerCase();
+  const rows=document.querySelectorAll('#'+stageKey+'-area tr');
+  rows.forEach(row=>{
+    if(row.classList.contains('w0')||row.classList.contains('w1')||row.classList.contains('w2')||row.classList.contains('w3')||row.classList.contains('w4')){
+      row.style.display='';
+      return;
+    }
+    const cells=row.querySelectorAll('td');
+    const name=(cells[3]?cells[3].innerText||'':'').toLowerCase();
+    const docType=(cells[4]?cells[4].innerText||'':'').toLowerCase();
+    const docNum=(cells[5]?cells[5].innerText||'':'').toLowerCase();
+    const lot=(cells[6]?cells[6].innerText||'':'').toLowerCase();
+    const rowStatus=(cells[10]?cells[10].innerText||'':'');
+    const matchSearch=!s||(name.includes(s)||docType.includes(s)||docNum.includes(s)||lot.includes(s));
+    const matchStatus=!status||rowStatus===status;
+    row.style.display=(matchSearch&&matchStatus)?'':'none';
+  });
+}
 function exportMdrExcel(stageKey){
-  const rows=[['L','WBS','Наименование','Тип документа','Начало','Окончание','Валюта','Стоимость','Статус']];
+  const rows=[['L','WBS','Наименование','Тип документа','№ Документа','Лот','Начало','Окончание','Валюта','Стоимость','Статус']];
   function walk(pid,depth){
     mgch(stageKey,pid).forEach(n=>{
       if(n.type==='level'){
-        rows.push([depth+1,n.code||'',n.name||'','','','','','','']);
+        rows.push([depth+1,n.code||'',n.name||'','','','','','','','','']);
         walk(n.id,depth+1);
       }else{
-        rows.push(['W',n.code||'',n.name||'',n.docType||'',n.dateStart||'',n.dateEnd||'',n.currency||'USD',n.amount||0,n.status||'Не начато']);
+        rows.push(['W',n.code||'',n.name||'',n.docType||'',n.docNum||'',n.lot||'',n.dateStart||'',n.dateEnd||'',n.currency||'USD',n.amount||0,n.status||'Не начато']);
       }
     });
   }
