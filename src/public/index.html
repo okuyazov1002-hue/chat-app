@@ -15,7 +15,7 @@ body{font-family:sans-serif;background:#e8eef0;height:100vh;display:flex;flex-di
 .topbar-right{display:flex;align-items:center;gap:10px;font-size:12px}
 .logout{background:rgba(255,255,255,0.15);border:none;color:white;border-radius:5px;padding:4px 12px;font-size:12px;cursor:pointer}
 .main{display:flex;flex:1;overflow:hidden;padding:10px;gap:10px}
-.sidebar{width:50px;background:white;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.10);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px;flex-shrink:0;position:relative;z-index:10}
+.sidebar{width:50px;background:white;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.10);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px;flex-shrink:0;position:relative;z-index:10;overflow-y:auto;overflow-x:hidden}
 .nav-item{position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#6a8880;border-radius:10px;transition:background 0.15s,color 0.15s;border:none;background:transparent}
 .nav-item:hover{background:#e8f5f2;color:#0d8a7a}
 .nav-item.active{background:#d0f0e8;color:#0d8a7a}
@@ -162,12 +162,12 @@ table.rt tr:hover td{background:#f5fcfa}
     <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="icon">📊</span><div class="nav-label">Отчёт по проектам</div></div>
     <div class="nav-item" onclick="showPage('projects',this)"><span class="icon">📋</span><div class="nav-label">Информация по проектам</div></div>
     <div class="nav-divider"></div>
-    <div class="nav-item" onclick="showPage('stage-1',this)"><span class="icon">1️⃣</span><div class="nav-label">Базовое проектирование</div></div>
-    <div class="nav-item" onclick="showPage('stage-2',this)"><span class="icon">2️⃣</span><div class="nav-label">Рабочее проектирование</div></div>
-    <div class="nav-item" onclick="showPage('stage-3',this)"><span class="icon">3️⃣</span><div class="nav-label">Изготовление оборудования</div></div>
-    <div class="nav-item" onclick="showPage('stage-4',this)"><span class="icon">4️⃣</span><div class="nav-label">Логистика и доставка</div></div>
-    <div class="nav-item" onclick="showPage('stage-5',this)"><span class="icon">5️⃣</span><div class="nav-label">СМР</div></div>
-    <div class="nav-item" onclick="showPage('stage-6',this)"><span class="icon">6️⃣</span><div class="nav-label">ПНР</div></div>
+    <div class="nav-item" onclick="showPage('stage-1',this)"><span class="icon">📝</span><div class="nav-label">Базовое проектирование</div></div>
+    <div class="nav-item" onclick="showPage('stage-2',this)"><span class="icon">🖥️</span><div class="nav-label">Рабочее проектирование</div></div>
+    <div class="nav-item" onclick="showPage('stage-3',this)"><span class="icon">🏭</span><div class="nav-label">Изготовление оборудования</div></div>
+    <div class="nav-item" onclick="showPage('stage-4',this)"><span class="icon">🚚</span><div class="nav-label">Логистика и доставка</div></div>
+    <div class="nav-item" onclick="showPage('stage-5',this)"><span class="icon">🏗️</span><div class="nav-label">СМР</div></div>
+    <div class="nav-item" onclick="showPage('stage-6',this)"><span class="icon">🔧</span><div class="nav-label">ПНР</div></div>
     <div class="nav-divider"></div>
     <div class="nav-item" onclick="showPage('letters',this)"><span class="icon">✉️</span><div class="nav-label">Реестр писем</div></div>
     <div class="nav-item" onclick="showPage('docs',this)"><span class="icon">📐</span><div class="nav-label">Рабочая документация</div></div>
@@ -226,10 +226,20 @@ table.rt tr:hover td{background:#f5fcfa}
 
     <div class="page" id="page-stage-1">
       <div class="page-title">1️⃣ Базовое проектирование</div>
+      <div class="wbs-toolbar">
+        <button class="add-btn" onclick="addMdr('stage-1')">+ Добавить</button>
+        <label class="upload-btn" style="cursor:pointer">📥 Загрузить Excel<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importMdrExcel('stage-1',this.files[0])"></label>
+        <button class="upload-btn" onclick="exportMdrExcel('stage-1')">📤 Скачать Excel</button>
+      </div>
       <div class="wbs-area" id="stage-1-area"></div>
     </div>
     <div class="page" id="page-stage-2">
       <div class="page-title">2️⃣ Рабочее проектирование</div>
+      <div class="wbs-toolbar">
+        <button class="add-btn" onclick="addMdr('stage-2')">+ Добавить</button>
+        <label class="upload-btn" style="cursor:pointer">📥 Загрузить Excel<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importMdrExcel('stage-2',this.files[0])"></label>
+        <button class="upload-btn" onclick="exportMdrExcel('stage-2')">📤 Скачать Excel</button>
+      </div>
       <div class="wbs-area" id="stage-2-area"></div>
     </div>
     <div class="page" id="page-stage-3">
@@ -301,7 +311,7 @@ table.rt tr:hover td{background:#f5fcfa}
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket=io();
-let myName='',nodes=[],letters=[],docs=[],equipment=[];
+let myName='',nodes=[],letters=[],docs=[],equipment=[],mdr=[];
 let selectedId=null,letFilter='all',docFilter='all',eqFilter='all';
 let st={},cm=null;
 const STAGES=['Базовое проектирование','Рабочее проектирование','Изготовление оборудования','Логистика и доставка','Строительно-монтажные работы','Пусконаладочные работы'];
@@ -341,9 +351,9 @@ async function doLogin(){
     document.getElementById('ls').style.display='none';
     document.getElementById('uLabel').textContent=myName;
     window.currentUsername=d.username;
-    [nodes,letters,docs,equipment]=await Promise.all([api('wbs'),api('letters'),api('docs'),api('equipment')]);
+    [nodes,letters,docs,equipment,mdr]=await Promise.all([api('wbs'),api('letters'),api('docs'),api('equipment'),api('mdr')]);
     migrateStages();
-    renderWBS();renderLetters();renderDocs();renderEq();renderDash();renderStagePages();
+    renderWBS();renderLetters();renderDocs();renderEq();renderDash();renderStagePages();renderMdrPages();
   }else document.getElementById('er').style.display='block';
 }
 function doLogout(){myName='';document.getElementById('ls').style.display='flex';}
@@ -352,6 +362,7 @@ socket.on('wbs_updated',d=>{nodes=d;renderWBS();renderDash();renderStagePages();
 socket.on('letters_updated',d=>{letters=d;renderLetters();});
 socket.on('docs_updated',d=>{docs=d;renderDocs();});
 socket.on('equipment_updated',d=>{equipment=d;renderEq();});
+socket.on('mdr_updated',d=>{mdr=d;renderMdrPages();});
 
 /* ===== WBS HELPERS ===== */
 function gch(pid){return nodes.filter(n=>n.parentId===pid);}
@@ -363,8 +374,6 @@ function stageProgress(id){const works=gad(id).filter(d=>d.type==="work"&&d.stag
 function pcol(p){return p===100?"#1a9a5a":p>0?"#1a6b9a":"#d0e8e0";}
 function renderStageBars(id){const sp=stageProgress(id);return STAGES.filter(s=>sp[s].total>0).map(s=>{const pct=Math.round(sp[s].done/sp[s].total*100);return "<div style=\"display:flex;gap:4px;margin-top:3px;font-size:9px;color:#7aa89a\"><span style=\"width:90px\">"+s+"</span><div style=\"flex:1;height:4px;background:#e0f0ec;border-radius:2px\"><div style=\"height:100%;width:"+pct+"%;background:#0d8a7a;border-radius:2px\"></div></div><span style=\"width:28px;text-align:right\">"+pct+"%</span></div>";}).join("");}
 const STAGE_PAGE_MAP=[
-  {id:'stage-1',name:'Базовое проектирование'},
-  {id:'stage-2',name:'Рабочее проектирование'},
   {id:'stage-3',name:'Изготовление оборудования'},
   {id:'stage-4',name:'Логистика и доставка'},
   {id:'stage-5',name:'Строительно-монтажные работы'},
@@ -422,6 +431,76 @@ function renderStagePages(){
     });
     area.innerHTML=html;
   });
+}
+const MDR_STATUSES=['Не начато','IFR','IFA','IFD','IFC','AFC'];
+const MDR_PCT={'Не начато':0,'IFR':20,'IFA':40,'IFD':60,'IFC':80,'AFC':100};
+function addMdr(stageKey){
+  mdr.push({id:Date.now(),stageKey,project:'',discipline:'',docType:'',drawingName:'',number:'',status:'Не начато',date:new Date().toISOString().split('T')[0]});
+  save('mdr',mdr,300);renderMdrPages();
+}
+function updM(id,f,v){const m=mdr.find(x=>x.id===id);if(m){m[f]=v;save('mdr',mdr,300);renderMdrPages();}}
+function delM(id){if(!confirm('Удалить?'))return;mdr=mdr.filter(x=>x.id!==id);save('mdr',mdr,300);renderMdrPages();}
+function renderMdrPage(stageKey){
+  const area=document.getElementById(stageKey+'-area');
+  if(!area)return;
+  const rows=mdr.filter(m=>m.stageKey===stageKey);
+  if(!rows.length){area.innerHTML='<div class="empty-tbl">Нет документов. Нажми «+ Добавить»</div>';return;}
+  let html='<table class="wbs" style="width:100%"><thead><tr>'+
+    '<th style="width:120px">Проект</th><th style="width:110px">Дисциплина</th><th style="width:140px">Тип документа</th>'+
+    '<th>Чертёж</th><th style="width:120px">Номер</th><th style="width:100px">Дата</th><th style="width:100px">Статус</th>'+
+    '<th style="width:50px" class="tr">%</th><th style="width:120px">Прогресс</th><th style="width:28px"></th>'+
+    '</tr></thead><tbody>';
+  rows.forEach(m=>{
+    const pct=MDR_PCT[m.status]||0;
+    const pc=pcol(pct);
+    html+='<tr class="wk">'+
+      '<td><input class="ni" value="'+(m.project||'')+'" placeholder="Проект" onchange="updM('+m.id+',\'project\',this.value)"></td>'+
+      '<td><input class="ni" value="'+(m.discipline||'')+'" placeholder="Дисциплина" onchange="updM('+m.id+',\'discipline\',this.value)"></td>'+
+      '<td><input class="ni" value="'+(m.docType||'')+'" placeholder="Тип документа" onchange="updM('+m.id+',\'docType\',this.value)"></td>'+
+      '<td><input class="ni" value="'+(m.drawingName||'')+'" placeholder="Наименование чертежа" onchange="updM('+m.id+',\'drawingName\',this.value)"></td>'+
+      '<td><input class="ni" value="'+(m.number||'')+'" placeholder="Номер" onchange="updM('+m.id+',\'number\',this.value)"></td>'+
+      '<td><input type="date" value="'+(m.date||'')+'" onchange="updM('+m.id+',\'date\',this.value)"></td>'+
+      '<td><select class="cur" style="width:100%" onchange="updM('+m.id+',\'status\',this.value)">'+MDR_STATUSES.map(s=>'<option value="'+s+'"'+(m.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></td>'+
+      '<td class="pct-val">'+pct+'%</td>'+
+      '<td><div class="barw"><div class="barf" style="width:'+pct+'%;background:'+pc+'"></div></div></td>'+
+      '<td class="tc"><button class="mbtn" onclick="delM('+m.id+')">✕</button></td>'+
+    '</tr>';
+  });
+  html+='</tbody></table>';
+  area.innerHTML=html;
+}
+function renderMdrPages(){renderMdrPage('stage-1');renderMdrPage('stage-2');}
+function exportMdrExcel(stageKey){
+  const rows=[['Проект','Дисциплина','Тип документа','Чертёж','Номер','Дата','Статус']];
+  mdr.filter(m=>m.stageKey===stageKey).forEach(m=>{
+    rows.push([m.project||'',m.discipline||'',m.docType||'',m.drawingName||'',m.number||'',m.date||'',m.status||'Не начато']);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'MDR');
+  XLSX.writeFile(wb,'DSOMK_MDR_'+stageKey+'.xlsx');
+}
+function importMdrExcel(stageKey,file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+    const statusSet=new Set(MDR_STATUSES);
+    const newRows=[];
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i];
+      if(!r||!r[0])continue;
+      const status=statusSet.has(r[6])?r[6]:'Не начато';
+      newRows.push({id:Date.now()+i,stageKey,project:String(r[0]||''),discipline:String(r[1]||''),docType:String(r[2]||''),drawingName:String(r[3]||''),number:String(r[4]||''),date:excelDateToISO(r[5]),status});
+    }
+    if(!confirm('Добавить '+newRows.length+' строк из Excel?'))return;
+    mdr=mdr.concat(newRows);
+    save('mdr',mdr,300);renderMdrPages();
+    alert('✅ Импортировано: '+newRows.length+' строк');
+  };
+  reader.readAsArrayBuffer(file);
 }
 function gadate(id,f){const w=gad(id).filter(d=>d.type==="work"&&d[f]);if(!w.length)return"";const ds=w.map(x=>x[f]).sort();return f==="dateStart"?ds[0]:ds[ds.length-1];}
 
