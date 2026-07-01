@@ -1,14 +1,13 @@
 {
-  "name": "chat-app",
-  "version": "1.0.0",
+  "name": "dsomk-dashboard",
+  "version": "2.0.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "^5.2.1",
-    "mongodb": "^7.4.0",
-    "multer": "^2.2.0",
-    "socket.io": "^4.8.3"
+    "express": "^4.19.2",
+    "mongodb": "^6.5.0",
+    "socket.io": "^4.7.5"
   }
 }
