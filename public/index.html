@@ -686,8 +686,7 @@ function importMdrExcel(stageKey,file){
     const wb=XLSX.read(e.target.result,{type:'array'});
     const ws=wb.Sheets[wb.SheetNames[0]];
     const rows=XLSX.utils.sheet_to_json(ws,{header:1});
-    const statusSet=new Set(MDR_STATUSES);
-    const newRows=[];
+    const statusSet=new Set([...(MDR_STATUSES_1||[]),...(MDR_STATUSES_2||[])]);    const newRows=[];
     const stack=[];
     for(let i=1;i<rows.length;i++){
       const r=rows[i];
