@@ -162,6 +162,13 @@ table.rt tr:hover td{background:#f5fcfa}
     <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="icon">📊</span><div class="nav-label">Отчёт по проектам</div></div>
     <div class="nav-item" onclick="showPage('projects',this)"><span class="icon">📋</span><div class="nav-label">Информация по проектам</div></div>
     <div class="nav-divider"></div>
+    <div class="nav-item" onclick="showPage('stage-1',this)"><span class="icon">1️⃣</span><div class="nav-label">Базовое проектирование</div></div>
+    <div class="nav-item" onclick="showPage('stage-2',this)"><span class="icon">2️⃣</span><div class="nav-label">Рабочее проектирование</div></div>
+    <div class="nav-item" onclick="showPage('stage-3',this)"><span class="icon">3️⃣</span><div class="nav-label">Изготовление оборудования</div></div>
+    <div class="nav-item" onclick="showPage('stage-4',this)"><span class="icon">4️⃣</span><div class="nav-label">Логистика и доставка</div></div>
+    <div class="nav-item" onclick="showPage('stage-5',this)"><span class="icon">5️⃣</span><div class="nav-label">СМР</div></div>
+    <div class="nav-item" onclick="showPage('stage-6',this)"><span class="icon">6️⃣</span><div class="nav-label">ПНР</div></div>
+    <div class="nav-divider"></div>
     <div class="nav-item" onclick="showPage('letters',this)"><span class="icon">✉️</span><div class="nav-label">Реестр писем</div></div>
     <div class="nav-item" onclick="showPage('docs',this)"><span class="icon">📐</span><div class="nav-label">Рабочая документация</div></div>
     <div class="nav-item" onclick="showPage('equipment',this)"><span class="icon">⚙️</span><div class="nav-label">Реестр оборудования</div></div>
@@ -215,6 +222,31 @@ table.rt tr:hover td{background:#f5fcfa}
           <tbody id="wbsBody"></tbody>
         </table>
       </div>
+    </div>
+
+    <div class="page" id="page-stage-1">
+      <div class="page-title">1️⃣ Базовое проектирование</div>
+      <div class="wbs-area" id="stage-1-area"></div>
+    </div>
+    <div class="page" id="page-stage-2">
+      <div class="page-title">2️⃣ Рабочее проектирование</div>
+      <div class="wbs-area" id="stage-2-area"></div>
+    </div>
+    <div class="page" id="page-stage-3">
+      <div class="page-title">3️⃣ Изготовление оборудования</div>
+      <div class="wbs-area" id="stage-3-area"></div>
+    </div>
+    <div class="page" id="page-stage-4">
+      <div class="page-title">4️⃣ Логистика и доставка</div>
+      <div class="wbs-area" id="stage-4-area"></div>
+    </div>
+    <div class="page" id="page-stage-5">
+      <div class="page-title">5️⃣ Строительно-монтажные работы</div>
+      <div class="wbs-area" id="stage-5-area"></div>
+    </div>
+    <div class="page" id="page-stage-6">
+      <div class="page-title">6️⃣ Пусконаладочные работы</div>
+      <div class="wbs-area" id="stage-6-area"></div>
     </div>
 
     <!-- LETTERS -->
@@ -272,7 +304,18 @@ const socket=io();
 let myName='',nodes=[],letters=[],docs=[],equipment=[];
 let selectedId=null,letFilter='all',docFilter='all',eqFilter='all';
 let st={},cm=null;
-const STAGES=['Подготовка','Базовый инжиниринг','Детальный инжиниринг','Закупки','Логистика','Строительство','Пусконаладка'];
+const STAGES=['Базовое проектирование','Рабочее проектирование','Изготовление оборудования','Логистика и доставка','Строительно-монтажные работы','Пусконаладочные работы'];
+const STAGE_MIGRATION={'Подготовка':'Базовое проектирование','Базовый инжиниринг':'Базовое проектирование','Детальный инжиниринг':'Рабочее проектирование','Закупки':'Изготовление оборудования','Логистика':'Логистика и доставка','Строительство':'Строительно-монтажные работы','Пусконаладка':'Пусконаладочные работы'};
+function migrateStages(){
+  let changed=false;
+  nodes.forEach(n=>{
+    if(n.type==='work'&&n.stage&&STAGE_MIGRATION[n.stage]){
+      n.stage=STAGE_MIGRATION[n.stage];
+      changed=true;
+    }
+  });
+  if(changed)save('wbs',nodes,300);
+}
 
 function showSv(){const e=document.getElementById('sv');e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1500);}
 async function api(key,data){
@@ -299,12 +342,13 @@ async function doLogin(){
     document.getElementById('uLabel').textContent=myName;
     window.currentUsername=d.username;
     [nodes,letters,docs,equipment]=await Promise.all([api('wbs'),api('letters'),api('docs'),api('equipment')]);
-    renderWBS();renderLetters();renderDocs();renderEq();renderDash();
+    migrateStages();
+    renderWBS();renderLetters();renderDocs();renderEq();renderDash();renderStagePages();
   }else document.getElementById('er').style.display='block';
 }
 function doLogout(){myName='';document.getElementById('ls').style.display='flex';}
 document.getElementById('up').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-socket.on('wbs_updated',d=>{nodes=d;renderWBS();renderDash();});
+socket.on('wbs_updated',d=>{nodes=d;renderWBS();renderDash();renderStagePages();});
 socket.on('letters_updated',d=>{letters=d;renderLetters();});
 socket.on('docs_updated',d=>{docs=d;renderDocs();});
 socket.on('equipment_updated',d=>{equipment=d;renderEq();});
@@ -318,6 +362,67 @@ function fmt(n){return n?Number(n).toLocaleString("ru-RU"):"";}
 function stageProgress(id){const works=gad(id).filter(d=>d.type==="work"&&d.stage);const result={};STAGES.forEach(s=>result[s]={total:0,done:0});works.forEach(w=>{if(result[w.stage]){result[w.stage].total++;if(w.status==="2")result[w.stage].done++;}});return result;}
 function pcol(p){return p===100?"#1a9a5a":p>0?"#1a6b9a":"#d0e8e0";}
 function renderStageBars(id){const sp=stageProgress(id);return STAGES.filter(s=>sp[s].total>0).map(s=>{const pct=Math.round(sp[s].done/sp[s].total*100);return "<div style=\"display:flex;gap:4px;margin-top:3px;font-size:9px;color:#7aa89a\"><span style=\"width:90px\">"+s+"</span><div style=\"flex:1;height:4px;background:#e0f0ec;border-radius:2px\"><div style=\"height:100%;width:"+pct+"%;background:#0d8a7a;border-radius:2px\"></div></div><span style=\"width:28px;text-align:right\">"+pct+"%</span></div>";}).join("");}
+const STAGE_PAGE_MAP=[
+  {id:'stage-1',name:'Базовое проектирование'},
+  {id:'stage-2',name:'Рабочее проектирование'},
+  {id:'stage-3',name:'Изготовление оборудования'},
+  {id:'stage-4',name:'Логистика и доставка'},
+  {id:'stage-5',name:'Строительно-монтажные работы'},
+  {id:'stage-6',name:'Пусконаладочные работы'}
+];
+function projectRootOf(nodeId){
+  let c=nodes.find(n=>n.id===nodeId);
+  while(c&&c.parentId){c=nodes.find(n=>n.id===c.parentId);}
+  return c;
+}
+function renderStageWorkRow(n){
+  const curs=['USD','EUR','UZS','RUB'];
+  const cur=n.currency||'USD';
+  const stc=n.status==='2'?'s2':n.status==='1'?'s1':'s0';
+  const pct=n.amount&&parseFloat(n.amount)?Math.round((parseFloat(n.osvoen)||0)/parseFloat(n.amount)*10000)/100:0;
+  const pc=pcol(pct);
+  return '<tr class="wk">'+
+    '<td><span class="cpill cpill-w" contenteditable="true" spellcheck="false" onblur="updNode('+n.id+',\'code\',this.textContent.trim())">'+(n.code||'—')+'</span></td>'+
+    '<td><input class="ni" value="'+n.name+'" placeholder="Название работы..." onchange="updNode('+n.id+',\'name\',this.value)"></td>'+
+    '<td><input type="date" value="'+n.dateStart+'" onchange="updNode('+n.id+',\'dateStart\',this.value)"></td>'+
+    '<td><input type="date" value="'+n.dateEnd+'" '+(!n.dateStart?'disabled':'')+' min="'+(n.dateStart||'')+'" onchange="updNode('+n.id+',\'dateEnd\',this.value)"></td>'+
+    '<td class="tc"><select class="cur" onchange="updNode('+n.id+',\'currency\',this.value)">'+curs.map(c=>'<option value="'+c+'"'+(cur===c?' selected':'')+'>'+c+'</option>').join('')+'</select></td>'+
+    '<td><input class="amt" type="number" value="'+n.amount+'" placeholder="0" onchange="updNode('+n.id+',\'amount\',this.value)"></td>'+
+    '<td><input class="amt" type="number" value="'+n.osvoen+'" placeholder="0" onchange="updNode('+n.id+',\'osvoen\',this.value)"></td>'+
+    '<td><select class="stsel '+stc+'" onchange="updNode('+n.id+',\'status\',this.value)">'+
+      '<option value="0" '+(n.status==='0'?'selected':'')+'>Не начато</option>'+
+      '<option value="1" '+(n.status==='1'?'selected':'')+'>Выполняется</option>'+
+      '<option value="2" '+(n.status==='2'?'selected':'')+'>Завершено</option>'+
+    '</select></td>'+
+    '<td class="pct-val">'+(pct>0?pct.toFixed(1)+'%':'0%')+'</td>'+
+    '<td><div class="barw"><div class="barf" style="width:'+Math.min(pct,100)+'%;background:'+pc+'"></div></div></td>'+
+  '</tr>';
+}
+function renderStagePages(){
+  STAGE_PAGE_MAP.forEach(sp=>{
+    const area=document.getElementById(sp.id+'-area');
+    if(!area)return;
+    const works=nodes.filter(n=>n.type==='work'&&n.stage===sp.name);
+    if(!works.length){area.innerHTML='<div class="empty-tbl">Нет работ на этом этапе</div>';return;}
+    const byProject={};
+    works.forEach(w=>{
+      const proj=projectRootOf(w.id);
+      const key=proj?proj.id:'none';
+      if(!byProject[key])byProject[key]={name:proj?(proj.name||'Без названия'):'Без проекта',works:[]};
+      byProject[key].works.push(w);
+    });
+    let html='';
+    Object.values(byProject).forEach(group=>{
+      html+='<div style="margin:14px 12px 6px;font-size:12px;font-weight:600;color:#054e44">'+group.name+'</div>';
+      html+='<table class="wbs" style="width:calc(100% - 24px);margin:0 12px 12px"><thead><tr>'+
+        '<th style="width:110px">WBS</th><th>Наименование</th><th style="width:88px">Начало</th><th style="width:88px">Окончание</th>'+
+        '<th style="width:42px" class="tc">Вал.</th><th style="width:100px" class="tr">Стоимость</th><th style="width:100px" class="tr">Освоено</th>'+
+        '<th style="width:90px">Статус</th><th style="width:50px" class="tr">%</th><th style="width:120px">Прогресс</th>'+
+        '</tr></thead><tbody>'+group.works.map(renderStageWorkRow).join('')+'</tbody></table>';
+    });
+    area.innerHTML=html;
+  });
+}
 function gadate(id,f){const w=gad(id).filter(d=>d.type==="work"&&d[f]);if(!w.length)return"";const ds=w.map(x=>x[f]).sort();return f==="dateStart"?ds[0]:ds[ds.length-1];}
 
 function csum(id){
@@ -420,7 +525,7 @@ function updNode(id,field,val){
   }
   if(field==='dateStart'&&n.dateEnd&&n.dateEnd<val)n.dateEnd='';
   n[field]=val;
-  save('wbs',nodes);renderWBS();
+  save('wbs',nodes);renderWBS();renderStagePages();
 }
 
 function selRow(id){
@@ -530,7 +635,7 @@ function renderWBS(){
 }
 
 function stageGroupData(){
-  const groupMap={'Подготовка':'design','Базовый инжиниринг':'design','Детальный инжиниринг':'design','Закупки':'supply','Логистика':'supply','Строительство':'construction','Пусконаладка':'construction'};
+  const groupMap={'Базовое проектирование':'design','Рабочее проектирование':'design','Изготовление оборудования':'supply','Логистика и доставка':'supply','Строительно-монтажные работы':'construction','Пусконаладочные работы':'construction'};
   const groups={design:[],supply:[],construction:[]};
   nodes.filter(n=>n.type==='work'&&n.stage&&groupMap[n.stage]).forEach(w=>{groups[groupMap[w.stage]].push(w);});
   const calc=(works)=>{
@@ -569,7 +674,7 @@ function equipmentInfoForProject(projectId){
   return {done,total:list.length};
 }
 function renderProjectStageCards(projectId){
-  const groupMap={'Подготовка':'design','Базовый инжиниринг':'design','Детальный инжиниринг':'design','Закупки':'supply','Логистика':'supply','Строительство':'construction','Пусконаладка':'construction'};
+  const groupMap={'Базовое проектирование':'design','Рабочее проектирование':'design','Изготовление оборудования':'supply','Логистика и доставка':'supply','Строительно-монтажные работы':'construction','Пусконаладочные работы':'construction'};
   const works=gad(projectId).filter(n=>n.type==='work'&&n.stage&&groupMap[n.stage]);
   const groups={design:[],supply:[],construction:[]};
   works.forEach(w=>groups[groupMap[w.stage]].push(w));
@@ -694,12 +799,12 @@ function renderProjectChartGanttHTML(projectId){
   const canvasId='chart-'+projectId;
   window.__projChartData[projectId]={labels:months.map(mo=>monthLabels[mo.m-1]),planArr,factArr,cumPlan,cumFact};
   const ganttStages=[
-    {raw:'Базовый инжиниринг',label:'Баз. проект.'},
-    {raw:'Детальный инжиниринг',label:'Дет. проект.'},
-    {raw:'Закупки',label:'Поставка'},
-    {raw:'Логистика',label:'Логистика'},
-    {raw:'Строительство',label:'Строит. и монтаж'},
-    {raw:'Пусконаладка',label:'ПНР'}
+    {raw:'Базовое проектирование',label:'Баз. проект.'},
+    {raw:'Рабочее проектирование',label:'Раб. проект.'},
+    {raw:'Изготовление оборудования',label:'Изгот. обор.'},
+    {raw:'Логистика и доставка',label:'Логистика'},
+    {raw:'Строительно-монтажные работы',label:'СМР'},
+    {raw:'Пусконаладочные работы',label:'ПНР'}
   ];
   let yearSpans=[];
   let curYear=null,curStart=0;
