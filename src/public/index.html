@@ -590,6 +590,33 @@ function renderMdrPage(stageKey){
   area.innerHTML=html;
   makeResizable(document.getElementById('mdrTable_'+stageKey));
 }
+function makeResizable(table){
+  if(!table)return;
+  table.style.tableLayout='fixed';
+  const ths=table.querySelectorAll('thead th');
+  ths.forEach(th=>{
+    th.style.position='relative';
+    if(th.querySelector('.col-resize-handle'))return;
+    const handle=document.createElement('span');
+    handle.className='col-resize-handle';
+    th.appendChild(handle);
+    handle.addEventListener('mousedown',e=>{
+      e.preventDefault();e.stopPropagation();
+      const startX=e.pageX;
+      const startWidth=th.offsetWidth;
+      function onMove(e2){
+        const newWidth=Math.max(30,startWidth+(e2.pageX-startX));
+        th.style.width=newWidth+'px';
+      }
+      function onUp(){
+        document.removeEventListener('mousemove',onMove);
+        document.removeEventListener('mouseup',onUp);
+      }
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
+    });
+  });
+}
 function renderMdrPages(){renderMdrPage('stage-1');renderMdrPage('stage-2');}
 function exportMdrExcel(stageKey){
   const rows=[['L','WBS','Наименование','Тип документа','Начало','Окончание','Валюта','Стоимость','Статус']];

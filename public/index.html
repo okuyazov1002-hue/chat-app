@@ -5,15 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>DSOMK</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:sans-serif;background:#e8eef0;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+@media print{.topbar,.sidebar,.logout,#stageTable+button,button{display:none!important}.main{padding:0!important}.content{gap:6px!important}.dash-card,.section,.prow{box-shadow:none!important;border:1px solid #ccc!important}body{background:white!important}.page{display:none!important}.page.active{display:flex!important}}
 .topbar{background:#0d8a7a;color:white;padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:44px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
 .topbar h1{font-size:14px;font-weight:600}
 .topbar-right{display:flex;align-items:center;gap:10px;font-size:12px}
 .logout{background:rgba(255,255,255,0.15);border:none;color:white;border-radius:5px;padding:4px 12px;font-size:12px;cursor:pointer}
 .main{display:flex;flex:1;overflow:hidden;padding:10px;gap:10px}
-.sidebar{width:50px;background:white;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.10);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px;flex-shrink:0;position:relative;z-index:10}
+.sidebar{width:50px;background:white;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.10);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px;flex-shrink:0;position:relative;z-index:10;overflow-y:auto;overflow-x:hidden}
 .nav-item{position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#6a8880;border-radius:10px;transition:background 0.15s,color 0.15s;border:none;background:transparent}
 .nav-item:hover{background:#e8f5f2;color:#0d8a7a}
 .nav-item.active{background:#d0f0e8;color:#0d8a7a}
@@ -87,7 +89,7 @@ td input[type=date]:disabled{color:#ccc;cursor:not-allowed}
 .dash-lbl{font-size:11px;color:#608878;margin-top:2px}
 .prog-section{background:#f8fdfb;border-radius:10px;padding:12px 14px;border:1px solid #e0f0ec}
 .prog-section h3{font-size:12px;color:#054e44;margin-bottom:10px;font-weight:600}
-.prow{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.prow{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:10px 12px;background:white;border-radius:8px;border:1px solid #e0f0ec;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
 .prow-name{width:180px;color:#336858;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pw{flex:1;height:7px;background:#e0f0ec;border-radius:4px;overflow:hidden}
 .pf{height:100%;border-radius:4px}
@@ -125,6 +127,8 @@ table.rt tr:hover td{background:#f5fcfa}
 .saved{position:fixed;bottom:14px;right:14px;background:#0d8a7a;color:white;padding:5px 12px;border-radius:7px;font-size:11px;opacity:0;transition:opacity 0.3s;z-index:9998;pointer-events:none}
 .saved.show{opacity:1}
 .empty-tbl{text-align:center;padding:30px;color:#90b8b0;font-size:12px}
+.col-resize-handle{position:absolute;right:0;top:0;bottom:0;width:6px;cursor:col-resize;user-select:none;z-index:5}
+.col-resize-handle:hover{background:rgba(255,255,255,0.3)}
 </style>
 </head>
 <body>
@@ -160,6 +164,13 @@ table.rt tr:hover td{background:#f5fcfa}
     <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="icon">📊</span><div class="nav-label">Отчёт по проектам</div></div>
     <div class="nav-item" onclick="showPage('projects',this)"><span class="icon">📋</span><div class="nav-label">Информация по проектам</div></div>
     <div class="nav-divider"></div>
+    <div class="nav-item" onclick="showPage('stage-1',this)"><span class="icon">📝</span><div class="nav-label">Базовое проектирование</div></div>
+    <div class="nav-item" onclick="showPage('stage-2',this)"><span class="icon">🖥️</span><div class="nav-label">Рабочее проектирование</div></div>
+    <div class="nav-item" onclick="showPage('stage-3',this)"><span class="icon">🏭</span><div class="nav-label">Изготовление оборудования</div></div>
+    <div class="nav-item" onclick="showPage('stage-4',this)"><span class="icon">🚚</span><div class="nav-label">Логистика и доставка</div></div>
+    <div class="nav-item" onclick="showPage('stage-5',this)"><span class="icon">🏗️</span><div class="nav-label">СМР</div></div>
+    <div class="nav-item" onclick="showPage('stage-6',this)"><span class="icon">🔧</span><div class="nav-label">ПНР</div></div>
+    <div class="nav-divider"></div>
     <div class="nav-item" onclick="showPage('letters',this)"><span class="icon">✉️</span><div class="nav-label">Реестр писем</div></div>
     <div class="nav-item" onclick="showPage('docs',this)"><span class="icon">📐</span><div class="nav-label">Рабочая документация</div></div>
     <div class="nav-item" onclick="showPage('equipment',this)"><span class="icon">⚙️</span><div class="nav-label">Реестр оборудования</div></div>
@@ -170,13 +181,13 @@ table.rt tr:hover td{background:#f5fcfa}
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
-      <div class="page-title">📊 Отчёт по проектам</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-right:14px"><div class="page-title">📊 Отчёт по проектам</div><div style="display:flex;align-items:center;gap:10px"><div style="display:flex;align-items:center;gap:6px;font-size:9px;color:#7aa89a"><span>курсы:</span><span>EUR<input id="rateEUR" value="1.08" style="border:none;background:#f0f8f5;border-radius:3px;padding:1px 4px;font-size:9px;width:46px;color:#0a6050;text-align:right" onchange="renderDash()"></span><span>UZS<input id="rateUZS" value="0.000081" style="border:none;background:#f0f8f5;border-radius:3px;padding:1px 4px;font-size:9px;width:60px;color:#0a6050;text-align:right" onchange="renderDash()"></span><span>RUB<input id="rateRUB" value="0.011" style="border:none;background:#f0f8f5;border-radius:3px;padding:1px 4px;font-size:9px;width:46px;color:#0a6050;text-align:right" onchange="renderDash()"></span></div><button onclick="window.print()" style="background:#0d8a7a;color:white;border:none;border-radius:5px;padding:5px 12px;font-size:11px;cursor:pointer;white-space:nowrap">🖨 Печать PDF</button></div></div>
       <div class="dash-scroll">
         <div class="dash-grid">
-          <div class="dash-card"><div class="dash-num" id="d-total">0</div><div class="dash-lbl">Активных проектов</div></div>
-          <div class="dash-card" style="border-color:#1a6b9a"><div class="dash-num" style="color:#1a3a6a" id="d-avg">0%</div><div class="dash-lbl">Средний прогресс</div></div>
-          <div class="dash-card" style="border-color:#c07820"><div class="dash-num" style="color:#7a4810" id="d-doing">0</div><div class="dash-lbl">Выполняется</div></div>
-          <div class="dash-card" style="border-color:#1a9a5a"><div class="dash-num" style="color:#0a5a30" id="d-done">0</div><div class="dash-lbl">Завершено</div></div>
+          <div class="dash-card" style="border-color:#054e44"><div class="dash-lbl">Итого</div><div class="dash-num" id="sc-total-cost" style="color:#054e44;font-size:19px">$0</div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><div class="barw" style="flex:1"><div class="barf" id="sc-total-bar" style="width:0%;background:#054e44"></div></div><span id="sc-total-pct" style="font-size:11px;font-weight:600;color:#054e44">0%</span></div></div>
+          <div class="dash-card" style="border-color:#1a6b9a"><div class="dash-lbl">Проектирование</div><div class="dash-num" id="sc-design-cost" style="color:#1a3a6a;font-size:19px">$0</div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><div class="barw" style="flex:1"><div class="barf" id="sc-design-bar" style="width:0%;background:#1a9a5a"></div></div><span id="sc-design-pct" style="font-size:11px;font-weight:600;color:#1a3a6a">0%</span></div></div>
+          <div class="dash-card" style="border-color:#c07820"><div class="dash-lbl">Поставка</div><div class="dash-num" id="sc-supply-cost" style="color:#7a4810;font-size:19px">$0</div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><div class="barw" style="flex:1"><div class="barf" id="sc-supply-bar" style="width:0%;background:#c07820"></div></div><span id="sc-supply-pct" style="font-size:11px;font-weight:600;color:#7a4810">0%</span></div></div>
+          <div class="dash-card" style="border-color:#c04040"><div class="dash-lbl">Строительство</div><div class="dash-num" id="sc-constr-cost" style="color:#7a2020;font-size:19px">$0</div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><div class="barw" style="flex:1"><div class="barf" id="sc-constr-bar" style="width:0%;background:#c04040"></div></div><span id="sc-constr-pct" style="font-size:11px;font-weight:600;color:#7a2020">0%</span></div></div>
         </div>
         <div class="prog-section">
           <h3>Прогресс по проектам</h3>
@@ -213,6 +224,43 @@ table.rt tr:hover td{background:#f5fcfa}
           <tbody id="wbsBody"></tbody>
         </table>
       </div>
+    </div>
+
+    <div class="page" id="page-stage-1">
+      <div class="page-title">1️⃣ Базовое проектирование</div>
+      <div class="wbs-toolbar">
+        <button class="add-btn" onclick="addMdrLevel('stage-1')">+ Уровень</button>
+        <button class="upload-btn" onclick="showMdrFileMenu(event,'stage-1')">📁</button>
+        <input type="file" id="mdrFileInput-stage-1" accept=".xlsx,.xls" style="display:none" onchange="importMdrExcel('stage-1',this.files[0])">
+        <span style="font-size:10px;color:#90b0a8;font-style:italic">Выбери строку → нажми ⋯ или ПКМ</span>
+      </div>
+      <div class="wbs-area" id="stage-1-area"></div>
+    </div>
+    <div class="page" id="page-stage-2">
+      <div class="page-title">2️⃣ Рабочее проектирование</div>
+      <div class="wbs-toolbar">
+        <button class="add-btn" onclick="addMdrLevel('stage-2')">+ Уровень</button>
+        <button class="upload-btn" onclick="showMdrFileMenu(event,'stage-2')">📁</button>
+        <input type="file" id="mdrFileInput-stage-2" accept=".xlsx,.xls" style="display:none" onchange="importMdrExcel('stage-2',this.files[0])">
+        <span style="font-size:10px;color:#90b0a8;font-style:italic">Выбери строку → нажми ⋯ или ПКМ</span>
+      </div>
+      <div class="wbs-area" id="stage-2-area"></div>
+    </div>
+    <div class="page" id="page-stage-3">
+      <div class="page-title">3️⃣ Изготовление оборудования</div>
+      <div class="wbs-area" id="stage-3-area"></div>
+    </div>
+    <div class="page" id="page-stage-4">
+      <div class="page-title">4️⃣ Логистика и доставка</div>
+      <div class="wbs-area" id="stage-4-area"></div>
+    </div>
+    <div class="page" id="page-stage-5">
+      <div class="page-title">5️⃣ Строительно-монтажные работы</div>
+      <div class="wbs-area" id="stage-5-area"></div>
+    </div>
+    <div class="page" id="page-stage-6">
+      <div class="page-title">6️⃣ Пусконаладочные работы</div>
+      <div class="wbs-area" id="stage-6-area"></div>
     </div>
 
     <!-- LETTERS -->
@@ -267,10 +315,21 @@ table.rt tr:hover td{background:#f5fcfa}
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket=io();
-let myName='',nodes=[],letters=[],docs=[],equipment=[];
+let myName='',nodes=[],letters=[],docs=[],equipment=[],mdr=[];
 let selectedId=null,letFilter='all',docFilter='all',eqFilter='all';
 let st={},cm=null;
-const STAGES=['Подготовка','Базовый инжиниринг','Детальный инжиниринг','Закупки','Логистика','Строительство','Пусконаладка'];
+const STAGES=['Базовое проектирование','Рабочее проектирование','Изготовление оборудования','Логистика и доставка','Строительно-монтажные работы','Пусконаладочные работы'];
+const STAGE_MIGRATION={'Подготовка':'Базовое проектирование','Базовый инжиниринг':'Базовое проектирование','Детальный инжиниринг':'Рабочее проектирование','Закупки':'Изготовление оборудования','Логистика':'Логистика и доставка','Строительство':'Строительно-монтажные работы','Пусконаладка':'Пусконаладочные работы'};
+function migrateStages(){
+  let changed=false;
+  nodes.forEach(n=>{
+    if(n.type==='work'&&n.stage&&STAGE_MIGRATION[n.stage]){
+      n.stage=STAGE_MIGRATION[n.stage];
+      changed=true;
+    }
+  });
+  if(changed)save('wbs',nodes,300);
+}
 
 function showSv(){const e=document.getElementById('sv');e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1500);}
 async function api(key,data){
@@ -296,21 +355,331 @@ async function doLogin(){
     document.getElementById('ls').style.display='none';
     document.getElementById('uLabel').textContent=myName;
     window.currentUsername=d.username;
-    [nodes,letters,docs,equipment]=await Promise.all([api('wbs'),api('letters'),api('docs'),api('equipment')]);
-    renderWBS();renderLetters();renderDocs();renderEq();renderDash();
+    [nodes,letters,docs,equipment,mdr]=await Promise.all([api('wbs'),api('letters'),api('docs'),api('equipment'),api('mdr')]);
+    migrateStages();
+    renderWBS();renderLetters();renderDocs();renderEq();renderDash();renderStagePages();renderMdrPages();
   }else document.getElementById('er').style.display='block';
 }
 function doLogout(){myName='';document.getElementById('ls').style.display='flex';}
 document.getElementById('up').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-socket.on('wbs_updated',d=>{nodes=d;renderWBS();renderDash();});
+socket.on('wbs_updated',d=>{nodes=d;renderWBS();renderDash();renderStagePages();});
 socket.on('letters_updated',d=>{letters=d;renderLetters();});
 socket.on('docs_updated',d=>{docs=d;renderDocs();});
 socket.on('equipment_updated',d=>{equipment=d;renderEq();});
+socket.on('mdr_updated',d=>{mdr=d;renderMdrPages();});
 
 /* ===== WBS HELPERS ===== */
 function gch(pid){return nodes.filter(n=>n.parentId===pid);}
 function gad(id){let r=[];gch(id).forEach(c=>{r.push(c);r=r.concat(gad(c.id));});return r;}
 function gdp(id){let d=0,c=nodes.find(n=>n.id===id);while(c&&c.parentId){c=nodes.find(n=>n.id===c.parentId);d++;}return d;}
+function ivis(n){if(!n.parentId)return true;const p=nodes.find(x=>x.id===n.parentId);if(!p||p.collapsed)return false;return ivis(p);}
+function fmt(n){return n?Number(n).toLocaleString("ru-RU"):"";}
+function stageProgress(id){const works=gad(id).filter(d=>d.type==="work"&&d.stage);const result={};STAGES.forEach(s=>result[s]={total:0,done:0});works.forEach(w=>{if(result[w.stage]){result[w.stage].total++;if(w.status==="2")result[w.stage].done++;}});return result;}
+function pcol(p){return p===100?"#1a9a5a":p>0?"#1a6b9a":"#d0e8e0";}
+function renderStageBars(id){const sp=stageProgress(id);return STAGES.filter(s=>sp[s].total>0).map(s=>{const pct=Math.round(sp[s].done/sp[s].total*100);return "<div style=\"display:flex;gap:4px;margin-top:3px;font-size:9px;color:#7aa89a\"><span style=\"width:90px\">"+s+"</span><div style=\"flex:1;height:4px;background:#e0f0ec;border-radius:2px\"><div style=\"height:100%;width:"+pct+"%;background:#0d8a7a;border-radius:2px\"></div></div><span style=\"width:28px;text-align:right\">"+pct+"%</span></div>";}).join("");}
+const STAGE_PAGE_MAP=[
+  {id:'stage-3',name:'Изготовление оборудования'},
+  {id:'stage-4',name:'Логистика и доставка'},
+  {id:'stage-5',name:'Строительно-монтажные работы'},
+  {id:'stage-6',name:'Пусконаладочные работы'}
+];
+function projectRootOf(nodeId){
+  let c=nodes.find(n=>n.id===nodeId);
+  while(c&&c.parentId){c=nodes.find(n=>n.id===c.parentId);}
+  return c;
+}
+function renderStageWorkRow(n){
+  const curs=['USD','EUR','UZS','RUB'];
+  const cur=n.currency||'USD';
+  const stc=n.status==='2'?'s2':n.status==='1'?'s1':'s0';
+  const pct=n.amount&&parseFloat(n.amount)?Math.round((parseFloat(n.osvoen)||0)/parseFloat(n.amount)*10000)/100:0;
+  const pc=pcol(pct);
+  return '<tr class="wk">'+
+    '<td><span class="cpill cpill-w" contenteditable="true" spellcheck="false" onblur="updNode('+n.id+',\'code\',this.textContent.trim())">'+(n.code||'—')+'</span></td>'+
+    '<td><input class="ni" value="'+n.name+'" placeholder="Название работы..." onchange="updNode('+n.id+',\'name\',this.value)"></td>'+
+    '<td><input type="date" value="'+n.dateStart+'" onchange="updNode('+n.id+',\'dateStart\',this.value)"></td>'+
+    '<td><input type="date" value="'+n.dateEnd+'" '+(!n.dateStart?'disabled':'')+' min="'+(n.dateStart||'')+'" onchange="updNode('+n.id+',\'dateEnd\',this.value)"></td>'+
+    '<td class="tc"><select class="cur" onchange="updNode('+n.id+',\'currency\',this.value)">'+curs.map(c=>'<option value="'+c+'"'+(cur===c?' selected':'')+'>'+c+'</option>').join('')+'</select></td>'+
+    '<td><input class="amt" type="number" value="'+n.amount+'" placeholder="0" onchange="updNode('+n.id+',\'amount\',this.value)"></td>'+
+    '<td><input class="amt" type="number" value="'+n.osvoen+'" placeholder="0" onchange="updNode('+n.id+',\'osvoen\',this.value)"></td>'+
+    '<td><select class="stsel '+stc+'" onchange="updNode('+n.id+',\'status\',this.value)">'+
+      '<option value="0" '+(n.status==='0'?'selected':'')+'>Не начато</option>'+
+      '<option value="1" '+(n.status==='1'?'selected':'')+'>Выполняется</option>'+
+      '<option value="2" '+(n.status==='2'?'selected':'')+'>Завершено</option>'+
+    '</select></td>'+
+    '<td class="pct-val">'+(pct>0?pct.toFixed(1)+'%':'0%')+'</td>'+
+    '<td><div class="barw"><div class="barf" style="width:'+Math.min(pct,100)+'%;background:'+pc+'"></div></div></td>'+
+  '</tr>';
+}
+function renderStagePages(){
+  STAGE_PAGE_MAP.forEach(sp=>{
+    const area=document.getElementById(sp.id+'-area');
+    if(!area)return;
+    const works=nodes.filter(n=>n.type==='work'&&n.stage===sp.name);
+    if(!works.length){area.innerHTML='<div class="empty-tbl">Нет работ на этом этапе</div>';return;}
+    const byProject={};
+    works.forEach(w=>{
+      const proj=projectRootOf(w.id);
+      const key=proj?proj.id:'none';
+      if(!byProject[key])byProject[key]={name:proj?(proj.name||'Без названия'):'Без проекта',works:[]};
+      byProject[key].works.push(w);
+    });
+    let html='';
+    Object.values(byProject).forEach(group=>{
+      html+='<div style="margin:14px 12px 6px;font-size:12px;font-weight:600;color:#054e44">'+group.name+'</div>';
+      html+='<table class="wbs" style="width:calc(100% - 24px);margin:0 12px 12px"><thead><tr>'+
+        '<th style="width:110px">WBS</th><th>Наименование</th><th style="width:88px">Начало</th><th style="width:88px">Окончание</th>'+
+        '<th style="width:42px" class="tc">Вал.</th><th style="width:100px" class="tr">Стоимость</th><th style="width:100px" class="tr">Освоено</th>'+
+        '<th style="width:90px">Статус</th><th style="width:50px" class="tr">%</th><th style="width:120px">Прогресс</th>'+
+        '</tr></thead><tbody>'+group.works.map(renderStageWorkRow).join('')+'</tbody></table>';
+    });
+    area.innerHTML=html;
+  });
+}
+const MDR_STATUSES=['Не начато','IFR','IFA','IFD','IFC','AFC'];
+const MDR_PCT={'Не начато':0,'IFR':20,'IFA':40,'IFD':60,'IFC':80,'AFC':100};
+function showMdrFileMenu(e,stageKey){
+  e.preventDefault();e.stopPropagation();
+  if(cm)cm.remove();
+  const rect=e.target.getBoundingClientRect();
+  const m=document.createElement('div');
+  m.className='ctx-menu';
+  m.style.left=rect.left+'px';
+  m.style.top=(rect.bottom+4)+'px';
+  m.innerHTML='<div class="ctx-item" onclick="document.getElementById(\'mdrFileInput-'+stageKey+'\').click();rmCm()">📥 Загрузить</div><div class="ctx-item" onclick="exportMdrExcel(\''+stageKey+'\');rmCm()">📤 Скачать</div>';
+  document.body.appendChild(m);cm=m;
+}
+let mdrSelected={};
+function mgch(stageKey,pid){return mdr.filter(m=>m.stageKey===stageKey&&m.parentId===pid);}
+function mgad(stageKey,id){let r=[];mgch(stageKey,id).forEach(c=>{r.push(c);r=r.concat(mgad(stageKey,c.id));});return r;}
+function mgdp(stageKey,id){let d=0,c=mdr.find(m=>m.id===id&&m.stageKey===stageKey);while(c&&c.parentId){c=mdr.find(m=>m.id===c.parentId);d++;}return d;}
+function mivis(stageKey,n){if(!n.parentId)return true;const p=mdr.find(x=>x.id===n.parentId);if(!p||p.collapsed)return false;return mivis(stageKey,p);}
+function addMdrLevel(stageKey){
+  const sel=mdr.find(m=>m.id===mdrSelected[stageKey]);
+  const pid=sel?(sel.type==='level'?sel.id:(sel.parentId||null)):null;
+  const pNode=pid?mdr.find(m=>m.id===pid):null;
+  const pCode=pNode?pNode.code:'';
+  const sib=mdr.filter(m=>m.stageKey===stageKey&&m.parentId===pid&&m.type==='level');
+  const idx=sib.length+1;
+  const code=pCode?(pCode+'.'+(idx<10?'0'+idx:idx)):String(idx).padStart(2,'0');
+  const id=Date.now();
+  mdr.push({id,stageKey,parentId:pid,type:'level',code,name:'',collapsed:false});
+  if(pNode)pNode.collapsed=false;
+  mdrSelected[stageKey]=id;
+  save('mdr',mdr,300);renderMdrPages();
+  setTimeout(()=>{const el=document.getElementById('mni_'+id);if(el)el.focus();},60);
+}
+function addMdrDoc(stageKey){
+  const sel=mdr.find(m=>m.id===mdrSelected[stageKey]);
+  if(!sel){alert('Выбери уровень!');return;}
+  const pid=sel.type==='level'?sel.id:sel.parentId;
+  const pNode=mdr.find(m=>m.id===pid);
+  const pCode=pNode?pNode.code:'';
+  const sib=mdr.filter(m=>m.stageKey===stageKey&&m.parentId===pid&&m.type==='doc');
+  const idx=sib.length+1;
+  const code=pCode+(pCode?'.':'')+String(idx).padStart(2,'0');
+  const id=Date.now();
+  mdr.push({id,stageKey,parentId:pid,type:'doc',code,name:'',docType:'',currency:'USD',amount:'',status:'Не начато',dateStart:'',dateEnd:''});
+  if(pNode)pNode.collapsed=false;
+  mdrSelected[stageKey]=id;
+  save('mdr',mdr,300);renderMdrPages();
+  setTimeout(()=>{const el=document.getElementById('mni_'+id);if(el)el.focus();},60);
+}
+function delMdrSelected(stageKey){
+  const id=mdrSelected[stageKey];
+  if(!id){alert('Выбери строку');return;}
+  const desc=mgad(stageKey,id).map(d=>d.id);
+  if(desc.length&&!confirm('Удалить со всеми вложенными?'))return;
+  mdr=mdr.filter(m=>m.id!==id&&!desc.includes(m.id));
+  mdrSelected[stageKey]=null;
+  save('mdr',mdr,300);renderMdrPages();
+}
+function moveMdrNode(stageKey,dir){
+  const id=mdrSelected[stageKey];
+  if(!id)return;
+  const n=mdr.find(x=>x.id===id);if(!n)return;
+  const sib=mdr.filter(x=>x.stageKey===stageKey&&x.parentId===n.parentId);
+  const idx=sib.findIndex(x=>x.id===id),ni2=idx+dir;
+  if(ni2<0||ni2>=sib.length)return;
+  const iA=mdr.indexOf(n),iB=mdr.indexOf(sib[ni2]);
+  mdr[iA]=sib[ni2];mdr[iB]=n;
+  save('mdr',mdr,300);renderMdrPages();
+}
+function toggleMdrCol(stageKey,id){const n=mdr.find(m=>m.id===id);if(n)n.collapsed=!n.collapsed;save('mdr',mdr,300);renderMdrPages();}
+function selMdrRow(stageKey,id){mdrSelected[stageKey]=id;renderMdrPages();}
+function showMdrCm(e,stageKey,id){
+  e.preventDefault();e.stopPropagation();
+  if(cm)cm.remove();
+  mdrSelected[stageKey]=id;renderMdrPages();
+  const m=document.createElement('div');
+  m.className='ctx-menu';
+  m.style.left=e.clientX+'px';
+  m.style.top=e.clientY+'px';
+  m.innerHTML='<div class="ctx-item" onclick="addMdrLevel(\''+stageKey+'\');rmCm()">📁 Добавить уровень</div><div class="ctx-item" onclick="addMdrDoc(\''+stageKey+'\');rmCm()">📄 Добавить документ</div><div class="ctx-sep"></div><div class="ctx-item" onclick="moveMdrNode(\''+stageKey+'\',-1);rmCm()">↑ Переместить вверх</div><div class="ctx-item" onclick="moveMdrNode(\''+stageKey+'\',1);rmCm()">↓ Переместить вниз</div><div class="ctx-sep"></div><div class="ctx-item danger" onclick="delMdrSelected(\''+stageKey+'\');rmCm()">✕ Удалить</div>';
+  document.body.appendChild(m);cm=m;
+  const rect=m.getBoundingClientRect();
+  if(rect.right>window.innerWidth)m.style.left=(e.clientX-rect.width)+'px';
+  if(rect.bottom>window.innerHeight)m.style.top=(e.clientY-rect.height)+'px';
+}
+
+function updM(id,f,v){
+  const m=mdr.find(x=>x.id===id);if(!m)return;
+  if(f==='dateEnd'){
+    if(!m.dateStart){alert('Сначала укажи дату начала!');renderMdrPages();return;}
+    if(v<m.dateStart){alert('Дата окончания не может быть раньше начала!');renderMdrPages();return;}
+  }
+  if(f==='dateStart'&&m.dateEnd&&m.dateEnd<v)m.dateEnd='';
+  m[f]=v;save('mdr',mdr,300);renderMdrPages();
+}
+function delM(id){if(!confirm('Удалить?'))return;mdr=mdr.filter(x=>x.id!==id);save('mdr',mdr,300);renderMdrPages();}
+function mrch(stageKey,pid,depth){
+  let html='';
+  mgch(stageKey,pid).forEach(n=>{
+    if(!mivis(stageKey,n))return;
+    const sel=n.id===mdrSelected[stageKey];
+    const dc=dcls(depth);
+    const sc=sel?' wsel':'';
+    const hch=mgch(stageKey,n.id).length>0;
+    if(n.type==='level'){
+      html+='<tr class="'+dc+sc+'" onclick="selMdrRow(\''+stageKey+'\','+n.id+')" oncontextmenu="showMdrCm(event,\''+stageKey+'\','+n.id+');return false">'+
+        '<td class="tc"><span class="lnum">'+(depth+1)+'</span></td>'+
+        '<td><span class="cpill" contenteditable="true" spellcheck="false" onclick="event.stopPropagation()" onblur="updM('+n.id+',\'code\',this.textContent.trim())">'+(n.code||'—')+'</span></td>'+
+        '<td><span class="tri'+(n.collapsed?' cl':'')+'" onclick="event.stopPropagation();toggleMdrCol(\''+stageKey+'\','+n.id+')">'+(hch?(n.collapsed?'▶':'▼'):'◆')+'</span><input class="ni" id="mni_'+n.id+'" value="'+(n.name||'')+'" placeholder="Наименование..." onclick="event.stopPropagation()" onchange="updM('+n.id+',\'name\',this.value)"></td>'+
+        '<td></td><td></td><td></td><td class="tc"></td><td></td><td></td><td></td><td></td>'+
+        '<td class="tc"><button class="mbtn" onclick="event.stopPropagation();showMdrCm(event,\''+stageKey+'\','+n.id+')">⋯</button></td>'+
+      '</tr>';
+      if(!n.collapsed)html+=mrch(stageKey,n.id,depth+1);
+    } else {
+      const pct=MDR_PCT[n.status]||0;
+      const pc=pcol(pct);
+      const curs=['USD','EUR','UZS','RUB'];
+      const cur=n.currency||'USD';
+      html+='<tr class="wk'+sc+'" onclick="selMdrRow(\''+stageKey+'\','+n.id+')" oncontextmenu="showMdrCm(event,\''+stageKey+'\','+n.id+');return false">'+
+        '<td class="tc"><span class="wnum">W</span></td>'+
+        '<td><span class="cpill cpill-w" contenteditable="true" spellcheck="false" onclick="event.stopPropagation()" onblur="updM('+n.id+',\'code\',this.textContent.trim())">'+(n.code||'—')+'</span></td>'+
+        '<td><input class="ni" id="mni_'+n.id+'" value="'+(n.name||'')+'" placeholder="Наименование чертежа..." onclick="event.stopPropagation()" onchange="updM('+n.id+',\'name\',this.value)"></td>'+
+        '<td><input class="ni" value="'+(n.docType||'')+'" placeholder="Тип документа" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'docType\',this.value)"></td>'+
+        '<td><input type="date" value="'+(n.dateStart||'')+'" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'dateStart\',this.value)"></td>'+
+        '<td><input type="date" value="'+(n.dateEnd||'')+'" '+(!n.dateStart?'disabled':'')+' min="'+(n.dateStart||'')+'" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'dateEnd\',this.value)"></td>'+
+        '<td class="tc"><select class="cur" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'currency\',this.value)">'+curs.map(c=>'<option value="'+c+'"'+(cur===c?' selected':'')+'>'+c+'</option>').join('')+'</select></td>'+
+        '<td><input class="amt" type="number" value="'+(n.amount||'')+'" placeholder="0" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'amount\',this.value)"></td>'+
+        '<td><select class="cur" style="width:100%" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'status\',this.value)">'+MDR_STATUSES.map(s=>'<option value="'+s+'"'+(n.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></td>'+
+        '<td class="pct-val">'+pct+'%</td>'+
+        '<td><div class="barw"><div class="barf" style="width:'+pct+'%;background:'+pc+'"></div></div></td>'+
+        '<td class="tc"><button class="mbtn" onclick="event.stopPropagation();showMdrCm(event,\''+stageKey+'\','+n.id+')">⋯</button></td>'+
+      '</tr>';
+    }
+  });
+  return html;
+}
+function renderMdrPage(stageKey){
+  const area=document.getElementById(stageKey+'-area');
+  if(!area)return;
+  if(!mdr.filter(m=>m.stageKey===stageKey&&!m.parentId).length){
+    area.innerHTML='<div class="empty-tbl">Нажми ⋯ на любой строке или добавь первый уровень<br><br><button onclick="addMdrLevel(\''+stageKey+'\')" style="background:#0d8a7a;color:white;border:none;border-radius:6px;padding:6px 16px;font-size:12px;cursor:pointer;margin-top:6px">+ Добавить первый уровень</button></div>';
+    return;
+  }
+  let html='<table class="wbs" id="mdrTable_'+stageKey+'" style="width:100%;min-width:900px"><thead><tr>'+
+    '<th style="width:28px" class="tc">L</th><th style="width:110px">WBS</th><th style="width:200px">Наименование</th>'+
+    '<th style="width:130px">Тип документа</th><th style="width:88px">Начало</th><th style="width:88px">Окончание</th>'+
+    '<th style="width:42px" class="tc">Вал.</th><th style="width:100px" class="tr">Стоимость</th>'+
+    '<th style="width:90px">Статус</th><th style="width:50px" class="tr">%</th><th style="width:120px">Прогресс</th><th style="width:28px" class="tc"></th>'+
+    '</tr></thead><tbody>';
+  html+=mrch(stageKey,null,0);
+  html+='</tbody></table>';
+  area.innerHTML=html;
+  makeResizable(document.getElementById('mdrTable_'+stageKey));
+}
+function makeResizable(table){
+  if(!table)return;
+  table.style.tableLayout='fixed';
+  const ths=table.querySelectorAll('thead th');
+  ths.forEach(th=>{
+    th.style.position='relative';
+    if(th.querySelector('.col-resize-handle'))return;
+    const handle=document.createElement('span');
+    handle.className='col-resize-handle';
+    th.appendChild(handle);
+    handle.addEventListener('mousedown',e=>{
+      e.preventDefault();e.stopPropagation();
+      const startX=e.pageX;
+      const startWidth=th.offsetWidth;
+      function onMove(e2){
+        const newWidth=Math.max(30,startWidth+(e2.pageX-startX));
+        th.style.width=newWidth+'px';
+      }
+      function onUp(){
+        document.removeEventListener('mousemove',onMove);
+        document.removeEventListener('mouseup',onUp);
+      }
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
+    });
+  });
+}
+function renderMdrPages(){renderMdrPage('stage-1');renderMdrPage('stage-2');}
+function exportMdrExcel(stageKey){
+  const rows=[['L','WBS','Наименование','Тип документа','Начало','Окончание','Валюта','Стоимость','Статус']];
+  function walk(pid,depth){
+    mgch(stageKey,pid).forEach(n=>{
+      if(n.type==='level'){
+        rows.push([depth+1,n.code||'',n.name||'','','','','','','']);
+        walk(n.id,depth+1);
+      }else{
+        rows.push(['W',n.code||'',n.name||'',n.docType||'',n.dateStart||'',n.dateEnd||'',n.currency||'USD',n.amount||0,n.status||'Не начато']);
+      }
+    });
+  }
+  walk(null,0);
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'MDR');
+  XLSX.writeFile(wb,'DSOMK_MDR_'+stageKey+'.xlsx');
+}
+function importMdrExcel(stageKey,file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+    const statusSet=new Set(MDR_STATUSES);
+    const newRows=[];
+    const stack=[];
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i];
+      if(!r||!r[0])continue;
+      const level=r[0];
+      const code=String(r[1]||'');
+      const name=String(r[2]||'');
+      const id=Date.now()+i;
+      if(level==='W'){
+        const parentId=stack.length?stack[stack.length-1].id:null;
+        const docType=String(r[3]||'');
+        const dateStart=excelDateToISO(r[4]);
+        const dateEnd=excelDateToISO(r[5]);
+        const currency=r[6]||'USD';
+        const amount=r[7]||'';
+        const status=statusSet.has(r[8])?r[8]:'Не начато';
+        newRows.push({id,stageKey,parentId,type:'doc',code,name,docType,dateStart,dateEnd,currency,amount,status});
+      }else{
+        const depth=parseInt(level)-1;
+        while(stack.length>depth)stack.pop();
+        const parentId=stack.length?stack[stack.length-1].id:null;
+        const node={id,stageKey,parentId,type:'level',code,name,collapsed:false};
+        newRows.push(node);
+        stack.push(node);
+      }
+    }
+    if(!confirm('Заменить текущие данные этого этапа на данные из Excel?\nНайдено строк: '+newRows.length))return;
+    mdr=mdr.filter(m=>m.stageKey!==stageKey).concat(newRows);
+    mdrSelected[stageKey]=null;
+    save('mdr',mdr,300);renderMdrPages();
+    alert('✅ Импортировано: '+newRows.length+' строк');
+  };
+  reader.readAsArrayBuffer(file);
+}
+function gadate(id,f){const w=gad(id).filter(d=>d.type==="work"&&d[f]);if(!w.length)return"";const ds=w.map(x=>x[f]).sort();return f==="dateStart"?ds[0]:ds[ds.length-1];}
 
 function csum(id){
   const n=nodes.find(n=>n.id===id);if(!n)return {};
@@ -331,6 +700,7 @@ function fmtMulti(obj){
   if(!keys.length)return "";
   return keys.map(k=>fmt(obj[k])+" "+k).join(" - ");
 }
+function toUSD(obj){const rEUR=parseFloat(document.getElementById("rateEUR").value)||1;const rUZS=parseFloat(document.getElementById("rateUZS").value)||0.00008;const rRUB=parseFloat(document.getElementById("rateRUB").value)||0.011;let total=0;Object.keys(obj).forEach(k=>{const v=obj[k];if(k==="USD")total+=v;else if(k==="EUR")total+=v*rEUR;else if(k==="UZS")total+=v*rUZS;else if(k==="RUB")total+=v*rRUB;});return total;}
 function cpct(id){
   const s=csum(id),o=cosv(id);
   let totalS=0,totalO=0;
@@ -411,7 +781,7 @@ function updNode(id,field,val){
   }
   if(field==='dateStart'&&n.dateEnd&&n.dateEnd<val)n.dateEnd='';
   n[field]=val;
-  save('wbs',nodes);renderWBS();
+  save('wbs',nodes);renderWBS();renderStagePages();
 }
 
 function selRow(id){
@@ -520,22 +890,346 @@ function renderWBS(){
   tb.innerHTML=rch(null,0);
 }
 
+function isDesignStage(name){return name==='Базовое проектирование'||name==='Рабочее проектирование';}
+function mdrDocsForProject(stageKey,projectName){
+  const roots=mdr.filter(m=>m.stageKey===stageKey&&!m.parentId&&m.type==='level'&&m.name===projectName);
+  let docs=[];
+  roots.forEach(r=>{docs=docs.concat(mgad(stageKey,r.id).filter(x=>x.type==='doc'));});
+  return docs;
+}
+function stageGroupData(){
+  const designItems=mdr.filter(m=>(m.stageKey==='stage-1'||m.stageKey==='stage-2')&&m.type==='doc').map(m=>({amount:parseFloat(m.amount)||0,currency:m.currency||'USD',pct:MDR_PCT[m.status]||0}));
+  const supplyStages=['Изготовление оборудования','Логистика и доставка'];
+  const constructionStages=['Строительно-монтажные работы','Пусконаладочные работы'];
+  const wbsToItem=n=>({amount:parseFloat(n.amount)||0,currency:n.currency||'USD',pct:n.amount&&parseFloat(n.amount)?Math.min(100,Math.round((parseFloat(n.osvoen)||0)/parseFloat(n.amount)*100)):0});
+  const supplyItems=nodes.filter(n=>n.type==='work'&&supplyStages.includes(n.stage)).map(wbsToItem);
+  const constructionItems=nodes.filter(n=>n.type==='work'&&constructionStages.includes(n.stage)).map(wbsToItem);
+  const calc=(items)=>{
+    let sum={};
+    items.forEach(it=>{if(it.amount)sum[it.currency]=(sum[it.currency]||0)+it.amount;});
+    const pct=items.length?Math.round(items.reduce((a,b)=>a+b.pct,0)/items.length):0;
+    return {cost:toUSD(sum),pct};
+  };
+  const design=calc(designItems);
+  const supply=calc(supplyItems);
+  const construction=calc(constructionItems);
+  const total=calc([...designItems,...supplyItems,...constructionItems]);
+  return {design,supply,construction,total};
+}
+function updateStageCards(){
+  const g=stageGroupData();
+  const set=(prefix,data)=>{
+    document.getElementById('sc-'+prefix+'-cost').textContent='$'+data.cost.toLocaleString('ru-RU',{maximumFractionDigits:0});
+    document.getElementById('sc-'+prefix+'-bar').style.width=Math.min(data.pct,100)+'%';
+    document.getElementById('sc-'+prefix+'-pct').textContent=data.pct+'%';
+  };
+  set('total',g.total);
+  set('design',g.design);
+  set('supply',g.supply);
+  set('constr',g.construction);
+}
+let expandedProjects=new Set();
+function toggleProjectExpand(id){if(expandedProjects.has(id))expandedProjects.delete(id);else expandedProjects.add(id);renderDash();}
+function equipmentInfoForProject(projectId){
+  const proj=nodes.find(n=>n.id===projectId);
+  if(!proj)return null;
+  const list=equipment.filter(e=>e.project===proj.name);
+  if(!list.length)return null;
+  const done=list.filter(e=>e.status==='done').length;
+  return {done,total:list.length};
+}
+function projectStageItems(projectId,groupKey){
+  const proj=nodes.find(n=>n.id===projectId);
+  const projName=proj?proj.name:null;
+  if(groupKey==='design'){
+    const docs1=mdrDocsForProject('stage-1',projName);
+    const docs2=mdrDocsForProject('stage-2',projName);
+    return docs1.concat(docs2).map(m=>({
+      dateStart:m.dateStart||'',dateEnd:m.dateEnd||'',amount:parseFloat(m.amount)||0,currency:m.currency||'USD',pct:MDR_PCT[m.status]||0
+    }));
+  }
+  const stagesMap={supply:['Изготовление оборудования','Логистика и доставка'],construction:['Строительно-монтажные работы','Пусконаладочные работы']};
+  const stages=stagesMap[groupKey]||[];
+  return gad(projectId).filter(n=>n.type==='work'&&stages.includes(n.stage)).map(n=>({
+    dateStart:n.dateStart||'',dateEnd:n.dateEnd||'',amount:parseFloat(n.amount)||0,currency:n.currency||'USD',
+    pct:n.amount&&parseFloat(n.amount)?Math.min(100,Math.round((parseFloat(n.osvoen)||0)/parseFloat(n.amount)*100)):0
+  }));
+}
+function renderProjectStageCards(projectId){
+  const cards=[{key:'design',label:'Проектирование',barColor:'#1a9a5a'},{key:'supply',label:'Поставка',barColor:'#c07820'},{key:'construction',label:'Строительство',barColor:'#c04040'}];
+  const todayStr=new Date().toISOString().split('T')[0];
+  const fd=d=>d?new Date(d).toLocaleDateString('ru-RU'):'—';
+  const html=cards.map(c=>{
+    const w=projectStageItems(projectId,c.key);
+    let sum={};
+    w.forEach(x=>{if(x.amount)sum[x.currency]=(sum[x.currency]||0)+x.amount;});
+    const cost=toUSD(sum);
+    const pct=w.length?Math.round(w.reduce((a,b)=>a+b.pct,0)/w.length):0;
+    const starts=w.filter(x=>x.dateStart).map(x=>x.dateStart).sort();
+    const ends=w.filter(x=>x.dateEnd).map(x=>x.dateEnd).sort();
+    const planStart=starts[0]||'';
+    const planEnd=ends.length?ends[ends.length-1]:'';
+    let forecast='',forecastColor='#7aa89a';
+    if(!w.length){forecast='';}
+    else if(pct>=100){forecast=planEnd;forecastColor='#1a9a5a';}
+    else if(!planEnd){forecast='';}
+    else if(todayStr<=planEnd){forecast=planEnd;forecastColor='#1a9a5a';}
+    else{
+      const startD=new Date(planStart||planEnd),todayD=new Date(todayStr);
+      const elapsed=Math.max(1,Math.round((todayD-startD)/86400000));
+      const pace=pct/elapsed;
+      if(pace<=0){forecast='—';forecastColor='#999';}
+      else{
+        const remDays=Math.round((100-pct)/pace);
+        const fD=new Date(todayD.getTime()+remDays*86400000);
+        forecast=fD.toISOString().split('T')[0];
+        forecastColor='#c04040';
+      }
+    }
+    const eqInfo=c.key==='supply'?equipmentInfoForProject(projectId):null;
+    return '<div style="background:#fafefd;border-radius:8px;padding:10px 12px;border:1px solid #e8f0ee">'+
+      '<div style="font-size:10px;color:#7aa89a;margin-bottom:5px">'+c.label+'</div>'+
+      '<div style="font-size:15px;font-weight:700;color:#054e44;margin-bottom:5px">$'+cost.toLocaleString('ru-RU',{maximumFractionDigits:0})+'</div>'+
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:'+(eqInfo?6:8)+'px">'+
+      '<div style="flex:1;height:6px;background:#e0f0ec;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+c.barColor+';border-radius:3px"></div></div>'+
+      '<span style="font-size:10px;font-weight:600;color:#054e44">'+pct+'%</span></div>'+
+      (eqInfo?('<div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#7a5a10;background:#fdf4e6;border-radius:4px;padding:3px 6px;margin-bottom:6px;width:fit-content">оборудование: '+eqInfo.done+' / '+eqInfo.total+' ед.</div>'):'')+
+      '<div style="font-size:9px;color:#7aa89a;border-top:1px dashed #e0ece8;padding-top:6px">'+
+      '<div>план: '+fd(planStart)+' – '+fd(planEnd)+'</div>'+
+      '<div style="color:'+forecastColor+';margin-top:2px">прогноз: '+(forecast?fd(forecast):'—')+'</div>'+
+      '</div></div>';
+  }).join('');
+  return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f5f3"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'+html+'</div></div>';
+}
+function toUSDsingle(cur,val){const o={};if(val)o[cur||'USD']=val;return toUSD(o);}
+function combinedDatedItems(projectId){
+  const proj=nodes.find(n=>n.id===projectId);
+  const projName=proj?proj.name:null;
+  const mdrDocs=mdrDocsForProject('stage-1',projName).concat(mdrDocsForProject('stage-2',projName)).filter(m=>m.dateStart&&m.dateEnd);
+  const mdrItems=mdrDocs.map(m=>({
+    dateStart:m.dateStart,dateEnd:m.dateEnd,amount:parseFloat(m.amount)||0,currency:m.currency||'USD',osvoenPct:(MDR_PCT[m.status]||0)/100
+  }));
+  const wbsItems=gad(projectId).filter(n=>n.type==='work'&&n.dateStart&&n.dateEnd&&!isDesignStage(n.stage)).map(n=>({
+    dateStart:n.dateStart,dateEnd:n.dateEnd,amount:parseFloat(n.amount)||0,currency:n.currency||'USD',
+    osvoenPct:n.amount&&parseFloat(n.amount)?Math.min(1,(parseFloat(n.osvoen)||0)/parseFloat(n.amount)):0
+  }));
+  return mdrItems.concat(wbsItems);
+}
+function projMonths(projectId){
+  const works=combinedDatedItems(projectId);
+  if(!works.length)return [];
+  const minStart=works.map(w=>w.dateStart).sort()[0];
+  let maxEnd=works.map(w=>w.dateEnd).sort().slice(-1)[0];
+  const today=new Date().toISOString().split('T')[0];
+  if(today.slice(0,7)>maxEnd.slice(0,7))maxEnd=today;
+  const start=new Date(minStart.slice(0,7)+'-01T00:00:00');
+  const end=new Date(maxEnd.slice(0,7)+'-01T00:00:00');
+  const months=[];
+  let cur=new Date(start);
+  let guard=0;
+  while(cur<=end&&guard<60){
+    months.push({y:cur.getFullYear(),m:cur.getMonth()+1});
+    cur.setMonth(cur.getMonth()+1);
+    guard++;
+  }
+  return months;
+}
+function monthIndexForDate(months,dateStr){
+  if(!dateStr||!months.length)return 0;
+  const y=parseInt(dateStr.slice(0,4)),m=parseInt(dateStr.slice(5,7));
+  let idx=months.findIndex(mo=>mo.y===y&&mo.m===m);
+  if(idx===-1){
+    if(y<months[0].y||(y===months[0].y&&m<months[0].m))idx=0;
+    else idx=months.length-1;
+  }
+  return idx;
+}
+function monthPlanSeries(projectId,months){
+  const works=combinedDatedItems(projectId).filter(w=>w.amount);
+  const arr=months.map(()=>0);
+  works.forEach(w=>{
+    const si=monthIndexForDate(months,w.dateStart);
+    const ei=monthIndexForDate(months,w.dateEnd);
+    const span=Math.max(1,ei-si+1);
+    const total=toUSDsingle(w.currency,w.amount);
+    const per=total/span;
+    for(let i=si;i<=ei;i++)arr[i]+=per;
+  });
+  return arr;
+}
+function projFactTotal(projectId){
+  const proj=nodes.find(n=>n.id===projectId);
+  const projName=proj?proj.name:null;
+  let total=0;
+  gad(projectId).filter(n=>n.type==='work'&&!isDesignStage(n.stage)).forEach(w=>{
+    total+=toUSDsingle(w.currency,parseFloat(w.osvoen)||0);
+  });
+  mdrDocsForProject('stage-1',projName).concat(mdrDocsForProject('stage-2',projName)).forEach(m=>{
+    const pct=(MDR_PCT[m.status]||0)/100;
+    total+=toUSDsingle(m.currency,(parseFloat(m.amount)||0)*pct);
+  });
+  return total;
+}
+function currentMonthIndex(months){
+  if(!months.length)return 0;
+  const now=new Date();
+  const y=now.getFullYear(),m=now.getMonth()+1;
+  let idx=months.findIndex(mo=>mo.y===y&&mo.m===m);
+  if(idx===-1){
+    if(y>months[months.length-1].y||(y===months[months.length-1].y&&m>months[months.length-1].m))idx=months.length-1;
+    else idx=0;
+  }
+  return idx;
+}
+window.__projChartData={};
+window.__chartInstances={};
+function renderProjectChartGanttHTML(projectId){
+  const months=projMonths(projectId);
+  if(!months.length)return '';
+  const planArr=monthPlanSeries(projectId,months);
+  const cumPlan=[];let rp=0;planArr.forEach(v=>{rp+=v;cumPlan.push(rp);});
+  const factTotal=projFactTotal(projectId);
+  const curIdx=currentMonthIndex(months);
+  const factArr=months.map((mo,i)=>i===curIdx?factTotal:0);
+  const cumFact=months.map((mo,i)=>i>=curIdx?factTotal:0);
+  const monthLabels=['1','2','3','4','5','6','7','8','9','10','11','12'];
+  const canvasId='chart-'+projectId;
+  window.__projChartData[projectId]={labels:months.map(mo=>monthLabels[mo.m-1]),planArr,factArr,cumPlan,cumFact};
+  const ganttStages=[
+    {raw:'Базовое проектирование',label:'Баз. проект.'},
+    {raw:'Рабочее проектирование',label:'Раб. проект.'},
+    {raw:'Изготовление оборудования',label:'Изгот. обор.'},
+    {raw:'Логистика и доставка',label:'Логистика'},
+    {raw:'Строительно-монтажные работы',label:'СМР'},
+    {raw:'Пусконаладочные работы',label:'ПНР'}
+  ];
+  let yearSpans=[];
+  let curYear=null,curStart=0;
+  months.forEach((mo,i)=>{
+    if(mo.y!==curYear){
+      if(curYear!==null)yearSpans.push({y:curYear,start:curStart,span:i-curStart});
+      curYear=mo.y;curStart=i;
+    }
+  });
+  yearSpans.push({y:curYear,start:curStart,span:months.length-curStart});
+  let ganttHtml='<div style="display:grid;grid-template-columns:110px repeat('+months.length+',minmax(0,1fr));row-gap:5px;align-items:center;margin-top:2px">';
+  ganttHtml+='<span></span>';
+  yearSpans.forEach(ys=>{
+    ganttHtml+='<span style="grid-column:'+(ys.start+2)+' / span '+ys.span+';font-size:9px;color:#7aa89a;text-align:center;border-bottom:1px solid #e0ece8;padding-bottom:3px">'+ys.y+'</span>';
+  });
+  ganttHtml+='<span></span>';
+  months.forEach(mo=>{
+    ganttHtml+='<span style="font-size:8px;color:#a8c4bc;text-align:center">'+monthLabels[mo.m-1]+'</span>';
+  });
+  ganttStages.forEach(gs=>{
+    let w;
+    if(isDesignStage(gs.raw)){
+      const stageKey=gs.raw==='Базовое проектирование'?'stage-1':'stage-2';
+      const proj=nodes.find(n=>n.id===projectId);
+      const projName=proj?proj.name:null;
+      w=mdrDocsForProject(stageKey,projName).map(m=>({dateStart:m.dateStart||'',dateEnd:m.dateEnd||'',pct:MDR_PCT[m.status]||0}));
+    }else{
+      w=gad(projectId).filter(n=>n.type==='work'&&n.stage===gs.raw).map(n=>({
+        dateStart:n.dateStart||'',dateEnd:n.dateEnd||'',
+        pct:n.amount&&parseFloat(n.amount)?Math.min(100,Math.round((parseFloat(n.osvoen)||0)/parseFloat(n.amount)*100)):0
+      }));
+    }
+    ganttHtml+='<span style="font-size:9px;color:#508870;text-align:left;justify-self:start;padding-right:6px">'+gs.label+'</span>';
+    if(!w.length){ganttHtml+='<span></span>';return;}
+    const starts=w.filter(x=>x.dateStart).map(x=>x.dateStart).sort();
+    const ends=w.filter(x=>x.dateEnd).map(x=>x.dateEnd).sort();
+    const pStart=starts[0]||'';
+    const pEnd=ends.length?ends[ends.length-1]:'';
+    const startIdx=monthIndexForDate(months,pStart);
+    const endIdx=monthIndexForDate(months,pEnd);
+    const span=Math.max(1,endIdx-startIdx+1);
+    const pct=w.length?Math.round(w.reduce((a,b)=>a+b.pct,0)/w.length):0;
+    ganttHtml+='<div style="grid-column:'+(startIdx+2)+' / span '+span+';background:#e0f0ec;height:11px;border-radius:3px;margin:0 2px;position:relative;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:#0d8a7a"></div></div>';
+  });
+  ganttHtml+='</div>';
+  return '<div style="background:#fafefd;border-radius:10px;border:1px solid #e0f0ec;padding:14px;margin-top:12px">'+
+    '<div style="display:flex;gap:14px;font-size:9px;color:#7aa89a;margin-bottom:8px">'+
+    '<span><span style="display:inline-block;width:9px;height:9px;background:#c8d4d0;border-radius:2px;margin-right:4px"></span>план (период)</span>'+
+    '<span><span style="display:inline-block;width:9px;height:9px;background:#1a9a5a;border-radius:2px;margin-right:4px"></span>факт (период)</span>'+
+    '<span><span style="display:inline-block;width:9px;height:2px;background:#1a6b9a;margin-right:4px;vertical-align:middle;display:inline-block"></span>накопл. факт</span>'+
+    '<span><span style="display:inline-block;width:9px;height:2px;border-top:2px dashed #999;margin-right:4px;vertical-align:middle;display:inline-block"></span>накопл. план</span>'+
+    '</div>'+
+    '<div style="position:relative;height:170px;margin-bottom:0;padding-left:112px"><canvas id="'+canvasId+'"></canvas></div>'+
+    ganttHtml+
+    '</div>';
+}
+function initExpandedCharts(){
+  if(typeof Chart==='undefined')return;
+  expandedProjects.forEach(id=>{
+    const data=window.__projChartData[id];
+    const canvas=document.getElementById('chart-'+id);
+    if(!data||!canvas)return;
+    if(window.__chartInstances[id]){window.__chartInstances[id].destroy();}
+    window.__chartInstances[id]=new Chart(canvas,{
+      data:{labels:data.labels,datasets:[
+        {type:'bar',label:'план',data:data.planArr,backgroundColor:'#c8d4d0',order:2,barPercentage:0.75},
+        {type:'bar',label:'факт',data:data.factArr,backgroundColor:'#1a9a5a',order:2,barPercentage:0.75},
+        {type:'line',label:'накопл. факт',data:data.cumFact,borderColor:'#1a6b9a',borderWidth:2,pointRadius:0,stepped:true,yAxisID:'y1',order:1},
+        {type:'line',label:'накопл. план',data:data.cumPlan,borderColor:'#999',borderDash:[4,3],borderWidth:2,pointRadius:0,tension:0.2,yAxisID:'y1',order:1}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{display:false}},y:{display:false},y1:{display:false,position:'right'}}}
+    });
+  });
+}
 function renderDash(){
   const roots=nodes.filter(n=>!n.parentId&&n.type==='wbs');
-  document.getElementById('d-total').textContent=roots.length;
-  const pcts=roots.map(r=>cpct(r.id));
-  document.getElementById('d-avg').textContent=(pcts.length?Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length):0)+'%';
-  document.getElementById('d-doing').textContent=nodes.filter(n=>n.type==='work'&&n.status==='1').length;
-  document.getElementById('d-done').textContent=nodes.filter(n=>n.type==='work'&&n.status==='2').length;
+  updateStageCards();
   const dp=document.getElementById('dashProgs');
   if(!roots.length){dp.innerHTML='<div class="empty-tbl">Добавьте проекты в разделе «Информация по проектам»</div>';return;}
-  dp.innerHTML=roots.map(r=>{
-    const p=cpct(r.id),s=csum(r.id),o=cosv(r.id);
+  dp.innerHTML=roots.filter(r=>gad(r.id).some(d=>d.type==="work")).map(r=>{
+    const p=cpct(r.id),s=csum(r.id);
     const c=p>=100?'#1a9a5a':p>50?'#0d8a7a':p>20?'#c07820':'#c04040';
-    return`<div class="prow"><span class="prow-name">${r.name||'Без названия'}</span><div class="pw"><div class="pf" style="width:${Math.min(p,100)}%;background:${c}"></div></div><span class="pp">${p.toFixed(1)}%</span><span style="font-size:10px;color:#5ab0a0;margin-left:6px;white-space:nowrap">${fmtMulti(s)}<br>освоено: ${fmtMulti(o)}</span></div>`;
+    const isOpen=expandedProjects.has(r.id);
+    return '<div class="prow" style="flex-direction:column;align-items:stretch">'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+      '<button onclick="toggleProjectExpand('+r.id+')" style="background:#f0f8f5;border:1px solid #b0ddd4;color:#0a7060;border-radius:4px;width:22px;height:22px;font-size:10px;cursor:pointer;flex-shrink:0">'+(isOpen?'▾':'▸')+'</button>'+
+      '<span class="prow-name" style="width:150px">'+(r.name||"Без названия")+'</span>'+
+      '<div class="pw"><div class="pf" style="width:'+Math.min(p,100)+'%;background:'+c+'"></div></div>'+
+      '<span class="pp">'+p.toFixed(1)+'%</span>'+
+      '<span style="font-size:10px;color:#5ab0a0;white-space:nowrap;flex-shrink:0">$'+toUSD(s).toLocaleString("ru-RU",{maximumFractionDigits:0})+'</span>'+
+      '</div>'+
+      (isOpen?(renderProjectStageCards(r.id)+renderProjectChartGanttHTML(r.id)):'')+
+      '</div>';
   }).join('');
+  setTimeout(initExpandedCharts,0);
 }
 
+function renderStageTable(){
+  const tbody=document.getElementById('stageTableBody');
+  if(!tbody)return;
+  const allWork=nodes.filter(n=>n.type==='work'&&n.stage);
+  const byStage={};
+  STAGES.forEach(s=>byStage[s]={works:[],dateStart:'',dateEnd:''});
+  allWork.forEach(w=>{
+    if(byStage[w.stage]){
+      byStage[w.stage].works.push(w);
+      if(w.dateStart&&(!byStage[w.stage].dateStart||w.dateStart<byStage[w.stage].dateStart))byStage[w.stage].dateStart=w.dateStart;
+      if(w.dateEnd&&(!byStage[w.stage].dateEnd||w.dateEnd>byStage[w.stage].dateEnd))byStage[w.stage].dateEnd=w.dateEnd;
+    }
+  });
+  const colors={'Подготовка':'#1a6b9a','Базовый инжиниринг':'#1a6b9a','Детальный инжиниринг':'#4a9ec8','Закупки':'#c0a020','Логистика':'#c0a020','Строительство':'#0d8a7a','Пусконаладка':'#1a9a5a','Проектирование':'#1a6b9a','Поставка':'#c0a020','Монтаж':'#0d8a7a'};
+  let html='';
+  STAGES.forEach(s=>{
+    const d=byStage[s];
+    if(!d.works.length)return;
+    let sum={};
+    d.works.forEach(w=>{
+      const c=w.currency||'USD';
+      const a=parseFloat(w.amount)||0;
+      if(a)sum[c]=(sum[c]||0)+a;
+    });
+    const done=d.works.filter(w=>w.status==='2').length;
+    const pct=Math.round(done/d.works.length*100);
+    const fd=dt=>dt?new Date(dt).toLocaleDateString('ru-RU'):'';
+    html+='<tr style="border-bottom:1px solid #f0f8f4"><td style="padding:8px 9px"><div style="display:flex;align-items:center;gap:6px;font-weight:500;color:#054e44"><div style="width:8px;height:8px;border-radius:50%;background:'+(colors[s]||'#999')+'"></div>'+s+'</div></td><td style="padding:8px 9px;color:#336858">'+fd(d.dateStart)+'</td><td style="padding:8px 9px;color:#336858">'+fd(d.dateEnd)+'</td><td style="padding:8px 9px;font-weight:700;color:#0a7060">$'+toUSD(sum).toLocaleString('ru-RU',{maximumFractionDigits:0})+'</td><td style="padding:8px 9px"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:#e0f0ec;border-radius:3px;overflow:hidden;max-width:60px"><div style="height:100%;border-radius:3px;width:'+pct+'%;background:'+(pct>=100?"#1a9a5a":pct>0?"#0d8a7a":"#c04040")+'"></div></div><span style="font-size:10px;color:#608878;font-weight:600">'+pct+'%</span></div></td></tr>';
+  });
+  tbody.innerHTML=html||'<tr><td colspan="5" style="padding:20px;text-align:center;color:#90b8b0;font-size:11px">Нет данных по этапам</td></tr>';
+}
 /* ===== LETTERS ===== */
 async function uploadLetter(file){
   if(!file)return;

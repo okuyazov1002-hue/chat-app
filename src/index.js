@@ -140,7 +140,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   });
 });
 
-['wbs', 'letters', 'docs', 'equipment'].forEach(key => {
+['wbs', 'letters', 'docs', 'equipment', 'mdr'].forEach(key => {
   app.get(`/api/${key}`, async (req, res) => {
     res.json(await DB.read(key));
   });
