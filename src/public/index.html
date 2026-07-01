@@ -228,8 +228,8 @@ table.rt tr:hover td{background:#f5fcfa}
       <div class="page-title">1️⃣ Базовое проектирование</div>
       <div class="wbs-toolbar">
         <button class="add-btn" onclick="addMdr('stage-1')">+ Добавить</button>
-        <label class="upload-btn" style="cursor:pointer">📥 Загрузить Excel<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importMdrExcel('stage-1',this.files[0])"></label>
-        <button class="upload-btn" onclick="exportMdrExcel('stage-1')">📤 Скачать Excel</button>
+        <button class="upload-btn" onclick="showMdrFileMenu(event,'stage-1')">📁</button>
+        <input type="file" id="mdrFileInput-stage-1" accept=".xlsx,.xls" style="display:none" onchange="importMdrExcel('stage-1',this.files[0])">
       </div>
       <div class="wbs-area" id="stage-1-area"></div>
     </div>
@@ -237,8 +237,8 @@ table.rt tr:hover td{background:#f5fcfa}
       <div class="page-title">2️⃣ Рабочее проектирование</div>
       <div class="wbs-toolbar">
         <button class="add-btn" onclick="addMdr('stage-2')">+ Добавить</button>
-        <label class="upload-btn" style="cursor:pointer">📥 Загрузить Excel<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importMdrExcel('stage-2',this.files[0])"></label>
-        <button class="upload-btn" onclick="exportMdrExcel('stage-2')">📤 Скачать Excel</button>
+        <button class="upload-btn" onclick="showMdrFileMenu(event,'stage-2')">📁</button>
+        <input type="file" id="mdrFileInput-stage-2" accept=".xlsx,.xls" style="display:none" onchange="importMdrExcel('stage-2',this.files[0])">
       </div>
       <div class="wbs-area" id="stage-2-area"></div>
     </div>
@@ -434,32 +434,57 @@ function renderStagePages(){
 }
 const MDR_STATUSES=['Не начато','IFR','IFA','IFD','IFC','AFC'];
 const MDR_PCT={'Не начато':0,'IFR':20,'IFA':40,'IFD':60,'IFC':80,'AFC':100};
+function showMdrFileMenu(e,stageKey){
+  e.preventDefault();e.stopPropagation();
+  if(cm)cm.remove();
+  const rect=e.target.getBoundingClientRect();
+  const m=document.createElement('div');
+  m.className='ctx-menu';
+  m.style.left=rect.left+'px';
+  m.style.top=(rect.bottom+4)+'px';
+  m.innerHTML='<div class="ctx-item" onclick="document.getElementById(\'mdrFileInput-'+stageKey+'\').click();rmCm()">📥 Загрузить</div><div class="ctx-item" onclick="exportMdrExcel(\''+stageKey+'\');rmCm()">📤 Скачать</div>';
+  document.body.appendChild(m);cm=m;
+}
 function addMdr(stageKey){
-  mdr.push({id:Date.now(),stageKey,project:'',discipline:'',docType:'',drawingName:'',number:'',status:'Не начато',date:new Date().toISOString().split('T')[0]});
+  mdr.push({id:Date.now(),stageKey,project:'',discipline:'',docType:'',drawingName:'',number:'',dateStart:'',dateEnd:'',currency:'USD',amount:'',status:'Не начато'});
   save('mdr',mdr,300);renderMdrPages();
 }
-function updM(id,f,v){const m=mdr.find(x=>x.id===id);if(m){m[f]=v;save('mdr',mdr,300);renderMdrPages();}}
+function updM(id,f,v){
+  const m=mdr.find(x=>x.id===id);if(!m)return;
+  if(f==='dateEnd'){
+    if(!m.dateStart){alert('Сначала укажи дату начала!');renderMdrPages();return;}
+    if(v<m.dateStart){alert('Дата окончания не может быть раньше начала!');renderMdrPages();return;}
+  }
+  if(f==='dateStart'&&m.dateEnd&&m.dateEnd<v)m.dateEnd='';
+  m[f]=v;save('mdr',mdr,300);renderMdrPages();
+}
 function delM(id){if(!confirm('Удалить?'))return;mdr=mdr.filter(x=>x.id!==id);save('mdr',mdr,300);renderMdrPages();}
 function renderMdrPage(stageKey){
   const area=document.getElementById(stageKey+'-area');
   if(!area)return;
   const rows=mdr.filter(m=>m.stageKey===stageKey);
+  const curs=['USD','EUR','UZS','RUB'];
   if(!rows.length){area.innerHTML='<div class="empty-tbl">Нет документов. Нажми «+ Добавить»</div>';return;}
   let html='<table class="wbs" style="width:100%"><thead><tr>'+
-    '<th style="width:120px">Проект</th><th style="width:110px">Дисциплина</th><th style="width:140px">Тип документа</th>'+
-    '<th>Чертёж</th><th style="width:120px">Номер</th><th style="width:100px">Дата</th><th style="width:100px">Статус</th>'+
-    '<th style="width:50px" class="tr">%</th><th style="width:120px">Прогресс</th><th style="width:28px"></th>'+
+    '<th style="width:110px">Проект</th><th style="width:100px">Дисциплина</th><th style="width:120px">Тип документа</th>'+
+    '<th>Чертёж</th><th style="width:100px">Номер</th><th style="width:85px">Начало</th><th style="width:85px">Окончание</th>'+
+    '<th style="width:40px" class="tc">Вал.</th><th style="width:90px" class="tr">Стоимость</th>'+
+    '<th style="width:90px">Статус</th><th style="width:45px" class="tr">%</th><th style="width:110px">Прогресс</th><th style="width:28px"></th>'+
     '</tr></thead><tbody>';
   rows.forEach(m=>{
     const pct=MDR_PCT[m.status]||0;
     const pc=pcol(pct);
+    const cur=m.currency||'USD';
     html+='<tr class="wk">'+
       '<td><input class="ni" value="'+(m.project||'')+'" placeholder="Проект" onchange="updM('+m.id+',\'project\',this.value)"></td>'+
       '<td><input class="ni" value="'+(m.discipline||'')+'" placeholder="Дисциплина" onchange="updM('+m.id+',\'discipline\',this.value)"></td>'+
       '<td><input class="ni" value="'+(m.docType||'')+'" placeholder="Тип документа" onchange="updM('+m.id+',\'docType\',this.value)"></td>'+
       '<td><input class="ni" value="'+(m.drawingName||'')+'" placeholder="Наименование чертежа" onchange="updM('+m.id+',\'drawingName\',this.value)"></td>'+
       '<td><input class="ni" value="'+(m.number||'')+'" placeholder="Номер" onchange="updM('+m.id+',\'number\',this.value)"></td>'+
-      '<td><input type="date" value="'+(m.date||'')+'" onchange="updM('+m.id+',\'date\',this.value)"></td>'+
+      '<td><input type="date" value="'+(m.dateStart||'')+'" onchange="updM('+m.id+',\'dateStart\',this.value)"></td>'+
+      '<td><input type="date" value="'+(m.dateEnd||'')+'" '+(!m.dateStart?'disabled':'')+' min="'+(m.dateStart||'')+'" onchange="updM('+m.id+',\'dateEnd\',this.value)"></td>'+
+      '<td class="tc"><select class="cur" onchange="updM('+m.id+',\'currency\',this.value)">'+curs.map(c=>'<option value="'+c+'"'+(cur===c?' selected':'')+'>'+c+'</option>').join('')+'</select></td>'+
+      '<td><input class="amt" type="number" value="'+(m.amount||'')+'" placeholder="0" onchange="updM('+m.id+',\'amount\',this.value)"></td>'+
       '<td><select class="cur" style="width:100%" onchange="updM('+m.id+',\'status\',this.value)">'+MDR_STATUSES.map(s=>'<option value="'+s+'"'+(m.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></td>'+
       '<td class="pct-val">'+pct+'%</td>'+
       '<td><div class="barw"><div class="barf" style="width:'+pct+'%;background:'+pc+'"></div></div></td>'+
@@ -471,9 +496,10 @@ function renderMdrPage(stageKey){
 }
 function renderMdrPages(){renderMdrPage('stage-1');renderMdrPage('stage-2');}
 function exportMdrExcel(stageKey){
-  const rows=[['Проект','Дисциплина','Тип документа','Чертёж','Номер','Дата','Статус']];
+  const rows=[['Проект','Дисциплина','Тип документа','Чертёж','Номер','Начало','Окончание','Статус','Прогресс','Стоимость']];
   mdr.filter(m=>m.stageKey===stageKey).forEach(m=>{
-    rows.push([m.project||'',m.discipline||'',m.docType||'',m.drawingName||'',m.number||'',m.date||'',m.status||'Не начато']);
+    const pct=MDR_PCT[m.status]||0;
+    rows.push([m.project||'',m.discipline||'',m.docType||'',m.drawingName||'',m.number||'',m.dateStart||'',m.dateEnd||'',m.status||'Не начато',pct+'%',(m.amount||0)+' '+(m.currency||'USD')]);
   });
   const ws=XLSX.utils.aoa_to_sheet(rows);
   const wb=XLSX.utils.book_new();
@@ -492,8 +518,14 @@ function importMdrExcel(stageKey,file){
     for(let i=1;i<rows.length;i++){
       const r=rows[i];
       if(!r||!r[0])continue;
-      const status=statusSet.has(r[6])?r[6]:'Не начато';
-      newRows.push({id:Date.now()+i,stageKey,project:String(r[0]||''),discipline:String(r[1]||''),docType:String(r[2]||''),drawingName:String(r[3]||''),number:String(r[4]||''),date:excelDateToISO(r[5]),status});
+      const status=statusSet.has(r[7])?r[7]:'Не начато';
+      let amount='',currency='USD';
+      if(r[9]){
+        const parts=String(r[9]).trim().split(' ');
+        amount=parseFloat(parts[0])||'';
+        if(parts[1])currency=parts[1];
+      }
+      newRows.push({id:Date.now()+i,stageKey,project:String(r[0]||''),discipline:String(r[1]||''),docType:String(r[2]||''),drawingName:String(r[3]||''),number:String(r[4]||''),dateStart:excelDateToISO(r[5]),dateEnd:excelDateToISO(r[6]),status,currency,amount});
     }
     if(!confirm('Добавить '+newRows.length+' строк из Excel?'))return;
     mdr=mdr.concat(newRows);
@@ -713,21 +745,24 @@ function renderWBS(){
   tb.innerHTML=rch(null,0);
 }
 
+function isDesignStage(name){return name==='Базовое проектирование'||name==='Рабочее проектирование';}
 function stageGroupData(){
-  const groupMap={'Базовое проектирование':'design','Рабочее проектирование':'design','Изготовление оборудования':'supply','Логистика и доставка':'supply','Строительно-монтажные работы':'construction','Пусконаладочные работы':'construction'};
-  const groups={design:[],supply:[],construction:[]};
-  nodes.filter(n=>n.type==='work'&&n.stage&&groupMap[n.stage]).forEach(w=>{groups[groupMap[w.stage]].push(w);});
-  const calc=(works)=>{
+  const designItems=mdr.filter(m=>m.stageKey==='stage-1'||m.stageKey==='stage-2').map(m=>({amount:parseFloat(m.amount)||0,currency:m.currency||'USD',pct:MDR_PCT[m.status]||0}));
+  const supplyStages=['Изготовление оборудования','Логистика и доставка'];
+  const constructionStages=['Строительно-монтажные работы','Пусконаладочные работы'];
+  const wbsToItem=n=>({amount:parseFloat(n.amount)||0,currency:n.currency||'USD',pct:n.amount&&parseFloat(n.amount)?Math.min(100,Math.round((parseFloat(n.osvoen)||0)/parseFloat(n.amount)*100)):0});
+  const supplyItems=nodes.filter(n=>n.type==='work'&&supplyStages.includes(n.stage)).map(wbsToItem);
+  const constructionItems=nodes.filter(n=>n.type==='work'&&constructionStages.includes(n.stage)).map(wbsToItem);
+  const calc=(items)=>{
     let sum={};
-    works.forEach(w=>{const c=w.currency||'USD';const a=parseFloat(w.amount)||0;if(a)sum[c]=(sum[c]||0)+a;});
-    const done=works.filter(w=>w.status==='2').length;
-    const pct=works.length?Math.round(done/works.length*100):0;
+    items.forEach(it=>{if(it.amount)sum[it.currency]=(sum[it.currency]||0)+it.amount;});
+    const pct=items.length?Math.round(items.reduce((a,b)=>a+b.pct,0)/items.length):0;
     return {cost:toUSD(sum),pct};
   };
-  const design=calc(groups.design);
-  const supply=calc(groups.supply);
-  const construction=calc(groups.construction);
-  const total=calc([...groups.design,...groups.supply,...groups.construction]);
+  const design=calc(designItems);
+  const supply=calc(supplyItems);
+  const construction=calc(constructionItems);
+  const total=calc([...designItems,...supplyItems,...constructionItems]);
   return {design,supply,construction,total};
 }
 function updateStageCards(){
@@ -752,21 +787,31 @@ function equipmentInfoForProject(projectId){
   const done=list.filter(e=>e.status==='done').length;
   return {done,total:list.length};
 }
+function projectStageItems(projectId,groupKey){
+  const proj=nodes.find(n=>n.id===projectId);
+  const projName=proj?proj.name:null;
+  if(groupKey==='design'){
+    return mdr.filter(m=>(m.stageKey==='stage-1'||m.stageKey==='stage-2')&&m.project===projName).map(m=>({
+      dateStart:m.dateStart||'',dateEnd:m.dateEnd||'',amount:parseFloat(m.amount)||0,currency:m.currency||'USD',pct:MDR_PCT[m.status]||0
+    }));
+  }
+  const stagesMap={supply:['Изготовление оборудования','Логистика и доставка'],construction:['Строительно-монтажные работы','Пусконаладочные работы']};
+  const stages=stagesMap[groupKey]||[];
+  return gad(projectId).filter(n=>n.type==='work'&&stages.includes(n.stage)).map(n=>({
+    dateStart:n.dateStart||'',dateEnd:n.dateEnd||'',amount:parseFloat(n.amount)||0,currency:n.currency||'USD',
+    pct:n.amount&&parseFloat(n.amount)?Math.min(100,Math.round((parseFloat(n.osvoen)||0)/parseFloat(n.amount)*100)):0
+  }));
+}
 function renderProjectStageCards(projectId){
-  const groupMap={'Базовое проектирование':'design','Рабочее проектирование':'design','Изготовление оборудования':'supply','Логистика и доставка':'supply','Строительно-монтажные работы':'construction','Пусконаладочные работы':'construction'};
-  const works=gad(projectId).filter(n=>n.type==='work'&&n.stage&&groupMap[n.stage]);
-  const groups={design:[],supply:[],construction:[]};
-  works.forEach(w=>groups[groupMap[w.stage]].push(w));
   const cards=[{key:'design',label:'Проектирование',barColor:'#1a9a5a'},{key:'supply',label:'Поставка',barColor:'#c07820'},{key:'construction',label:'Строительство',barColor:'#c04040'}];
   const todayStr=new Date().toISOString().split('T')[0];
   const fd=d=>d?new Date(d).toLocaleDateString('ru-RU'):'—';
   const html=cards.map(c=>{
-    const w=groups[c.key];
+    const w=projectStageItems(projectId,c.key);
     let sum={};
-    w.forEach(x=>{const cur=x.currency||'USD';const a=parseFloat(x.amount)||0;if(a)sum[cur]=(sum[cur]||0)+a;});
+    w.forEach(x=>{if(x.amount)sum[x.currency]=(sum[x.currency]||0)+x.amount;});
     const cost=toUSD(sum);
-    const done=w.filter(x=>x.status==='2').length;
-    const pct=w.length?Math.round(done/w.length*100):0;
+    const pct=w.length?Math.round(w.reduce((a,b)=>a+b.pct,0)/w.length):0;
     const starts=w.filter(x=>x.dateStart).map(x=>x.dateStart).sort();
     const ends=w.filter(x=>x.dateEnd).map(x=>x.dateEnd).sort();
     const planStart=starts[0]||'';
@@ -804,8 +849,20 @@ function renderProjectStageCards(projectId){
   return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f5f3"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'+html+'</div></div>';
 }
 function toUSDsingle(cur,val){const o={};if(val)o[cur||'USD']=val;return toUSD(o);}
+function combinedDatedItems(projectId){
+  const proj=nodes.find(n=>n.id===projectId);
+  const projName=proj?proj.name:null;
+  const mdrItems=mdr.filter(m=>(m.stageKey==='stage-1'||m.stageKey==='stage-2')&&m.project===projName&&m.dateStart&&m.dateEnd).map(m=>({
+    dateStart:m.dateStart,dateEnd:m.dateEnd,amount:parseFloat(m.amount)||0,currency:m.currency||'USD',osvoenPct:(MDR_PCT[m.status]||0)/100
+  }));
+  const wbsItems=gad(projectId).filter(n=>n.type==='work'&&n.dateStart&&n.dateEnd&&!isDesignStage(n.stage)).map(n=>({
+    dateStart:n.dateStart,dateEnd:n.dateEnd,amount:parseFloat(n.amount)||0,currency:n.currency||'USD',
+    osvoenPct:n.amount&&parseFloat(n.amount)?Math.min(1,(parseFloat(n.osvoen)||0)/parseFloat(n.amount)):0
+  }));
+  return mdrItems.concat(wbsItems);
+}
 function projMonths(projectId){
-  const works=gad(projectId).filter(n=>n.type==='work'&&n.dateStart&&n.dateEnd);
+  const works=combinedDatedItems(projectId);
   if(!works.length)return [];
   const minStart=works.map(w=>w.dateStart).sort()[0];
   let maxEnd=works.map(w=>w.dateEnd).sort().slice(-1)[0];
@@ -834,23 +891,30 @@ function monthIndexForDate(months,dateStr){
   return idx;
 }
 function monthPlanSeries(projectId,months){
-  const works=gad(projectId).filter(n=>n.type==='work'&&n.dateStart&&n.dateEnd&&n.amount);
+  const works=combinedDatedItems(projectId).filter(w=>w.amount);
   const arr=months.map(()=>0);
   works.forEach(w=>{
     const si=monthIndexForDate(months,w.dateStart);
     const ei=monthIndexForDate(months,w.dateEnd);
     const span=Math.max(1,ei-si+1);
-    const total=toUSDsingle(w.currency,parseFloat(w.amount)||0);
+    const total=toUSDsingle(w.currency,w.amount);
     const per=total/span;
     for(let i=si;i<=ei;i++)arr[i]+=per;
   });
   return arr;
 }
 function projFactTotal(projectId){
-  const works=gad(projectId).filter(n=>n.type==='work');
-  let sum={};
-  works.forEach(w=>{const c=w.currency||'USD';const a=parseFloat(w.osvoen)||0;if(a)sum[c]=(sum[c]||0)+a;});
-  return toUSD(sum);
+  const proj=nodes.find(n=>n.id===projectId);
+  const projName=proj?proj.name:null;
+  let total=0;
+  gad(projectId).filter(n=>n.type==='work'&&!isDesignStage(n.stage)).forEach(w=>{
+    total+=toUSDsingle(w.currency,parseFloat(w.osvoen)||0);
+  });
+  mdr.filter(m=>(m.stageKey==='stage-1'||m.stageKey==='stage-2')&&m.project===projName).forEach(m=>{
+    const pct=(MDR_PCT[m.status]||0)/100;
+    total+=toUSDsingle(m.currency,(parseFloat(m.amount)||0)*pct);
+  });
+  return total;
 }
 function currentMonthIndex(months){
   if(!months.length)return 0;
@@ -904,7 +968,18 @@ function renderProjectChartGanttHTML(projectId){
     ganttHtml+='<span style="font-size:8px;color:#a8c4bc;text-align:center">'+monthLabels[mo.m-1]+'</span>';
   });
   ganttStages.forEach(gs=>{
-    const w=gad(projectId).filter(n=>n.type==='work'&&n.stage===gs.raw);
+    let w;
+    if(isDesignStage(gs.raw)){
+      const stageKey=gs.raw==='Базовое проектирование'?'stage-1':'stage-2';
+      const proj=nodes.find(n=>n.id===projectId);
+      const projName=proj?proj.name:null;
+      w=mdr.filter(m=>m.stageKey===stageKey&&m.project===projName).map(m=>({dateStart:m.dateStart||'',dateEnd:m.dateEnd||'',pct:MDR_PCT[m.status]||0}));
+    }else{
+      w=gad(projectId).filter(n=>n.type==='work'&&n.stage===gs.raw).map(n=>({
+        dateStart:n.dateStart||'',dateEnd:n.dateEnd||'',
+        pct:n.amount&&parseFloat(n.amount)?Math.min(100,Math.round((parseFloat(n.osvoen)||0)/parseFloat(n.amount)*100)):0
+      }));
+    }
     ganttHtml+='<span style="font-size:9px;color:#508870;text-align:left;justify-self:start;padding-right:6px">'+gs.label+'</span>';
     if(!w.length){ganttHtml+='<span></span>';return;}
     const starts=w.filter(x=>x.dateStart).map(x=>x.dateStart).sort();
@@ -914,8 +989,7 @@ function renderProjectChartGanttHTML(projectId){
     const startIdx=monthIndexForDate(months,pStart);
     const endIdx=monthIndexForDate(months,pEnd);
     const span=Math.max(1,endIdx-startIdx+1);
-    const done=w.filter(x=>x.status==='2').length;
-    const pct=w.length?Math.round(done/w.length*100):0;
+    const pct=w.length?Math.round(w.reduce((a,b)=>a+b.pct,0)/w.length):0;
     ganttHtml+='<div style="grid-column:'+(startIdx+2)+' / span '+span+';background:#e0f0ec;height:11px;border-radius:3px;margin:0 2px;position:relative;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:#0d8a7a"></div></div>';
   });
   ganttHtml+='</div>';
