@@ -436,8 +436,9 @@ function renderStagePages(){
     area.innerHTML=html;
   });
 }
-const MDR_STATUSES=['Не начато','IFR','IFA','IFD','IFC','AFC'];
-const MDR_PCT={'Не начато':0,'IFR':20,'IFA':40,'IFD':60,'IFC':80,'AFC':100};
+const MDR_STATUSES_1=['Не начато','IFR','IFA','IFD'];
+const MDR_STATUSES_2=['Не начато','IFR','IFA','IFC','AFC'];
+const MDR_PCT={'Не начато':0,'IFR':25,'IFA':50,'IFD':100,'IFC':75,'AFC':100};
 function showMdrFileMenu(e,stageKey){
   e.preventDefault();e.stopPropagation();
   if(cm)cm.remove();
@@ -563,7 +564,7 @@ function mrch(stageKey,pid,depth){
         '<td><input type="date" value="'+(n.dateEnd||'')+'" '+(!n.dateStart?'disabled':'')+' min="'+(n.dateStart||'')+'" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'dateEnd\',this.value)"></td>'+
         '<td class="tc"><select class="cur" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'currency\',this.value)">'+curs.map(c=>'<option value="'+c+'"'+(cur===c?' selected':'')+'>'+c+'</option>').join('')+'</select></td>'+
         '<td><input class="amt" type="number" value="'+(n.amount||'')+'" placeholder="0" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'amount\',this.value)"></td>'+
-        '<td><select class="cur" style="width:100%" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'status\',this.value)">'+MDR_STATUSES.map(s=>'<option value="'+s+'"'+(n.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></td>'+
+        '<td><select class="cur" style="width:100%" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'status\',this.value)">'+(stageKey==='stage-1'?MDR_STATUSES_1:MDR_STATUSES_2).map(s=>'<option value="'+s+'"'+(n.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></td>'+
         '<td class="pct-val">'+pct+'%</td>'+
         '<td><div class="barw"><div class="barf" style="width:'+pct+'%;background:'+pc+'"></div></div></td>'+
         '<td class="tc"><button class="mbtn" onclick="event.stopPropagation();showMdrCm(event,\''+stageKey+'\','+n.id+')">⋯</button></td>'+
