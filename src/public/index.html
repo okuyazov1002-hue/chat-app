@@ -229,18 +229,20 @@ table.rt tr:hover td{background:#f5fcfa}
     <div class="page" id="page-stage-1">
       <div class="page-title">1️⃣ Базовое проектирование</div>
       <div class="wbs-toolbar">
-        <button class="add-btn" onclick="addMdr('stage-1')">+ Добавить</button>
+        <button class="add-btn" onclick="addMdrLevel('stage-1')">+ Уровень</button>
         <button class="upload-btn" onclick="showMdrFileMenu(event,'stage-1')">📁</button>
         <input type="file" id="mdrFileInput-stage-1" accept=".xlsx,.xls" style="display:none" onchange="importMdrExcel('stage-1',this.files[0])">
+        <span style="font-size:10px;color:#90b0a8;font-style:italic">Выбери строку → нажми ⋯ или ПКМ</span>
       </div>
       <div class="wbs-area" id="stage-1-area"></div>
     </div>
     <div class="page" id="page-stage-2">
       <div class="page-title">2️⃣ Рабочее проектирование</div>
       <div class="wbs-toolbar">
-        <button class="add-btn" onclick="addMdr('stage-2')">+ Добавить</button>
+        <button class="add-btn" onclick="addMdrLevel('stage-2')">+ Уровень</button>
         <button class="upload-btn" onclick="showMdrFileMenu(event,'stage-2')">📁</button>
         <input type="file" id="mdrFileInput-stage-2" accept=".xlsx,.xls" style="display:none" onchange="importMdrExcel('stage-2',this.files[0])">
+        <span style="font-size:10px;color:#90b0a8;font-style:italic">Выбери строку → нажми ⋯ или ПКМ</span>
       </div>
       <div class="wbs-area" id="stage-2-area"></div>
     </div>
@@ -447,10 +449,79 @@ function showMdrFileMenu(e,stageKey){
   m.innerHTML='<div class="ctx-item" onclick="document.getElementById(\'mdrFileInput-'+stageKey+'\').click();rmCm()">📥 Загрузить</div><div class="ctx-item" onclick="exportMdrExcel(\''+stageKey+'\');rmCm()">📤 Скачать</div>';
   document.body.appendChild(m);cm=m;
 }
-function addMdr(stageKey){
-  mdr.push({id:Date.now(),stageKey,project:'',discipline:'',docType:'',drawingName:'',number:'',dateStart:'',dateEnd:'',currency:'USD',amount:'',status:'Не начато'});
+let mdrSelected={};
+function mgch(stageKey,pid){return mdr.filter(m=>m.stageKey===stageKey&&m.parentId===pid);}
+function mgad(stageKey,id){let r=[];mgch(stageKey,id).forEach(c=>{r.push(c);r=r.concat(mgad(stageKey,c.id));});return r;}
+function mgdp(stageKey,id){let d=0,c=mdr.find(m=>m.id===id&&m.stageKey===stageKey);while(c&&c.parentId){c=mdr.find(m=>m.id===c.parentId);d++;}return d;}
+function mivis(stageKey,n){if(!n.parentId)return true;const p=mdr.find(x=>x.id===n.parentId);if(!p||p.collapsed)return false;return mivis(stageKey,p);}
+function addMdrLevel(stageKey){
+  const sel=mdr.find(m=>m.id===mdrSelected[stageKey]);
+  const pid=sel?(sel.type==='level'?sel.id:(sel.parentId||null)):null;
+  const pNode=pid?mdr.find(m=>m.id===pid):null;
+  const pCode=pNode?pNode.code:'';
+  const sib=mdr.filter(m=>m.stageKey===stageKey&&m.parentId===pid&&m.type==='level');
+  const idx=sib.length+1;
+  const code=pCode?(pCode+'.'+(idx<10?'0'+idx:idx)):String(idx).padStart(2,'0');
+  const id=Date.now();
+  mdr.push({id,stageKey,parentId:pid,type:'level',code,name:'',collapsed:false});
+  if(pNode)pNode.collapsed=false;
+  mdrSelected[stageKey]=id;
+  save('mdr',mdr,300);renderMdrPages();
+  setTimeout(()=>{const el=document.getElementById('mni_'+id);if(el)el.focus();},60);
+}
+function addMdrDoc(stageKey){
+  const sel=mdr.find(m=>m.id===mdrSelected[stageKey]);
+  if(!sel){alert('Выбери уровень!');return;}
+  const pid=sel.type==='level'?sel.id:sel.parentId;
+  const pNode=mdr.find(m=>m.id===pid);
+  const pCode=pNode?pNode.code:'';
+  const sib=mdr.filter(m=>m.stageKey===stageKey&&m.parentId===pid&&m.type==='doc');
+  const idx=sib.length+1;
+  const code=pCode+(pCode?'.':'')+String(idx).padStart(2,'0');
+  const id=Date.now();
+  mdr.push({id,stageKey,parentId:pid,type:'doc',code,name:'',docType:'',currency:'USD',amount:'',status:'Не начато',dateStart:'',dateEnd:''});
+  if(pNode)pNode.collapsed=false;
+  mdrSelected[stageKey]=id;
+  save('mdr',mdr,300);renderMdrPages();
+  setTimeout(()=>{const el=document.getElementById('mni_'+id);if(el)el.focus();},60);
+}
+function delMdrSelected(stageKey){
+  const id=mdrSelected[stageKey];
+  if(!id){alert('Выбери строку');return;}
+  const desc=mgad(stageKey,id).map(d=>d.id);
+  if(desc.length&&!confirm('Удалить со всеми вложенными?'))return;
+  mdr=mdr.filter(m=>m.id!==id&&!desc.includes(m.id));
+  mdrSelected[stageKey]=null;
   save('mdr',mdr,300);renderMdrPages();
 }
+function moveMdrNode(stageKey,dir){
+  const id=mdrSelected[stageKey];
+  if(!id)return;
+  const n=mdr.find(x=>x.id===id);if(!n)return;
+  const sib=mdr.filter(x=>x.stageKey===stageKey&&x.parentId===n.parentId);
+  const idx=sib.findIndex(x=>x.id===id),ni2=idx+dir;
+  if(ni2<0||ni2>=sib.length)return;
+  const iA=mdr.indexOf(n),iB=mdr.indexOf(sib[ni2]);
+  mdr[iA]=sib[ni2];mdr[iB]=n;
+  save('mdr',mdr,300);renderMdrPages();
+}
+function toggleMdrCol(stageKey,id){const n=mdr.find(m=>m.id===id);if(n)n.collapsed=!n.collapsed;save('mdr',mdr,300);renderMdrPages();}
+function selMdrRow(stageKey,id){mdrSelected[stageKey]=id;renderMdrPages();}
+function showMdrCm(e,stageKey,id){
+  e.preventDefault();e.stopPropagation();
+  if(cm)cm.remove();
+  mdrSelected[stageKey]=id;renderMdrPages();
+  const m=document.createElement('div');
+  m.className='ctx-menu';
+  m.style.left=e.clientX+'px';
+  m.style.top=e.clientY+'px';
+  m.innerHTML='<div class="ctx-item" onclick="addMdrLevel(\''+stageKey+'\');rmCm()">📁 Добавить уровень</div><div class="ctx-item" onclick="addMdrDoc(\''+stageKey+'\');rmCm()">📄 Добавить документ</div><div class="ctx-sep"></div><div class="ctx-item" onclick="moveMdrNode(\''+stageKey+'\',-1);rmCm()">↑ Переместить вверх</div><div class="ctx-item" onclick="moveMdrNode(\''+stageKey+'\',1);rmCm()">↓ Переместить вниз</div><div class="ctx-sep"></div><div class="ctx-item danger" onclick="delMdrSelected(\''+stageKey+'\');rmCm()">✕ Удалить</div>';
+  document.body.appendChild(m);cm=m;
+  const rect=m.getBoundingClientRect();
+  if(rect.right>window.innerWidth)m.style.left=(e.clientX-rect.width)+'px';
+  if(rect.bottom>window.innerHeight)m.style.top=(e.clientY-rect.height)+'px';
+}
+
 function updM(id,f,v){
   const m=mdr.find(x=>x.id===id);if(!m)return;
   if(f==='dateEnd'){
@@ -461,77 +532,78 @@ function updM(id,f,v){
   m[f]=v;save('mdr',mdr,300);renderMdrPages();
 }
 function delM(id){if(!confirm('Удалить?'))return;mdr=mdr.filter(x=>x.id!==id);save('mdr',mdr,300);renderMdrPages();}
+function mrch(stageKey,pid,depth){
+  let html='';
+  mgch(stageKey,pid).forEach(n=>{
+    if(!mivis(stageKey,n))return;
+    const sel=n.id===mdrSelected[stageKey];
+    const dc=dcls(depth);
+    const sc=sel?' wsel':'';
+    const hch=mgch(stageKey,n.id).length>0;
+    if(n.type==='level'){
+      html+='<tr class="'+dc+sc+'" onclick="selMdrRow(\''+stageKey+'\','+n.id+')" oncontextmenu="showMdrCm(event,\''+stageKey+'\','+n.id+');return false">'+
+        '<td class="tc"><span class="lnum">'+(depth+1)+'</span></td>'+
+        '<td><span class="cpill" contenteditable="true" spellcheck="false" onclick="event.stopPropagation()" onblur="updM('+n.id+',\'code\',this.textContent.trim())">'+(n.code||'—')+'</span></td>'+
+        '<td><span class="tri'+(n.collapsed?' cl':'')+'" onclick="event.stopPropagation();toggleMdrCol(\''+stageKey+'\','+n.id+')">'+(hch?(n.collapsed?'▶':'▼'):'◆')+'</span><input class="ni" id="mni_'+n.id+'" value="'+(n.name||'')+'" placeholder="Наименование..." onclick="event.stopPropagation()" onchange="updM('+n.id+',\'name\',this.value)"></td>'+
+        '<td></td><td></td><td></td><td class="tc"></td><td></td><td></td><td></td><td></td>'+
+        '<td class="tc"><button class="mbtn" onclick="event.stopPropagation();showMdrCm(event,\''+stageKey+'\','+n.id+')">⋯</button></td>'+
+      '</tr>';
+      if(!n.collapsed)html+=mrch(stageKey,n.id,depth+1);
+    } else {
+      const pct=MDR_PCT[n.status]||0;
+      const pc=pcol(pct);
+      const curs=['USD','EUR','UZS','RUB'];
+      const cur=n.currency||'USD';
+      html+='<tr class="wk'+sc+'" onclick="selMdrRow(\''+stageKey+'\','+n.id+')" oncontextmenu="showMdrCm(event,\''+stageKey+'\','+n.id+');return false">'+
+        '<td class="tc"><span class="wnum">W</span></td>'+
+        '<td><span class="cpill cpill-w" contenteditable="true" spellcheck="false" onclick="event.stopPropagation()" onblur="updM('+n.id+',\'code\',this.textContent.trim())">'+(n.code||'—')+'</span></td>'+
+        '<td><input class="ni" id="mni_'+n.id+'" value="'+(n.name||'')+'" placeholder="Наименование чертежа..." onclick="event.stopPropagation()" onchange="updM('+n.id+',\'name\',this.value)"></td>'+
+        '<td><input class="ni" value="'+(n.docType||'')+'" placeholder="Тип документа" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'docType\',this.value)"></td>'+
+        '<td><input type="date" value="'+(n.dateStart||'')+'" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'dateStart\',this.value)"></td>'+
+        '<td><input type="date" value="'+(n.dateEnd||'')+'" '+(!n.dateStart?'disabled':'')+' min="'+(n.dateStart||'')+'" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'dateEnd\',this.value)"></td>'+
+        '<td class="tc"><select class="cur" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'currency\',this.value)">'+curs.map(c=>'<option value="'+c+'"'+(cur===c?' selected':'')+'>'+c+'</option>').join('')+'</select></td>'+
+        '<td><input class="amt" type="number" value="'+(n.amount||'')+'" placeholder="0" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'amount\',this.value)"></td>'+
+        '<td><select class="cur" style="width:100%" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'status\',this.value)">'+MDR_STATUSES.map(s=>'<option value="'+s+'"'+(n.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></td>'+
+        '<td class="pct-val">'+pct+'%</td>'+
+        '<td><div class="barw"><div class="barf" style="width:'+pct+'%;background:'+pc+'"></div></div></td>'+
+        '<td class="tc"><button class="mbtn" onclick="event.stopPropagation();showMdrCm(event,\''+stageKey+'\','+n.id+')">⋯</button></td>'+
+      '</tr>';
+    }
+  });
+  return html;
+}
 function renderMdrPage(stageKey){
   const area=document.getElementById(stageKey+'-area');
   if(!area)return;
-  const rows=mdr.filter(m=>m.stageKey===stageKey);
-  const curs=['USD','EUR','UZS','RUB'];
-  if(!rows.length){area.innerHTML='<div class="empty-tbl">Нет документов. Нажми «+ Добавить»</div>';return;}
-  let html='<table class="wbs" id="mdrTable_'+stageKey+'" style="width:100%"><thead><tr>'+
-    '<th style="width:70px">ID</th><th style="width:110px">Проект</th><th style="width:100px">Дисциплина</th><th style="width:120px">Тип документа</th>'+
-    '<th>Чертёж</th><th style="width:100px">Номер</th><th style="width:85px">Начало</th><th style="width:85px">Окончание</th>'+
-    '<th style="width:40px" class="tc">Вал.</th><th style="width:90px" class="tr">Стоимость</th>'+
-    '<th style="width:90px">Статус</th><th style="width:45px" class="tr">%</th><th style="width:110px">Прогресс</th><th style="width:28px"></th>'+
+  if(!mdr.filter(m=>m.stageKey===stageKey&&!m.parentId).length){
+    area.innerHTML='<div class="empty-tbl">Нажми ⋯ на любой строке или добавь первый уровень<br><br><button onclick="addMdrLevel(\''+stageKey+'\')" style="background:#0d8a7a;color:white;border:none;border-radius:6px;padding:6px 16px;font-size:12px;cursor:pointer;margin-top:6px">+ Добавить первый уровень</button></div>';
+    return;
+  }
+  let html='<table class="wbs" id="mdrTable_'+stageKey+'" style="width:100%;min-width:900px"><thead><tr>'+
+    '<th style="width:28px" class="tc">L</th><th style="width:110px">WBS</th><th style="width:200px">Наименование</th>'+
+    '<th style="width:130px">Тип документа</th><th style="width:88px">Начало</th><th style="width:88px">Окончание</th>'+
+    '<th style="width:42px" class="tc">Вал.</th><th style="width:100px" class="tr">Стоимость</th>'+
+    '<th style="width:90px">Статус</th><th style="width:50px" class="tr">%</th><th style="width:120px">Прогресс</th><th style="width:28px" class="tc"></th>'+
     '</tr></thead><tbody>';
-  rows.forEach(m=>{
-    const pct=MDR_PCT[m.status]||0;
-    const pc=pcol(pct);
-    const cur=m.currency||'USD';
-    html+='<tr class="wk">'+
-      '<td style="font-size:9px;color:#a8c4bc">'+m.id+'</td>'+
-      '<td><input class="ni" value="'+(m.project||'')+'" placeholder="Проект" onchange="updM('+m.id+',\'project\',this.value)"></td>'+
-      '<td><input class="ni" value="'+(m.discipline||'')+'" placeholder="Дисциплина" onchange="updM('+m.id+',\'discipline\',this.value)"></td>'+
-      '<td><input class="ni" value="'+(m.docType||'')+'" placeholder="Тип документа" onchange="updM('+m.id+',\'docType\',this.value)"></td>'+
-      '<td><input class="ni" value="'+(m.drawingName||'')+'" placeholder="Наименование чертежа" onchange="updM('+m.id+',\'drawingName\',this.value)"></td>'+
-      '<td><input class="ni" value="'+(m.number||'')+'" placeholder="Номер" onchange="updM('+m.id+',\'number\',this.value)"></td>'+
-      '<td><input type="date" value="'+(m.dateStart||'')+'" onchange="updM('+m.id+',\'dateStart\',this.value)"></td>'+
-      '<td><input type="date" value="'+(m.dateEnd||'')+'" '+(!m.dateStart?'disabled':'')+' min="'+(m.dateStart||'')+'" onchange="updM('+m.id+',\'dateEnd\',this.value)"></td>'+
-      '<td class="tc"><select class="cur" onchange="updM('+m.id+',\'currency\',this.value)">'+curs.map(c=>'<option value="'+c+'"'+(cur===c?' selected':'')+'>'+c+'</option>').join('')+'</select></td>'+
-      '<td><input class="amt" type="number" value="'+(m.amount||'')+'" placeholder="0" onchange="updM('+m.id+',\'amount\',this.value)"></td>'+
-      '<td><select class="cur" style="width:100%" onchange="updM('+m.id+',\'status\',this.value)">'+MDR_STATUSES.map(s=>'<option value="'+s+'"'+(m.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></td>'+
-      '<td class="pct-val">'+pct+'%</td>'+
-      '<td><div class="barw"><div class="barf" style="width:'+pct+'%;background:'+pc+'"></div></div></td>'+
-      '<td class="tc"><button class="mbtn" onclick="delM('+m.id+')">✕</button></td>'+
-    '</tr>';
-  });
+  html+=mrch(stageKey,null,0);
   html+='</tbody></table>';
   area.innerHTML=html;
   makeResizable(document.getElementById('mdrTable_'+stageKey));
 }
-function makeResizable(table){
-  if(!table)return;
-  table.style.tableLayout='fixed';
-  const ths=table.querySelectorAll('thead th');
-  ths.forEach(th=>{
-    th.style.position='relative';
-    if(th.querySelector('.col-resize-handle'))return;
-    const handle=document.createElement('span');
-    handle.className='col-resize-handle';
-    th.appendChild(handle);
-    handle.addEventListener('mousedown',e=>{
-      e.preventDefault();e.stopPropagation();
-      const startX=e.pageX;
-      const startWidth=th.offsetWidth;
-      function onMove(e2){
-        const newWidth=Math.max(30,startWidth+(e2.pageX-startX));
-        th.style.width=newWidth+'px';
-      }
-      function onUp(){
-        document.removeEventListener('mousemove',onMove);
-        document.removeEventListener('mouseup',onUp);
-      }
-      document.addEventListener('mousemove',onMove);
-      document.addEventListener('mouseup',onUp);
-    });
-  });
-}
 function renderMdrPages(){renderMdrPage('stage-1');renderMdrPage('stage-2');}
 function exportMdrExcel(stageKey){
-  const rows=[['Проект','Дисциплина','Тип документа','Чертёж','Номер','Начало','Окончание','Статус','Прогресс','Стоимость']];
-  mdr.filter(m=>m.stageKey===stageKey).forEach(m=>{
-    const pct=MDR_PCT[m.status]||0;
-    rows.push([m.project||'',m.discipline||'',m.docType||'',m.drawingName||'',m.number||'',m.dateStart||'',m.dateEnd||'',m.status||'Не начато',pct+'%',(m.amount||0)+' '+(m.currency||'USD')]);
-  });
+  const rows=[['L','WBS','Наименование','Тип документа','Начало','Окончание','Валюта','Стоимость','Статус']];
+  function walk(pid,depth){
+    mgch(stageKey,pid).forEach(n=>{
+      if(n.type==='level'){
+        rows.push([depth+1,n.code||'',n.name||'','','','','','','']);
+        walk(n.id,depth+1);
+      }else{
+        rows.push(['W',n.code||'',n.name||'',n.docType||'',n.dateStart||'',n.dateEnd||'',n.currency||'USD',n.amount||0,n.status||'Не начато']);
+      }
+    });
+  }
+  walk(null,0);
   const ws=XLSX.utils.aoa_to_sheet(rows);
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'MDR');
@@ -546,20 +618,35 @@ function importMdrExcel(stageKey,file){
     const rows=XLSX.utils.sheet_to_json(ws,{header:1});
     const statusSet=new Set(MDR_STATUSES);
     const newRows=[];
+    const stack=[];
     for(let i=1;i<rows.length;i++){
       const r=rows[i];
       if(!r||!r[0])continue;
-      const status=statusSet.has(r[7])?r[7]:'Не начато';
-      let amount='',currency='USD';
-      if(r[9]){
-        const parts=String(r[9]).trim().split(' ');
-        amount=parseFloat(parts[0])||'';
-        if(parts[1])currency=parts[1];
+      const level=r[0];
+      const code=String(r[1]||'');
+      const name=String(r[2]||'');
+      const id=Date.now()+i;
+      if(level==='W'){
+        const parentId=stack.length?stack[stack.length-1].id:null;
+        const docType=String(r[3]||'');
+        const dateStart=excelDateToISO(r[4]);
+        const dateEnd=excelDateToISO(r[5]);
+        const currency=r[6]||'USD';
+        const amount=r[7]||'';
+        const status=statusSet.has(r[8])?r[8]:'Не начато';
+        newRows.push({id,stageKey,parentId,type:'doc',code,name,docType,dateStart,dateEnd,currency,amount,status});
+      }else{
+        const depth=parseInt(level)-1;
+        while(stack.length>depth)stack.pop();
+        const parentId=stack.length?stack[stack.length-1].id:null;
+        const node={id,stageKey,parentId,type:'level',code,name,collapsed:false};
+        newRows.push(node);
+        stack.push(node);
       }
-      newRows.push({id:Date.now()+i,stageKey,project:String(r[0]||''),discipline:String(r[1]||''),docType:String(r[2]||''),drawingName:String(r[3]||''),number:String(r[4]||''),dateStart:excelDateToISO(r[5]),dateEnd:excelDateToISO(r[6]),status,currency,amount});
     }
-    if(!confirm('Добавить '+newRows.length+' строк из Excel?'))return;
-    mdr=mdr.concat(newRows);
+    if(!confirm('Заменить текущие данные этого этапа на данные из Excel?\nНайдено строк: '+newRows.length))return;
+    mdr=mdr.filter(m=>m.stageKey!==stageKey).concat(newRows);
+    mdrSelected[stageKey]=null;
     save('mdr',mdr,300);renderMdrPages();
     alert('✅ Импортировано: '+newRows.length+' строк');
   };
@@ -777,8 +864,14 @@ function renderWBS(){
 }
 
 function isDesignStage(name){return name==='Базовое проектирование'||name==='Рабочее проектирование';}
+function mdrDocsForProject(stageKey,projectName){
+  const roots=mdr.filter(m=>m.stageKey===stageKey&&!m.parentId&&m.type==='level'&&m.name===projectName);
+  let docs=[];
+  roots.forEach(r=>{docs=docs.concat(mgad(stageKey,r.id).filter(x=>x.type==='doc'));});
+  return docs;
+}
 function stageGroupData(){
-  const designItems=mdr.filter(m=>m.stageKey==='stage-1'||m.stageKey==='stage-2').map(m=>({amount:parseFloat(m.amount)||0,currency:m.currency||'USD',pct:MDR_PCT[m.status]||0}));
+  const designItems=mdr.filter(m=>(m.stageKey==='stage-1'||m.stageKey==='stage-2')&&m.type==='doc').map(m=>({amount:parseFloat(m.amount)||0,currency:m.currency||'USD',pct:MDR_PCT[m.status]||0}));
   const supplyStages=['Изготовление оборудования','Логистика и доставка'];
   const constructionStages=['Строительно-монтажные работы','Пусконаладочные работы'];
   const wbsToItem=n=>({amount:parseFloat(n.amount)||0,currency:n.currency||'USD',pct:n.amount&&parseFloat(n.amount)?Math.min(100,Math.round((parseFloat(n.osvoen)||0)/parseFloat(n.amount)*100)):0});
@@ -822,7 +915,9 @@ function projectStageItems(projectId,groupKey){
   const proj=nodes.find(n=>n.id===projectId);
   const projName=proj?proj.name:null;
   if(groupKey==='design'){
-    return mdr.filter(m=>(m.stageKey==='stage-1'||m.stageKey==='stage-2')&&m.project===projName).map(m=>({
+    const docs1=mdrDocsForProject('stage-1',projName);
+    const docs2=mdrDocsForProject('stage-2',projName);
+    return docs1.concat(docs2).map(m=>({
       dateStart:m.dateStart||'',dateEnd:m.dateEnd||'',amount:parseFloat(m.amount)||0,currency:m.currency||'USD',pct:MDR_PCT[m.status]||0
     }));
   }
@@ -883,7 +978,8 @@ function toUSDsingle(cur,val){const o={};if(val)o[cur||'USD']=val;return toUSD(o
 function combinedDatedItems(projectId){
   const proj=nodes.find(n=>n.id===projectId);
   const projName=proj?proj.name:null;
-  const mdrItems=mdr.filter(m=>(m.stageKey==='stage-1'||m.stageKey==='stage-2')&&m.project===projName&&m.dateStart&&m.dateEnd).map(m=>({
+  const mdrDocs=mdrDocsForProject('stage-1',projName).concat(mdrDocsForProject('stage-2',projName)).filter(m=>m.dateStart&&m.dateEnd);
+  const mdrItems=mdrDocs.map(m=>({
     dateStart:m.dateStart,dateEnd:m.dateEnd,amount:parseFloat(m.amount)||0,currency:m.currency||'USD',osvoenPct:(MDR_PCT[m.status]||0)/100
   }));
   const wbsItems=gad(projectId).filter(n=>n.type==='work'&&n.dateStart&&n.dateEnd&&!isDesignStage(n.stage)).map(n=>({
@@ -941,7 +1037,7 @@ function projFactTotal(projectId){
   gad(projectId).filter(n=>n.type==='work'&&!isDesignStage(n.stage)).forEach(w=>{
     total+=toUSDsingle(w.currency,parseFloat(w.osvoen)||0);
   });
-  mdr.filter(m=>(m.stageKey==='stage-1'||m.stageKey==='stage-2')&&m.project===projName).forEach(m=>{
+  mdrDocsForProject('stage-1',projName).concat(mdrDocsForProject('stage-2',projName)).forEach(m=>{
     const pct=(MDR_PCT[m.status]||0)/100;
     total+=toUSDsingle(m.currency,(parseFloat(m.amount)||0)*pct);
   });
@@ -1004,7 +1100,7 @@ function renderProjectChartGanttHTML(projectId){
       const stageKey=gs.raw==='Базовое проектирование'?'stage-1':'stage-2';
       const proj=nodes.find(n=>n.id===projectId);
       const projName=proj?proj.name:null;
-      w=mdr.filter(m=>m.stageKey===stageKey&&m.project===projName).map(m=>({dateStart:m.dateStart||'',dateEnd:m.dateEnd||'',pct:MDR_PCT[m.status]||0}));
+      w=mdrDocsForProject(stageKey,projName).map(m=>({dateStart:m.dateStart||'',dateEnd:m.dateEnd||'',pct:MDR_PCT[m.status]||0}));
     }else{
       w=gad(projectId).filter(n=>n.type==='work'&&n.stage===gs.raw).map(n=>({
         dateStart:n.dateStart||'',dateEnd:n.dateEnd||'',
