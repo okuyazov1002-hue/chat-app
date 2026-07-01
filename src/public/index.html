@@ -699,12 +699,14 @@ function importMdrExcel(stageKey,file){
       if(level==='W'){
         const parentId=stack.length?stack[stack.length-1].id:null;
         const docType=String(r[3]||'');
-        const dateStart=excelDateToISO(r[4]);
-        const dateEnd=excelDateToISO(r[5]);
-        const currency=r[6]||'USD';
-        const amount=r[7]||'';
-        const status=statusSet.has(r[8])?r[8]:'Не начато';
-        newRows.push({id,stageKey,parentId,type:'doc',code,name,docType,dateStart,dateEnd,currency,amount,status});
+        const docNum=String(r[4]||'');
+        const lot=String(r[5]||'');
+        const dateStart=excelDateToISO(r[6]);
+        const dateEnd=excelDateToISO(r[7]);
+        const currency=r[8]||'USD';
+        const amount=r[9]||'';
+        const status=String(r[10]||'Не начато');
+        newRows.push({id,stageKey,parentId,type:'doc',code,name,docType,docNum,lot,dateStart,dateEnd,currency,amount,status});
       }else{
         const depth=parseInt(level)-1;
         while(stack.length>depth)stack.pop();
