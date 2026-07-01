@@ -557,15 +557,86 @@ function updateStageCards(){
   set('supply',g.supply);
   set('constr',g.construction);
 }
+let expandedProjectId=null;
+function toggleProjectExpand(id){expandedProjectId=expandedProjectId===id?null:id;renderDash();}
+function equipmentInfoForProject(projectId){
+  const proj=nodes.find(n=>n.id===projectId);
+  if(!proj)return null;
+  const list=equipment.filter(e=>e.project===proj.name);
+  if(!list.length)return null;
+  const done=list.filter(e=>e.status==='done').length;
+  return {done,total:list.length};
+}
+function renderProjectStageCards(projectId){
+  const groupMap={'Подготовка':'design','Базовый инжиниринг':'design','Детальный инжиниринг':'design','Закупки':'supply','Логистика':'supply','Строительство':'construction','Пусконаладка':'construction'};
+  const works=gad(projectId).filter(n=>n.type==='work'&&n.stage&&groupMap[n.stage]);
+  const groups={design:[],supply:[],construction:[]};
+  works.forEach(w=>groups[groupMap[w.stage]].push(w));
+  const cards=[{key:'design',label:'Проектирование',barColor:'#1a9a5a'},{key:'supply',label:'Поставка',barColor:'#c07820'},{key:'construction',label:'Строительство',barColor:'#c04040'}];
+  const todayStr=new Date().toISOString().split('T')[0];
+  const fd=d=>d?new Date(d).toLocaleDateString('ru-RU'):'—';
+  const html=cards.map(c=>{
+    const w=groups[c.key];
+    let sum={};
+    w.forEach(x=>{const cur=x.currency||'USD';const a=parseFloat(x.amount)||0;if(a)sum[cur]=(sum[cur]||0)+a;});
+    const cost=toUSD(sum);
+    const done=w.filter(x=>x.status==='2').length;
+    const pct=w.length?Math.round(done/w.length*100):0;
+    const starts=w.filter(x=>x.dateStart).map(x=>x.dateStart).sort();
+    const ends=w.filter(x=>x.dateEnd).map(x=>x.dateEnd).sort();
+    const planStart=starts[0]||'';
+    const planEnd=ends.length?ends[ends.length-1]:'';
+    let forecast='',forecastColor='#7aa89a';
+    if(!w.length){forecast='';}
+    else if(pct>=100){forecast=planEnd;forecastColor='#1a9a5a';}
+    else if(!planEnd){forecast='';}
+    else if(todayStr<=planEnd){forecast=planEnd;forecastColor='#1a9a5a';}
+    else{
+      const startD=new Date(planStart||planEnd),todayD=new Date(todayStr);
+      const elapsed=Math.max(1,Math.round((todayD-startD)/86400000));
+      const pace=pct/elapsed;
+      if(pace<=0){forecast='—';forecastColor='#999';}
+      else{
+        const remDays=Math.round((100-pct)/pace);
+        const fD=new Date(todayD.getTime()+remDays*86400000);
+        forecast=fD.toISOString().split('T')[0];
+        forecastColor='#c04040';
+      }
+    }
+    const eqInfo=c.key==='supply'?equipmentInfoForProject(projectId):null;
+    return '<div style="background:#fafefd;border-radius:8px;padding:10px 12px;border:1px solid #e8f0ee">'+
+      '<div style="font-size:10px;color:#7aa89a;margin-bottom:5px">'+c.label+'</div>'+
+      '<div style="font-size:15px;font-weight:700;color:#054e44;margin-bottom:5px">$'+cost.toLocaleString('ru-RU',{maximumFractionDigits:0})+'</div>'+
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:'+(eqInfo?6:8)+'px">'+
+      '<div style="flex:1;height:6px;background:#e0f0ec;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+c.barColor+';border-radius:3px"></div></div>'+
+      '<span style="font-size:10px;font-weight:600;color:#054e44">'+pct+'%</span></div>'+
+      (eqInfo?('<div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#7a5a10;background:#fdf4e6;border-radius:4px;padding:3px 6px;margin-bottom:6px;width:fit-content">оборудование: '+eqInfo.done+' / '+eqInfo.total+' ед.</div>'):'')+
+      '<div style="font-size:9px;color:#7aa89a;border-top:1px dashed #e0ece8;padding-top:6px">'+
+      '<div>план: '+fd(planStart)+' – '+fd(planEnd)+'</div>'+
+      '<div style="color:'+forecastColor+';margin-top:2px">прогноз: '+(forecast?fd(forecast):'—')+'</div>'+
+      '</div></div>';
+  }).join('');
+  return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f5f3"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'+html+'</div></div>';
+}
 function renderDash(){
   const roots=nodes.filter(n=>!n.parentId&&n.type==='wbs');
   updateStageCards();
   const dp=document.getElementById('dashProgs');
   if(!roots.length){dp.innerHTML='<div class="empty-tbl">Добавьте проекты в разделе «Информация по проектам»</div>';return;}
   dp.innerHTML=roots.filter(r=>gad(r.id).some(d=>d.type==="work")).map(r=>{
-    const p=cpct(r.id),s=csum(r.id),o=cosv(r.id);
+    const p=cpct(r.id),s=csum(r.id);
     const c=p>=100?'#1a9a5a':p>50?'#0d8a7a':p>20?'#c07820':'#c04040';
-    return `<div class="prow"><span class="prow-name">${r.name||"Без названия"}</span><div class="pw"><div class="pf" style="width:${Math.min(p,100)}%;background:${c}"></div></div><span class="pp">${p.toFixed(1)}%</span><span style="font-size:10px;color:#5ab0a0;margin-left:6px;white-space:nowrap">$${toUSD(s).toLocaleString("ru-RU",{maximumFractionDigits:0})}<br>${fmtMulti(s)}<br>освоено: ${fmtMulti(o)}</span></div><div style="margin-top:6px;padding-top:6px;border-top:1px solid #f0f5f3">${renderStageBars(r.id)}</div></div>`;
+    const isOpen=expandedProjectId===r.id;
+    return '<div class="prow" style="flex-direction:column;align-items:stretch">'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+      '<button onclick="toggleProjectExpand('+r.id+')" style="background:#f0f8f5;border:1px solid #b0ddd4;color:#0a7060;border-radius:4px;width:22px;height:22px;font-size:10px;cursor:pointer;flex-shrink:0">'+(isOpen?'▾':'▸')+'</button>'+
+      '<span class="prow-name" style="width:150px">'+(r.name||"Без названия")+'</span>'+
+      '<div class="pw"><div class="pf" style="width:'+Math.min(p,100)+'%;background:'+c+'"></div></div>'+
+      '<span class="pp">'+p.toFixed(1)+'%</span>'+
+      '<span style="font-size:10px;color:#5ab0a0;white-space:nowrap;flex-shrink:0">$'+toUSD(s).toLocaleString("ru-RU",{maximumFractionDigits:0})+'</span>'+
+      '</div>'+
+      (isOpen?renderProjectStageCards(r.id):'')+
+      '</div>';
   }).join('');
 }
 
