@@ -560,6 +560,8 @@ function mrch(stageKey,pid,depth){
         '<td><span class="cpill cpill-w" contenteditable="true" spellcheck="false" onclick="event.stopPropagation()" onblur="updM('+n.id+',\'code\',this.textContent.trim())">'+(n.code||'—')+'</span></td>'+
         '<td><input class="ni" id="mni_'+n.id+'" value="'+(n.name||'')+'" placeholder="Наименование чертежа..." onclick="event.stopPropagation()" onchange="updM('+n.id+',\'name\',this.value)"></td>'+
         '<td><input class="ni" value="'+(n.docType||'')+'" placeholder="Тип документа" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'docType\',this.value)"></td>'+
+        '<td><input class="ni" value="'+(n.docNum||'')+'" placeholder="№ документа" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'docNum\',this.value)"></td>'+
+        '<td><input class="ni" value="'+(n.lot||'')+'" placeholder="Лот" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'lot\',this.value)"></td>'+
         '<td><input type="date" value="'+(n.dateStart||'')+'" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'dateStart\',this.value)"></td>'+
         '<td><input type="date" value="'+(n.dateEnd||'')+'" '+(!n.dateStart?'disabled':'')+' min="'+(n.dateStart||'')+'" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'dateEnd\',this.value)"></td>'+
         '<td class="tc"><select class="cur" onclick="event.stopPropagation()" onchange="updM('+n.id+',\'currency\',this.value)">'+curs.map(c=>'<option value="'+c+'"'+(cur===c?' selected':'')+'>'+c+'</option>').join('')+'</select></td>'+
@@ -582,7 +584,7 @@ function renderMdrPage(stageKey){
   }
   let html='<table class="wbs" id="mdrTable_'+stageKey+'" style="width:100%;min-width:900px"><thead><tr>'+
     '<th style="width:28px" class="tc">L</th><th style="width:110px">WBS</th><th style="width:200px">Наименование</th>'+
-    '<th style="width:130px">Тип документа</th><th style="width:88px">Начало</th><th style="width:88px">Окончание</th>'+
+    '<th style="width:130px">Тип документа</th><th style="width:80px">№ Документа</th><th style="width:80px">Лот</th><th style="width:88px">Начало</th><th style="width:88px">Окончание</th>'+
     '<th style="width:42px" class="tc">Вал.</th><th style="width:100px" class="tr">Стоимость</th>'+
     '<th style="width:90px">Статус</th><th style="width:50px" class="tr">%</th><th style="width:120px">Прогресс</th><th style="width:28px" class="tc"></th>'+
     '</tr></thead><tbody>';
