@@ -174,12 +174,11 @@ table.rt tr:hover td{background:#f5fcfa}
       <div style="display:flex;align-items:center;justify-content:space-between;padding-right:14px"><div class="page-title">📊 Отчёт по проектам</div><div style="display:flex;align-items:center;gap:10px"><div style="display:flex;align-items:center;gap:6px;font-size:9px;color:#7aa89a"><span>курсы:</span><span>EUR<input id="rateEUR" value="1.08" style="border:none;background:#f0f8f5;border-radius:3px;padding:1px 4px;font-size:9px;width:46px;color:#0a6050;text-align:right" onchange="renderDash()"></span><span>UZS<input id="rateUZS" value="0.000081" style="border:none;background:#f0f8f5;border-radius:3px;padding:1px 4px;font-size:9px;width:60px;color:#0a6050;text-align:right" onchange="renderDash()"></span><span>RUB<input id="rateRUB" value="0.011" style="border:none;background:#f0f8f5;border-radius:3px;padding:1px 4px;font-size:9px;width:46px;color:#0a6050;text-align:right" onchange="renderDash()"></span></div><button onclick="window.print()" style="background:#0d8a7a;color:white;border:none;border-radius:5px;padding:5px 12px;font-size:11px;cursor:pointer;white-space:nowrap">🖨 Печать PDF</button></div></div>
       <div class="dash-scroll">
         <div class="dash-grid">
-          <div class="dash-card"><div class="dash-num" id="d-total">0</div><div class="dash-lbl">Активных проектов</div></div>
-          <div class="dash-card" style="border-color:#1a6b9a"><div class="dash-num" style="color:#1a3a6a" id="d-avg">0%</div><div class="dash-lbl">Средний прогресс</div></div>
-          <div class="dash-card" style="border-color:#c07820"><div class="dash-num" style="color:#7a4810" id="d-doing">0</div><div class="dash-lbl">Выполняется</div></div>
-          <div class="dash-card" style="border-color:#1a9a5a"><div class="dash-num" style="color:#0a5a30" id="d-done">0</div><div class="dash-lbl">Завершено</div></div>
+          <div class="dash-card" style="border-color:#054e44"><div class="dash-lbl">Итого</div><div class="dash-num" id="sc-total-cost" style="color:#054e44;font-size:19px">$0</div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><div class="barw" style="flex:1"><div class="barf" id="sc-total-bar" style="width:0%;background:#054e44"></div></div><span id="sc-total-pct" style="font-size:11px;font-weight:600;color:#054e44">0%</span></div></div>
+          <div class="dash-card" style="border-color:#1a6b9a"><div class="dash-lbl">Проектирование</div><div class="dash-num" id="sc-design-cost" style="color:#1a3a6a;font-size:19px">$0</div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><div class="barw" style="flex:1"><div class="barf" id="sc-design-bar" style="width:0%;background:#1a9a5a"></div></div><span id="sc-design-pct" style="font-size:11px;font-weight:600;color:#1a3a6a">0%</span></div></div>
+          <div class="dash-card" style="border-color:#c07820"><div class="dash-lbl">Поставка</div><div class="dash-num" id="sc-supply-cost" style="color:#7a4810;font-size:19px">$0</div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><div class="barw" style="flex:1"><div class="barf" id="sc-supply-bar" style="width:0%;background:#c07820"></div></div><span id="sc-supply-pct" style="font-size:11px;font-weight:600;color:#7a4810">0%</span></div></div>
+          <div class="dash-card" style="border-color:#c04040"><div class="dash-lbl">Строительство</div><div class="dash-num" id="sc-constr-cost" style="color:#7a2020;font-size:19px">$0</div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><div class="barw" style="flex:1"><div class="barf" id="sc-constr-bar" style="width:0%;background:#c04040"></div></div><span id="sc-constr-pct" style="font-size:11px;font-weight:600;color:#7a2020">0%</span></div></div>
         </div>
-        <div class="section"><div class="sec-title">Сводка по этапам</div><div style="overflow:auto"><table id="stageTable" style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#0d8a7a"><th style="color:white;padding:7px 9px;text-align:left;font-size:10px">Этап</th><th style="color:white;padding:7px 9px;text-align:left;font-size:10px">Начало</th><th style="color:white;padding:7px 9px;text-align:left;font-size:10px">Окончание</th><th style="color:white;padding:7px 9px;text-align:left;font-size:10px">Итого в USD</th><th style="color:white;padding:7px 9px;text-align:left;font-size:10px">Прогресс</th></tr></thead><tbody id="stageTableBody"></tbody></table></div></div>
         <div class="prog-section">
           <h3>Прогресс по проектам</h3>
           <div id="dashProgs"><div class="empty-tbl">Добавьте проекты в разделе «Информация по проектам»</div></div>
@@ -529,13 +528,38 @@ function renderWBS(){
   tb.innerHTML=rch(null,0);
 }
 
+function stageGroupData(){
+  const groupMap={'Подготовка':'design','Базовый инжиниринг':'design','Детальный инжиниринг':'design','Закупки':'supply','Логистика':'supply','Строительство':'construction','Пусконаладка':'construction'};
+  const groups={design:[],supply:[],construction:[]};
+  nodes.filter(n=>n.type==='work'&&n.stage&&groupMap[n.stage]).forEach(w=>{groups[groupMap[w.stage]].push(w);});
+  const calc=(works)=>{
+    let sum={};
+    works.forEach(w=>{const c=w.currency||'USD';const a=parseFloat(w.amount)||0;if(a)sum[c]=(sum[c]||0)+a;});
+    const done=works.filter(w=>w.status==='2').length;
+    const pct=works.length?Math.round(done/works.length*100):0;
+    return {cost:toUSD(sum),pct};
+  };
+  const design=calc(groups.design);
+  const supply=calc(groups.supply);
+  const construction=calc(groups.construction);
+  const total=calc([...groups.design,...groups.supply,...groups.construction]);
+  return {design,supply,construction,total};
+}
+function updateStageCards(){
+  const g=stageGroupData();
+  const set=(prefix,data)=>{
+    document.getElementById('sc-'+prefix+'-cost').textContent='$'+data.cost.toLocaleString('ru-RU',{maximumFractionDigits:0});
+    document.getElementById('sc-'+prefix+'-bar').style.width=Math.min(data.pct,100)+'%';
+    document.getElementById('sc-'+prefix+'-pct').textContent=data.pct+'%';
+  };
+  set('total',g.total);
+  set('design',g.design);
+  set('supply',g.supply);
+  set('constr',g.construction);
+}
 function renderDash(){
   const roots=nodes.filter(n=>!n.parentId&&n.type==='wbs');
-  document.getElementById('d-total').textContent=roots.length;
-  const pcts=roots.map(r=>cpct(r.id));
-  document.getElementById('d-avg').textContent=(pcts.length?Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length):0)+'%';
-  document.getElementById('d-doing').textContent=nodes.filter(n=>n.type==='work'&&n.status==='1').length;
-  document.getElementById('d-done').textContent=nodes.filter(n=>n.type==='work'&&n.status==='2').length;
+  updateStageCards();
   const dp=document.getElementById('dashProgs');
   if(!roots.length){dp.innerHTML='<div class="empty-tbl">Добавьте проекты в разделе «Информация по проектам»</div>';return;}
   dp.innerHTML=roots.filter(r=>gad(r.id).some(d=>d.type==="work")).map(r=>{
@@ -543,7 +567,6 @@ function renderDash(){
     const c=p>=100?'#1a9a5a':p>50?'#0d8a7a':p>20?'#c07820':'#c04040';
     return `<div class="prow"><span class="prow-name">${r.name||"Без названия"}</span><div class="pw"><div class="pf" style="width:${Math.min(p,100)}%;background:${c}"></div></div><span class="pp">${p.toFixed(1)}%</span><span style="font-size:10px;color:#5ab0a0;margin-left:6px;white-space:nowrap">$${toUSD(s).toLocaleString("ru-RU",{maximumFractionDigits:0})}<br>${fmtMulti(s)}<br>освоено: ${fmtMulti(o)}</span></div><div style="margin-top:6px;padding-top:6px;border-top:1px solid #f0f5f3">${renderStageBars(r.id)}</div></div>`;
   }).join('');
-  renderStageTable();
 }
 
 function renderStageTable(){
