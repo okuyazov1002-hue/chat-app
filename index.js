@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -29,15 +30,6 @@ async function connectDB() {
 }
 
 const DB = {
-  async read(key) {
-    try {
-      const doc = await db.collection('data').findOne({ _id: key });
-      return doc ? doc.value : null;
-    } catch (e) {
-      console.error('DB read error:', e);
-      return null;
-    }
-  },
   async write(key, data) {
     try {
       await db.collection('data').updateOne(
@@ -58,8 +50,17 @@ app.use(express.static('public'));
 
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  const user = await db.collection('users').findOne({ username, password });
-  if (user) res.json({ ok: true, name: user.name, username: user.username });
+  try {
+    if (db) {
+      const user = await db.collection('users').findOne({ username, password });
+      if (user) return res.json({ ok: true, name: user.name, username: user.username });
+      return res.json({ ok: false });
+    }
+  } catch (e) {
+    console.error('Login DB error, используем DEFAULT_USERS:', e.message);
+  }
+  const fallback = DEFAULT_USERS.find(u => u.username === username && u.password === password);
+  if (fallback) res.json({ ok: true, name: fallback.name, username: fallback.username });
   else res.json({ ok: false });
 });
 
@@ -80,14 +81,22 @@ app.post('/change-password', async (req, res) => {
 });
 
 app.get('/api/dashboard', async (req, res) => {
-  const data = await DB.read('dashboard');
-  res.json(data || null);
+  try {
+    const doc = await db.collection('data').findOne({ _id: 'dashboard' });
+    if (!doc) return res.json(null);
+    res.json({ ...doc.value, _serverUpdatedAt: doc.updatedAt });
+  } catch (e) {
+    console.error('Dashboard read error:', e);
+    res.json(null);
+  }
 });
 
 app.post('/api/dashboard', async (req, res) => {
   const ok = await DB.write('dashboard', req.body);
   if (ok) {
-    io.emit('dashboard_updated', req.body);
+    const doc = await db.collection('data').findOne({ _id: 'dashboard' });
+    const payload = { ...req.body, _serverUpdatedAt: doc ? doc.updatedAt : req.body.updatedAt };
+    io.emit('dashboard_updated', payload);
     res.json({ ok: true });
   } else {
     res.json({ ok: false });
@@ -98,9 +107,7 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-connectDB().then(() => {
-  server.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));
-}).catch(err => {
-  console.error('Ошибка подключения к MongoDB:', err);
-  process.exit(1);
+connectDB().catch(err => {
+  console.error('Mongo не подключена, сервер работает в режиме без базы (данные не сохраняются):', err.message);
 });
+server.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));
