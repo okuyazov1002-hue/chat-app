@@ -103,7 +103,7 @@ function handleFile(file){
       const ws = wb.Sheets[wb.SheetNames[0]];
       const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
       const rows = parseRows(raw);
-      if(!rows.length){ alert('Не найдено строк данных. Проверьте колонки:\nПроект · Этап · Название · План начало · План окончание · Факт начало · Факт окончание · %'); return; }
+      if(!rows.length){ alert('Не найдено строк данных. Проверьте колонки:\nПроект · Этап · Объект · Дисциплина · План начало · План окончание · Факт начало · Факт окончание · Стоимость · Выполнено · Статус'); return; }
       if(!DATA) DATA = normalizeData(null);
       DATA[CAT] = {
         rows,
@@ -123,22 +123,44 @@ function handleFile(file){
 
 function norm(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
 
+function statusToPct(status){
+  const s = norm(status);
+  if(!s) return null;
+  if(s.includes('заверш')) return 100;
+  if(s.includes('не начат')) return 0;
+  return null;
+}
+function toNumber(v){
+  if(v==null || v==='') return null;
+  if(typeof v==='number') return v;
+  const n = parseFloat(String(v).replace(/\s/g,'').replace(',','.'));
+  return isNaN(n) ? null : n;
+}
+
 function parseRows(raw){
   let hIdx = -1, map = {};
   for(let i=0;i<Math.min(raw.length,10);i++){
     const cells = (raw[i]||[]).map(norm);
     const pi = cells.findIndex(c => c.includes('проект'));
     const ni = cells.findIndex(c => c.includes('назван'));
-    if(pi>-1 && ni>-1){
+    const oi = cells.findIndex(c => c.includes('объект'));
+    const di = cells.findIndex(c => c.includes('дисциплин'));
+    if(pi>-1 && (ni>-1 || oi>-1 || di>-1)){
       hIdx = i;
+      map.code    = cells.findIndex(c => c==='код'||c.includes('код'));
       map.project = pi;
       map.stage   = cells.findIndex(c => c.includes('этап'));
+      map.object     = oi;
+      map.discipline = di;
       map.name    = ni;
       map.planStart = cells.findIndex(c => c.includes('план') && c.includes('нач'));
       map.planEnd   = cells.findIndex(c => c.includes('план') && (c.includes('окон')||c.includes('конец')));
       map.factStart = cells.findIndex(c => c.includes('факт') && c.includes('нач'));
       map.factEnd   = cells.findIndex(c => c.includes('факт') && (c.includes('окон')||c.includes('конец')));
-      map.pct       = cells.findIndex(c => c.includes('%')||c.includes('процент')||c.includes('готовност'));
+      map.cost    = cells.findIndex(c => c.includes('стоимост'));
+      map.done    = cells.findIndex(c => c.includes('выполнен'));
+      map.status  = cells.findIndex(c => c.includes('статус'));
+      map.pctOld  = cells.findIndex(c => c.includes('%')||c.includes('процент')||c.includes('готовност'));
       break;
     }
   }
@@ -146,17 +168,43 @@ function parseRows(raw){
   const rows = [];
   for(let i=hIdx+1;i<raw.length;i++){
     const r = raw[i]||[];
-    const project = r[map.project], name = r[map.name];
-    if(project==null && name==null) continue;
+    const project = map.project>-1 ? r[map.project] : null;
+    const object = map.object>-1 ? r[map.object] : null;
+    const discipline = map.discipline>-1 ? r[map.discipline] : null;
+    const nameOld = map.name>-1 ? r[map.name] : null;
+    if(project==null && object==null && nameOld==null) continue;
+
+    const cost = map.cost>-1 ? toNumber(r[map.cost]) : null;
+    const done = map.done>-1 ? toNumber(r[map.done]) : null;
+    const status = map.status>-1 ? String(r[map.status]||'').trim() : '';
+
+    let pct;
+    if(cost!=null && cost>0 && done!=null){
+      pct = clamp(done/cost*100);
+    } else if(map.pctOld>-1 && r[map.pctOld]!=null && r[map.pctOld]!==''){
+      pct = toPct(r[map.pctOld]);
+    } else {
+      const sp = statusToPct(status);
+      pct = sp==null ? 0 : sp;
+    }
+
+    const name = (object!=null || discipline!=null)
+      ? [object,discipline].filter(v=>v!=null && v!=='').map(v=>String(v).trim()).join(' · ')
+      : String(nameOld||'—').trim();
+
     rows.push({
+      code: map.code>-1 ? r[map.code] : null,
       project: String(project||'Без названия').trim(),
       stage:   map.stage>-1 ? String(r[map.stage]||'Прочее').trim() : 'Прочее',
-      name:    String(name||'—').trim(),
+      object:     object!=null ? String(object).trim() : null,
+      discipline: discipline!=null ? String(discipline).trim() : null,
+      name,
       planStart: toISO(r[map.planStart]),
       planEnd:   toISO(r[map.planEnd]),
       factStart: toISO(r[map.factStart]),
       factEnd:   toISO(r[map.factEnd]),
-      pct: toPct(r[map.pct])
+      cost, done, status,
+      pct
     });
   }
   return rows;
@@ -187,33 +235,80 @@ function toPct(v){
 }
 function clamp(n){ return Math.max(0, Math.min(100, Math.round(n*10)/10)); }
 
-/* ---------- ШАБЛОН / ВЫГРУЗКА ---------- */
-const HEADER = ['Проект','Этап','Название','План начало','План окончание','Факт начало','Факт окончание','%'];
-function downloadTemplate(){
-  const SAMPLES = {
-    main: ['Металлургический цех','Сернокислотный цех','Цех электролизации меди','Шлакообогатительный цех','Склад концентрата'],
+/* ---------- ШАБЛОН / ВЫГРУЗКА (УМНАЯ ТАБЛИЦА EXCEL ЧЕРЕЗ EXCELJS) ---------- */
+const HEADER = ['Код','Проект','Этап','Объект','Дисциплина','План начало','План окончание','Факт начало','Факт окончание','Стоимость','Выполнено','Статус'];
+const COL_WIDTHS = [6,26,22,22,26,13,14,13,14,13,13,14];
+
+async function buildSmartTableFile(rows, fileName){
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Данные');
+  HEADER.forEach((name,i) => { ws.getColumn(i+1).width = COL_WIDTHS[i]; });
+
+  ws.addTable({
+    name: 'Таблица1',
+    ref: 'A1',
+    headerRow: true,
+    style: { theme:'TableStyleMedium2', showRowStripes:true },
+    columns: HEADER.map(name => ({name})),
+    rows
+  });
+
+  ws.getRow(1).font = { bold:true };
+  ws.views = [{ state:'frozen', ySplit:1 }];
+  for(let r=2;r<=rows.length+1;r++){
+    [6,7,8,9].forEach(c => { const cell = ws.getCell(r,c); if(cell.value instanceof Date) cell.numFmt = 'DD.MM.YYYY'; });
+    [10,11].forEach(c => { ws.getCell(r,c).numFmt = '#,##0'; });
+  }
+
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function sampleRowsFor(cat){
+  const SETS = {
+    main: ['Металлургический цех','Сернокислотный цех','Цех электролизации меди'],
     prep: ['Планировка территории','Временные дороги'],
     aux:  ['Административно-бытовой корпус','Ремонтно-механический цех']
   };
-  const wsData = [HEADER];
-  (SAMPLES[CAT]||SAMPLES.main).forEach(pr => {
-    wsData.push([pr,'Проектирование','Технологическая часть','01.02.2026','30.04.2026','05.02.2026','28.04.2026',100]);
-    wsData.push([pr,'Поставка','Основное оборудование','01.03.2026','30.09.2026','10.03.2026','',45]);
-    wsData.push([pr,'СМР','Монтаж металлоконструкций','01.05.2026','31.10.2026','03.05.2026','',30]);
+  const stages = ['Базовое проектирование','Рабочее проектирование','СМР'];
+  const disciplines = ['Технологическая часть','Механическая часть','Электротехническая часть'];
+  const statuses = ['Завершено','В работе','Не начато'];
+  const rows = [];
+  let code = 1;
+  (SETS[cat]||SETS.main).forEach(project => {
+    stages.forEach((stage,i) => {
+      const cost = 100000 + code*15000;
+      const done = i===0 ? cost : (i===1 ? Math.round(cost*0.4) : 0);
+      rows.push([
+        code, project, stage, project.split(' ')[0]+' — объект', disciplines[i%disciplines.length],
+        new Date(2026,1+i,1), new Date(2026,4+i,30),
+        i<2 ? new Date(2026,1+i,3) : null, i===0 ? new Date(2026,4,28) : null,
+        cost, done, statuses[i]
+      ]);
+      code++;
+    });
   });
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), 'Данные');
-  XLSX.writeFile(wb, 'dsomk-shablon.xlsx');
+  return rows;
+}
+
+function downloadTemplate(){
+  buildSmartTableFile(sampleRowsFor(CAT), 'dsomk-shablon.xlsx');
 }
 function downloadCurrent(){
   const cur = DATA ? DATA[CAT] : null;
   if(!cur || !cur.rows || !cur.rows.length){ alert('Данных пока нет'); return; }
-  const fmt = iso => iso ? iso.split('-').reverse().join('.') : '';
-  const wsData = [HEADER, ...cur.rows.map(r =>
-    [r.project, r.stage, r.name, fmt(r.planStart), fmt(r.planEnd), fmt(r.factStart), fmt(r.factEnd), r.pct])];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), 'Данные');
-  XLSX.writeFile(wb, 'dsomk-dannye.xlsx');
+  const toDate2 = iso => iso ? new Date(iso) : null;
+  const rows = cur.rows.map(r => [
+    r.code||'', r.project, r.stage, r.object||'', r.discipline||'',
+    toDate2(r.planStart), toDate2(r.planEnd), toDate2(r.factStart), toDate2(r.factEnd),
+    r.cost||'', r.done||'', r.status||''
+  ]);
+  buildSmartTableFile(rows, 'dsomk-dannye.xlsx');
 }
 
 /* ---------- РАСЧЁТЫ ---------- */
