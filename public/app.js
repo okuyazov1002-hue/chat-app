@@ -126,7 +126,7 @@ function norm(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
 function statusToPct(status){
   const s = norm(status);
   if(!s) return null;
-  if(s.includes('заверш')) return 100;
+  if(s.includes('заверш') || s.includes('заверщ') || s.includes('выполнен')) return 100;
   if(s.includes('не начат')) return 0;
   return null;
 }
