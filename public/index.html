@@ -19,8 +19,13 @@
   body{min-height:100vh;position:relative;}
 
   .genplan-layer{position:fixed;inset:0;z-index:-1;overflow:hidden;}
-  .genplan-image{position:absolute;inset:0;background:url('/assets/genplan-bg.jpg') center/cover no-repeat;opacity:.12;}
+  .genplan-image{position:absolute;inset:0;background:url('/assets/genplan-bg.jpg') center/cover no-repeat;opacity:.22;}
   .genplan-fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.95));}
+  .genplan-lines{position:absolute;inset:0;width:100%;height:100%;}
+  .gl{fill:none;stroke:var(--fact);stroke-width:2;opacity:.5;stroke-dasharray:10 14;animation:glFlow 6s linear infinite;}
+  .gl.slow{animation-duration:11s;opacity:.35;}
+  .gl.rev{animation-direction:reverse;}
+  @keyframes glFlow{ to{ stroke-dashoffset:-240; } }
 
   .login-screen{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:#fafbfc;}
   .login-box{position:relative;z-index:2;background:#fff;border:1px solid var(--ink);border-radius:10px;padding:36px 32px;width:320px;text-align:center;box-shadow:0 10px 40px rgba(17,18,20,.08);}
@@ -124,6 +129,12 @@
   <div class="genplan-layer">
     <div class="genplan-image"></div>
     <div class="genplan-fade"></div>
+    <svg class="genplan-lines" viewBox="0 0 1363 1154" preserveAspectRatio="xMidYMid slice">
+      <path class="gl"      d="M 60,880 L 420,880 L 420,620 L 760,620 L 760,300 L 1120,300"/>
+      <path class="gl slow" d="M 200,120 L 200,460 L 560,460 L 560,760 L 980,760 L 980,1060"/>
+      <path class="gl rev"  d="M 1300,540 L 900,540 L 900,860 L 520,860 L 520,1080"/>
+      <path class="gl slow rev" d="M 680,60 L 680,380 L 1060,380 L 1060,700 L 1320,700"/>
+    </svg>
   </div>
   <div class="login-box">
     <h1>ДСОМК</h1>
@@ -141,6 +152,12 @@
   <div class="genplan-layer">
     <div class="genplan-image"></div>
     <div class="genplan-fade"></div>
+    <svg class="genplan-lines" viewBox="0 0 1363 1154" preserveAspectRatio="xMidYMid slice">
+      <path class="gl"      d="M 60,880 L 420,880 L 420,620 L 760,620 L 760,300 L 1120,300"/>
+      <path class="gl slow" d="M 200,120 L 200,460 L 560,460 L 560,760 L 980,760 L 980,1060"/>
+      <path class="gl rev"  d="M 1300,540 L 900,540 L 900,860 L 520,860 L 520,1080"/>
+      <path class="gl slow rev" d="M 680,60 L 680,380 L 1060,380 L 1060,700 L 1320,700"/>
+    </svg>
   </div>
   <div class="sheet">
     <header>
