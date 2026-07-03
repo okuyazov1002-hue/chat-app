@@ -19,13 +19,9 @@
   body{min-height:100vh;position:relative;}
 
   .genplan-layer{position:fixed;inset:0;z-index:-1;overflow:hidden;}
-  .genplan-image{position:absolute;inset:0;background:url('/assets/genplan-bg.jpg') center/cover no-repeat;opacity:.22;}
-  .genplan-fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.95));}
-  .genplan-lines{position:absolute;inset:0;width:100%;height:100%;}
-  .gl{fill:none;stroke:var(--fact);stroke-width:2;opacity:.5;stroke-dasharray:10 14;animation:glFlow 6s linear infinite;}
-  .gl.slow{animation-duration:11s;opacity:.35;}
-  .gl.rev{animation-direction:reverse;}
-  @keyframes glFlow{ to{ stroke-dashoffset:-240; } }
+  .genplan-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;}
+  .login-screen .genplan-image{opacity:.8;}
+  .genplan-fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.72));}
 
   .login-screen{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:#fafbfc;}
   .login-box{position:relative;z-index:2;background:#fff;border:1px solid var(--ink);border-radius:10px;padding:36px 32px;width:320px;text-align:center;box-shadow:0 10px 40px rgba(17,18,20,.08);}
@@ -68,6 +64,18 @@
   .kpi-card .label{font-size:10.5px;letter-spacing:1px;color:var(--grey);text-transform:uppercase;font-family:'IBM Plex Mono',monospace;}
   .kpi-card .value{font-family:'IBM Plex Sans Condensed',sans-serif;font-weight:700;font-size:26px;margin-top:8px;color:var(--navy);}
   .kpi-card .sub{font-size:10.5px;color:var(--dim);margin-top:6px;font-family:'IBM Plex Mono',monospace;}
+
+  nav.cats{display:flex;justify-content:center;gap:34px;flex-wrap:wrap;}
+  nav.cats a{font-family:'IBM Plex Sans Condensed',sans-serif;font-weight:600;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--grey);text-decoration:none;padding:6px 2px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
+  nav.cats a:hover{color:var(--ink);}
+  nav.cats a.active{color:var(--ink);border-bottom-color:var(--ink);}
+
+  .toolbar{display:flex;flex-direction:column;align-items:flex-end;gap:7px;margin:16px 0 4px;}
+  .tb-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+  .tpl-btn.primary{background:var(--ink);color:#fff;}
+  .tpl-btn.primary:hover{background:var(--navy);}
+  .tb-meta{display:flex;gap:18px;flex-wrap:wrap;font-size:10.5px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
+  .tb-meta b{color:var(--ink);}
 
   .cat-header{margin:26px 0 14px;}
   .cat-header h2{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:20px;text-transform:uppercase;letter-spacing:.03em;}
@@ -127,14 +135,8 @@
 
 <div class="login-screen" id="loginScreen">
   <div class="genplan-layer">
-    <div class="genplan-image"></div>
+    <img class="genplan-image" src="/assets/genplan-anim.svg" alt="">
     <div class="genplan-fade"></div>
-    <svg class="genplan-lines" viewBox="0 0 1363 1154" preserveAspectRatio="xMidYMid slice">
-      <path class="gl"      d="M 60,880 L 420,880 L 420,620 L 760,620 L 760,300 L 1120,300"/>
-      <path class="gl slow" d="M 200,120 L 200,460 L 560,460 L 560,760 L 980,760 L 980,1060"/>
-      <path class="gl rev"  d="M 1300,540 L 900,540 L 900,860 L 520,860 L 520,1080"/>
-      <path class="gl slow rev" d="M 680,60 L 680,380 L 1060,380 L 1060,700 L 1320,700"/>
-    </svg>
   </div>
   <div class="login-box">
     <h1>ДСОМК</h1>
@@ -150,14 +152,8 @@
 
 <div class="app" id="app">
   <div class="genplan-layer">
-    <div class="genplan-image"></div>
+    <img class="genplan-image" src="/assets/genplan-anim.svg" alt="">
     <div class="genplan-fade"></div>
-    <svg class="genplan-lines" viewBox="0 0 1363 1154" preserveAspectRatio="xMidYMid slice">
-      <path class="gl"      d="M 60,880 L 420,880 L 420,620 L 760,620 L 760,300 L 1120,300"/>
-      <path class="gl slow" d="M 200,120 L 200,460 L 560,460 L 560,760 L 980,760 L 980,1060"/>
-      <path class="gl rev"  d="M 1300,540 L 900,540 L 900,860 L 520,860 L 520,1080"/>
-      <path class="gl slow rev" d="M 680,60 L 680,380 L 1060,380 L 1060,700 L 1320,700"/>
-    </svg>
   </div>
   <div class="sheet">
     <header>
@@ -168,32 +164,33 @@
           <h1>ДСОМК · Дашборд</h1>
         </div>
       </div>
-      <div></div>
+      <nav class="cats" id="catNav">
+        <a href="#" data-cat="prep">Подготовительные работы</a>
+        <a href="#" data-cat="main" class="active">Основные проекты</a>
+        <a href="#" data-cat="aux">Вспомогательные проекты</a>
+      </nav>
       <div class="userbox">
         Пользователь: <b id="userLabel" onclick="openSettings()"></b>
         <button class="logout" onclick="doLogout()">Выйти</button>
       </div>
     </header>
 
-    <div class="upload-zone" id="dropZone">
-      <h3>Загрузить Excel</h3>
-      <p>Проект · Этап · Название · План начало · План окончание · Факт начало · Факт окончание · %</p>
-      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
-      <div class="meta-row">
+    <div class="toolbar">
+      <div class="tb-actions">
+        <button class="tpl-btn primary" onclick="document.getElementById('fileInput').click()">Загрузить Excel</button>
+        <button class="tpl-btn" onclick="downloadTemplate()">Скачать шаблон</button>
+        <button class="tpl-btn" onclick="downloadCurrent()">Скачать текущие данные</button>
+      </div>
+      <div class="tb-meta">
         <span>файл: <b id="fileLabel">не загружен</b></span>
         <span>обновил: <b id="updatedByLabel">—</b></span>
         <span>когда: <b id="updatedAtLabel">—</b></span>
       </div>
-      <div class="zone-actions">
-        <button class="tpl-btn" onclick="event.stopPropagation();downloadTemplate()">Скачать шаблон</button>
-        <button class="tpl-btn" onclick="event.stopPropagation();downloadCurrent()">Скачать текущие данные</button>
-      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none">
     </div>
 
-    <div class="kpi-grid" id="kpiGrid"></div>
-
     <div class="cat-header">
-      <h2>Проекты</h2>
+      <h2 id="catTitle">Основные проекты</h2>
       <p id="projectCountLabel">объекты металлургического комплекса</p>
     </div>
     <div class="acc-list" id="accList">
@@ -222,346 +219,6 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script>
-const HEADERS = ['Проект','Этап','Название','План начало','План окончание','Факт начало','Факт окончание','%'];
-let currentUser = null;
-let dashboardData = { rows: [] };
-let socket = null;
-
-function $(id){ return document.getElementById(id); }
-
-function escapeHtml(v){
-  return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function pad2(n){ return String(n).padStart(2,'0'); }
-function formatDate(d){ return `${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.${d.getFullYear()}`; }
-function formatDateTime(iso){
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return String(iso);
-  return `${formatDate(d)} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-}
-function normDate(v){
-  if (v instanceof Date) return formatDate(v);
-  if (v === '' || v == null) return '';
-  return String(v).trim();
-}
-function normPercent(v){
-  if (v === '' || v == null) return 0;
-  if (typeof v === 'number') return v <= 1 ? Math.round(v*100) : Math.round(v);
-  const s = String(v).replace('%','').replace(',','.').trim();
-  const n = parseFloat(s);
-  if (isNaN(n)) return 0;
-  return n <= 1 ? Math.round(n*100) : Math.round(n);
-}
-function parseDMY(str){
-  const m = String(str).trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
-  if (!m) return null;
-  let [, dd, mm, yy] = m;
-  yy = yy.length === 2 ? '20'+yy : yy;
-  const d = new Date(+yy, +mm-1, +dd);
-  return isNaN(d.getTime()) ? null : d;
-}
-function isRowOverdue(r){
-  if (!r.planEnd) return false;
-  if (Number(r.percent) >= 100 || r.factEnd) return false;
-  const d = parseDMY(r.planEnd);
-  if (!d) return false;
-  const today = new Date(); today.setHours(0,0,0,0);
-  return d < today;
-}
-function showToast(msg){
-  const t = $('savedToast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => t.classList.remove('show'), 2200);
-}
-
-function doLogin(){
-  const username = $('loginUser').value.trim();
-  const password = $('loginPass').value;
-  $('loginErr').style.display = 'none';
-  if (!username || !password) return;
-  fetch('/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.ok) {
-      currentUser = { username: data.username, name: data.name };
-      localStorage.setItem('dsomk_user', JSON.stringify(currentUser));
-      enterApp();
-    } else {
-      $('loginErr').textContent = 'Неверный логин или пароль';
-      $('loginErr').style.display = 'block';
-    }
-  })
-  .catch(() => {
-    $('loginErr').textContent = 'Ошибка соединения с сервером';
-    $('loginErr').style.display = 'block';
-  });
-}
-function doLogout(){
-  localStorage.removeItem('dsomk_user');
-  location.reload();
-}
-function enterApp(){
-  $('loginScreen').style.display = 'none';
-  $('app').style.display = 'block';
-  $('userLabel').textContent = currentUser.name;
-  $('footerUser').textContent = currentUser.name;
-  initSocket();
-  loadDashboard();
-}
-
-function openSettings(){
-  $('oldPass').value = '';
-  $('newPass').value = '';
-  $('pwErr').style.display = 'none';
-  $('settingsModal').style.display = 'flex';
-}
-function closeSettings(){ $('settingsModal').style.display = 'none'; }
-function submitPasswordChange(){
-  const oldPassword = $('oldPass').value;
-  const newPassword = $('newPass').value;
-  fetch('/change-password', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: currentUser.username, oldPassword, newPassword })
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.ok) {
-      closeSettings();
-      showToast('Пароль изменён');
-    } else {
-      $('pwErr').textContent = data.error || 'Не удалось сменить пароль';
-      $('pwErr').style.display = 'block';
-    }
-  })
-  .catch(() => {
-    $('pwErr').textContent = 'Ошибка соединения с сервером';
-    $('pwErr').style.display = 'block';
-  });
-}
-
-function initSocket(){
-  socket = io();
-  socket.on('dashboard_updated', data => renderDashboard(data));
-}
-
-function parseWorkbook(file){
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const wb = XLSX.read(data, { type: 'array', cellDates: true });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
-        const rows = json.map(r => ({
-          project: String(r['Проект'] ?? '').trim(),
-          stage: String(r['Этап'] ?? '').trim(),
-          name: String(r['Название'] ?? '').trim(),
-          planStart: normDate(r['План начало']),
-          planEnd: normDate(r['План окончание']),
-          factStart: normDate(r['Факт начало']),
-          factEnd: normDate(r['Факт окончание']),
-          percent: normPercent(r['%'])
-        })).filter(r => r.project);
-        resolve(rows);
-      } catch (err) { reject(err); }
-    };
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
-  });
-}
-function handleFile(file){
-  $('fileLabel').textContent = file.name;
-  parseWorkbook(file).then(rows => {
-    if (!rows.length) {
-      showToast('Файл пуст или не соответствует формату');
-      return;
-    }
-    const payload = { rows, updatedBy: currentUser.name, fileName: file.name, updatedAt: new Date().toISOString() };
-    renderDashboard({ ...payload, _serverUpdatedAt: payload.updatedAt });
-    fetch('/api/dashboard', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-    .then(r => r.json())
-    .then(res => showToast(res.ok ? 'Данные загружены' : 'Ошибка сохранения'))
-    .catch(() => showToast('Ошибка соединения с сервером'));
-  }).catch(err => {
-    console.error(err);
-    showToast('Не удалось прочитать файл');
-  });
-}
-
-function loadDashboard(){
-  fetch('/api/dashboard')
-    .then(r => r.json())
-    .then(data => renderDashboard(data || { rows: [] }))
-    .catch(() => renderDashboard({ rows: [] }));
-}
-function groupByProject(rows){
-  const map = new Map();
-  rows.forEach(r => {
-    if (!map.has(r.project)) map.set(r.project, []);
-    map.get(r.project).push(r);
-  });
-  return map;
-}
-function computeProjectStats(rows){
-  const n = rows.length;
-  const avg = n ? Math.round(rows.reduce((s,r) => s + (Number(r.percent)||0), 0) / n) : 0;
-  const overdueCount = rows.filter(isRowOverdue).length;
-  let status = 'warn', label = 'В работе';
-  if (!n) { status = 'empty'; label = 'Нет данных'; }
-  else if (overdueCount > 0) { status = 'overdue'; label = `Отставание · ${overdueCount}`; }
-  else if (avg >= 100) { status = 'ok'; label = 'Завершено'; }
-  return { avg, status, label };
-}
-function renderDashboard(data){
-  dashboardData = data || { rows: [] };
-  const rows = Array.isArray(dashboardData.rows) ? dashboardData.rows : [];
-
-  $('updatedByLabel').textContent = dashboardData.updatedBy || '—';
-  const ts = dashboardData._serverUpdatedAt || dashboardData.updatedAt;
-  $('updatedAtLabel').textContent = ts ? formatDateTime(ts) : '—';
-  $('footerUpdated').textContent = ts ? formatDateTime(ts) : '—';
-  if (dashboardData.fileName) $('fileLabel').textContent = dashboardData.fileName;
-
-  const grouped = groupByProject(rows);
-  $('projectCountLabel').textContent = grouped.size
-    ? `${grouped.size} объектов · металлургический комплекс`
-    : 'объекты металлургического комплекса';
-
-  renderKpi(grouped);
-  renderAccordion(grouped);
-}
-function renderKpi(grouped){
-  const kpiGrid = $('kpiGrid');
-  if (!grouped.size) { kpiGrid.style.display = 'none'; kpiGrid.innerHTML = ''; return; }
-  kpiGrid.style.display = 'grid';
-  const totalProjects = grouped.size;
-  let totalPct = 0, overdue = 0, done = 0;
-  grouped.forEach(list => {
-    const st = computeProjectStats(list);
-    totalPct += st.avg;
-    if (st.status === 'overdue') overdue++;
-    if (st.avg >= 100) done++;
-  });
-  const avgAll = totalProjects ? Math.round(totalPct / totalProjects) : 0;
-  kpiGrid.innerHTML = `
-    <div class="kpi-card"><div class="label">Всего объектов</div><div class="value">${totalProjects}</div><div class="sub">в работе</div></div>
-    <div class="kpi-card"><div class="label">Средний прогресс</div><div class="value">${avgAll}%</div><div class="sub">по всем объектам</div></div>
-    <div class="kpi-card"><div class="label">Завершено</div><div class="value">${done}</div><div class="sub">из ${totalProjects}</div></div>
-    <div class="kpi-card"><div class="label">С отставанием</div><div class="value">${overdue}</div><div class="sub">требуют внимания</div></div>
-  `;
-}
-function renderAccordion(grouped){
-  const list = $('accList');
-  if (!grouped.size) {
-    list.innerHTML = `<div class="empty-state"><b>Нет данных</b><br>Загрузите Excel-файл с графиком проектов, чтобы увидеть дашборд.</div>`;
-    return;
-  }
-  let html = '', i = 0;
-  grouped.forEach((rows, project) => {
-    const st = computeProjectStats(rows);
-    html += `
-    <div class="acc-item" id="acc-${i}">
-      <div class="acc-header" onclick="toggleAcc(${i})">
-        <div class="acc-title"><div class="name">${escapeHtml(project)}</div><div class="sub">${rows.length} этапов</div></div>
-        <div class="acc-progress">
-          <div class="progress-track"><div class="progress-fill" style="width:${st.avg}%"></div></div>
-          <div class="progress-label">${st.avg}%</div>
-        </div>
-        <div class="acc-badge ${st.status}">${st.label}</div>
-        <svg class="acc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-      </div>
-      <div class="acc-body">
-        <div class="table-scroll">
-        <table class="stage-table">
-          <thead><tr><th>Этап</th><th>Название</th><th>План начало</th><th>План окончание</th><th>Факт начало</th><th>Факт окончание</th><th>%</th></tr></thead>
-          <tbody>
-            ${rows.map(r => `<tr class="${isRowOverdue(r) ? 'row-overdue' : ''}">
-              <td>${escapeHtml(r.stage)}</td>
-              <td>${escapeHtml(r.name)}</td>
-              <td>${escapeHtml(r.planStart)}</td>
-              <td>${escapeHtml(r.planEnd)}</td>
-              <td>${escapeHtml(r.factStart)}</td>
-              <td>${escapeHtml(r.factEnd)}</td>
-              <td class="cell-pct">${r.percent}%</td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-        </div>
-      </div>
-    </div>`;
-    i++;
-  });
-  list.innerHTML = html;
-}
-function toggleAcc(i){
-  const el = $('acc-' + i);
-  if (el) el.classList.toggle('open');
-}
-
-function downloadTemplate(){
-  const sample = [
-    ['Медеплавильный завод — расширение','Проектирование','Базовый проект (FEED)','01.02.2026','30.04.2026','05.02.2026','','35'],
-    ['Медеплавильный завод — расширение','Поставка','Оборудование электролиза','01.05.2026','30.09.2026','','','0']
-  ];
-  const ws = XLSX.utils.aoa_to_sheet([HEADERS, ...sample]);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Данные');
-  XLSX.writeFile(wb, 'dsomk_shablon.xlsx');
-}
-function downloadCurrent(){
-  const rows = Array.isArray(dashboardData.rows) ? dashboardData.rows : [];
-  if (!rows.length) { showToast('Нет данных для выгрузки'); return; }
-  const aoa = [HEADERS, ...rows.map(r => [r.project, r.stage, r.name, r.planStart, r.planEnd, r.factStart, r.factEnd, r.percent])];
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Данные');
-  const d = new Date();
-  const stamp = `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}`;
-  XLSX.writeFile(wb, `dsomk_dashboard_${stamp}.xlsx`);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const dropZone = $('dropZone');
-  const fileInput = $('fileInput');
-
-  dropZone.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
-  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropZone.classList.remove('drag');
-    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-  });
-
-  ['loginUser','loginPass'].forEach(id => {
-    $(id).addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-  });
-  ['oldPass','newPass'].forEach(id => {
-    $(id).addEventListener('keydown', e => { if (e.key === 'Enter') submitPasswordChange(); });
-  });
-
-  const saved = localStorage.getItem('dsomk_user');
-  if (saved) {
-    try {
-      currentUser = JSON.parse(saved);
-      enterApp();
-    } catch (e) { localStorage.removeItem('dsomk_user'); }
-  }
-});
-</script>
+<script src="/app.js"></script>
 </body>
 </html>
