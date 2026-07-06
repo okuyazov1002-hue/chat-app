@@ -6,60 +6,156 @@
   <title>Вход — Отчётность</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: #f0f2f5;
+      font-family: -apple-system, "SF Pro Display", "Segoe UI", Arial, sans-serif;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      background: #0f2027;
+      overflow: hidden;
     }
+
+    /* Анимированный чертёж на фоне */
+    .bg {
+      position: fixed;
+      inset: -10%;
+      background: url("/assets/genplan-bg.jpg") center / cover no-repeat;
+      animation: drift 60s ease-in-out infinite alternate;
+      z-index: 0;
+    }
+    @keyframes drift {
+      0%   { transform: scale(1.05) translate(0, 0); }
+      50%  { transform: scale(1.15) translate(-2%, -1.5%); }
+      100% { transform: scale(1.08) translate(2%, 1.5%); }
+    }
+
+    /* Затемнение поверх чертежа, чтобы карточка читалась */
+    .bg::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(15,32,39,0.82), rgba(44,83,100,0.72));
+    }
+
+    /* Светящиеся круги на фоне */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.55;
+      z-index: 0;
+    }
+    .blob1 { width: 420px; height: 420px; background: #4a6cf7; top: -110px; left: -110px; }
+    .blob2 { width: 360px; height: 360px; background: #9b59f6; bottom: -90px; right: -90px; }
+    .blob3 { width: 260px; height: 260px; background: #2dd4bf; top: 55%; left: 12%; }
+
+    /* Стеклянная карточка */
     .card {
-      background: #fff;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      position: relative;
+      z-index: 1;
       width: 100%;
       max-width: 380px;
+      margin: 16px;
+      padding: 42px 34px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.10);
+      backdrop-filter: blur(28px) saturate(160%);
+      -webkit-backdrop-filter: blur(28px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
     }
-    h1 { font-size: 22px; margin-bottom: 24px; text-align: center; color: #1a1a2e; }
-    label { display: block; margin-bottom: 6px; font-size: 14px; color: #555; }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #fff;
+      text-align: center;
+      margin-bottom: 30px;
+      letter-spacing: 0.3px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.75);
+      margin-bottom: 7px;
+      margin-left: 4px;
+    }
+
     input {
       width: 100%;
-      padding: 12px;
-      margin-bottom: 16px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 15px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      font-size: 16px;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 14px;
+      transition: all 0.25s ease;
     }
-    input:focus { outline: none; border-color: #4a6cf7; }
+    input::placeholder { color: rgba(255, 255, 255, 0.4); }
+    input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
     button {
       width: 100%;
-      padding: 12px;
-      background: #4a6cf7;
+      padding: 14px;
+      margin-top: 6px;
+      font-size: 17px;
+      font-weight: 600;
       color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
+      background: rgba(255, 255, 255, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 14px;
       cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.25s ease;
     }
-    button:hover { background: #3a5ce5; }
-    .error { color: #e74c3c; font-size: 14px; margin-bottom: 12px; text-align: center; }
+    button:hover { background: rgba(255, 255, 255, 0.32); transform: translateY(-1px); }
+    button:active { transform: scale(0.98); }
+
+    .error {
+      color: #ffb4b4;
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 14px;
+      min-height: 18px;
+    }
   </style>
 </head>
 <body>
+  <div class="bg"></div>
+
+  <div class="dimmer">
+    🌙 <input type="range" id="dim" min="0.3" max="0.92" step="0.01">
+  </div>
+
   <div class="card">
-    <h1>Вход в систему отчётности</h1>
+    <h1>Отчётность</h1>
     <div class="error" id="error"></div>
     <form id="loginForm">
       <label>Логин</label>
-      <input type="text" name="username" required>
+      <input type="text" name="username" placeholder="Введите логин" required>
       <label>Пароль</label>
-      <input type="password" name="password" required>
+      <input type="password" name="password" placeholder="Введите пароль" required>
       <button type="submit">Войти</button>
     </form>
   </div>
+
   <script>
+    const dim = document.getElementById("dim");
+    dim.value = localStorage.getItem("dim") || 0.75;
+    document.documentElement.style.setProperty("--dim", dim.value);
+    dim.addEventListener("input", () => {
+      document.documentElement.style.setProperty("--dim", dim.value);
+      localStorage.setItem("dim", dim.value);
+    });
+
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target));
