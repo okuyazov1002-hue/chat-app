@@ -61,6 +61,26 @@
     .logo-text .title { font-size: 15px; font-weight: 700; letter-spacing: 0.4px; }
     .logo-text .subtitle { font-size: 11.5px; color: rgba(255,255,255,0.65); margin-top: 2px; }
 
+    /* Навигация по разделам */
+    .nav { display: flex; gap: 6px; flex-wrap: wrap; }
+    .nav-btn {
+      padding: 9px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.75);
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+    .nav-btn.active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+
     /* Кнопка пользователя */
     .user-menu { position: relative; }
     .user-btn {
@@ -119,6 +139,42 @@
       color: rgba(255, 255, 255, 0.85);
       font-size: 17px;
     }
+
+    /* Вкладки и списки проектов */
+    .tab { display: none; }
+    .tab.active { display: block; }
+    .tab-title { color: #fff; font-size: 22px; margin-bottom: 20px; }
+    .tab-empty { color: rgba(255,255,255,0.6); }
+
+    .project-list { display: flex; flex-direction: column; gap: 10px; max-width: 900px; }
+    .project-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .project-item:hover {
+      background: rgba(255, 255, 255, 0.13);
+      transform: translateX(4px);
+    }
+    .project-code {
+      flex-shrink: 0;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: #fff;
+      color: #0a1628;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: "Consolas", monospace;
+    }
+    .project-name { color: #fff; font-size: 15px; }
 
     /* Модальное окно смены пароля */
     .modal-overlay {
@@ -183,6 +239,13 @@
       </div>
     </div>
 
+    <nav class="nav">
+      <button class="nav-btn active" data-tab="schedule">Общий график</button>
+      <button class="nav-btn" data-tab="prep">Подготовительные работы</button>
+      <button class="nav-btn" data-tab="main">Основные проекты</button>
+      <button class="nav-btn" data-tab="aux">Вспомогательные объекты</button>
+    </nav>
+
     <div class="user-menu">
       <button class="user-btn" id="userBtn">
         <span class="avatar" id="avatar">?</span>
@@ -196,7 +259,13 @@
   </header>
 
   <main class="content">
-    Здесь будет таблица отчётности.
+    <div id="tab-schedule" class="tab active">
+      <h2 class="tab-title">Общий график</h2>
+      <p class="tab-empty">Раздел в разработке — здесь будет общий график работ.</p>
+    </div>
+    <div id="tab-prep" class="tab"></div>
+    <div id="tab-main" class="tab"></div>
+    <div id="tab-aux" class="tab"></div>
   </main>
 
   <!-- Окно смены пароля -->
@@ -213,6 +282,7 @@
     </div>
   </div>
 
+  <script src="projects.js"></script>
   <script>
     // Имя пользователя в шапке
     fetch("/api/me").then(r => {
@@ -261,6 +331,41 @@
       passMsg.textContent = d.message;
       passMsg.className = "msg " + (res.ok ? "ok" : "err");
       if (res.ok) setTimeout(() => passModal.classList.remove("open"), 1200);
+    });
+
+    // Отрисовка списков проектов
+    function renderTab(key) {
+      const container = document.getElementById("tab-" + key);
+      if (!container || container.dataset.rendered) return;
+      const section = PROJECTS[key];
+      let html = `<h2 class="tab-title">${section.title}</h2><div class="project-list">`;
+      section.items.forEach(p => {
+        html += `<div class="project-item" data-code="${p.code}">
+                   <span class="project-code">${p.code}</span>
+                   <span class="project-name">${p.name}</span>
+                 </div>`;
+      });
+      html += `</div>`;
+      container.innerHTML = html;
+      container.dataset.rendered = "1";
+    }
+    ["prep", "main", "aux"].forEach(renderTab);
+
+    // Переключение вкладок
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    // Переход на дашборд проекта (пока заглушка)
+    document.querySelectorAll(".project-item").forEach(item => {
+      item.addEventListener("click", () => {
+        window.location.href = "/project.html?code=" + item.dataset.code;
+      });
     });
   </script>
 </body>
