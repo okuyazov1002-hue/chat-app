@@ -456,7 +456,7 @@
         headerRow: true,
         style: { showRowStripes: false },
         columns: REPORT_COLUMNS.map(c => ({ name: c })),
-        rows: [],
+        rows: [ REPORT_COLUMNS.map(() => "") ],
       });
 
       ws.columns.forEach(col => { col.width = 14; });
