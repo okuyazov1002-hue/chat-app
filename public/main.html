@@ -146,7 +146,7 @@
     .tab-title { color: #fff; font-size: 22px; margin-bottom: 20px; }
     .tab-empty { color: rgba(255,255,255,0.6); }
 
-    .project-list { display: flex; flex-direction: column; gap: 10px; max-width: 900px; }
+    .project-list { display: flex; flex-direction: column; gap: 10px; }
     .project-item {
       display: flex;
       align-items: center;
@@ -175,6 +175,36 @@
       font-family: "Consolas", monospace;
     }
     .project-name { color: #fff; font-size: 15px; }
+    .project-panel {
+      display: none;
+      background: #fff;
+      border-radius: 0 0 14px 14px;
+      margin-top: -10px;
+      padding: 16px 18px;
+      overflow: hidden;
+    }
+    .project-panel.open { display: block; }
+    .project-item.open {
+      border-radius: 14px 14px 0 0;
+    }
+
+    .panel-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .panel-btn {
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #0a1628;
+      background: #eef1f5;
+      border: 1px solid #d5dae1;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .panel-btn:hover { background: #e2e6ec; }
 
     /* Модальное окно смены пароля */
     .modal-overlay {
@@ -343,6 +373,13 @@
         html += `<div class="project-item" data-code="${p.code}">
                    <span class="project-code">${p.code}</span>
                    <span class="project-name">${p.name}</span>
+                 </div>
+                 <div class="project-panel" id="panel-${p.code}">
+                   <div class="panel-toolbar">
+                     <button class="panel-btn">📥 импорт</button>
+                     <button class="panel-btn">📤 экспорт</button>
+                   </div>
+                   <div class="panel-table-wrap" id="table-${p.code}">таблица появится здесь.</div>
                  </div>`;
       });
       html += `</div>`;
@@ -361,10 +398,14 @@
       });
     });
 
-    // Переход на дашборд проекта (пока заглушка)
+    // Раскрытие/скрытие панели проекта
     document.querySelectorAll(".project-item").forEach(item => {
       item.addEventListener("click", () => {
-        window.location.href = "/project.html?code=" + item.dataset.code;
+        const code = item.dataset.code;
+        const panel = document.getElementById("panel-" + code);
+        const isOpen = panel.classList.contains("open");
+        item.classList.toggle("open", !isOpen);
+        panel.classList.toggle("open", !isOpen);
       });
     });
   </script>
