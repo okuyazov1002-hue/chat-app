@@ -2,6 +2,8 @@ require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
+const session = require("express-session");
+const MongoStore = require("connect-mongo").default || require("connect-mongo");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,8 +14,71 @@ mongoose
   .then(() => console.log("✅ База данных подключена"))
   .catch((err) => console.error("❌ Ошибка подключения к базе:", err.message));
 
+// Чтение данных из форм
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// Сессии (память о том, кто вошёл)
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "temp-secret-change-me",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }),
+    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }, // 7 дней
+  })
+);
+
+// Раздача файлов из папки public (страницы, стили)
+app.use(express.static("public"));
+
+const bcrypt = require("bcrypt");
+const User = require("./models/User");
+
+// Регистрация (создание пользователя)
+app.post("/api/register", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ message: "Заполните логин и пароль" });
+    }
+    const exists = await User.findOne({ username });
+    if (exists) {
+      return res.status(400).json({ message: "Такой логин уже занят" });
+    }
+    const hash = await bcrypt.hash(password, 10);
+    await User.create({ username, password: hash });
+    res.json({ message: "Пользователь создан" });
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
+// Вход
+app.post("/api/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(401).json({ message: "Неверный логин или пароль" });
+    }
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) {
+      return res.status(401).json({ message: "Неверный логин или пароль" });
+    }
+    req.session.userId = user._id;
+    res.json({ message: "Вход выполнен" });
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
+// Главная страница: пускаем только вошедших
 app.get("/", (req, res) => {
-  res.send("Сайт отчётности работает!");
+  if (!req.session.userId) {
+    return res.redirect("/login.html");
+  }
+  res.send("Вы вошли! Здесь будет отчётность.");
 });
 
 app.listen(PORT, () => {
