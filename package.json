@@ -1,14 +1,24 @@
 {
-  "name": "dsomk-dashboard",
-  "version": "2.0.0",
-  "main": "index.js",
+  "name": "chat-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/okuyazov1002-hue/chat-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/okuyazov1002-hue/chat-app/issues"
+  },
+  "homepage": "https://github.com/okuyazov1002-hue/chat-app#readme",
   "dependencies": {
-    "dotenv": "^17.4.2",
-    "express": "^4.19.2",
-    "mongodb": "^6.5.0",
-    "socket.io": "^4.7.5"
+    "express": "^5.2.1"
   }
 }
