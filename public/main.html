@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ДСОМК — Отчётность</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --dim: 0.75; }
+
+    body {
+      font-family: -apple-system, "SF Pro Display", "Segoe UI", Arial, sans-serif;
+      min-height: 100vh;
+      background: #0a1628;
+    }
+
+    .bg {
+      position: fixed;
+      inset: -10%;
+      background: url("/assets/genplan-bg.jpg") center / cover no-repeat;
+      animation: drift 60s ease-in-out infinite alternate;
+      z-index: 0;
+    }
+    @keyframes drift {
+      0%   { transform: scale(1.05) translate(0, 0); }
+      50%  { transform: scale(1.15) translate(-2%, -1.5%); }
+      100% { transform: scale(1.08) translate(2%, 1.5%); }
+    }
+    .bg::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: #0a1e3d;
+      opacity: var(--dim);
+    }
+
+    /* Шапка */
+    .topbar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 28px;
+      background: rgba(10, 22, 40, 0.45);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    /* Логотип */
+    .logo { display: flex; align-items: center; gap: 14px; color: #fff; }
+    .logo-mark {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: #fff;
+      color: #0a1628;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 15px; letter-spacing: 0.5px;
+    }
+    .logo-text .title { font-size: 15px; font-weight: 700; letter-spacing: 0.4px; }
+    .logo-text .subtitle { font-size: 11.5px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+
+    /* Кнопка пользователя */
+    .user-menu { position: relative; }
+    .user-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 18px;
+      font-size: 15px; font-weight: 600; color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .user-btn:hover { background: rgba(255, 255, 255, 0.2); }
+    .user-btn .avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: #fff; color: #0a1628;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+    }
+
+    /* Выпадающее меню */
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      min-width: 210px;
+      padding: 8px;
+      border-radius: 16px;
+      background: rgba(10, 22, 40, 0.75);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      display: none;
+    }
+    .dropdown.open { display: block; }
+    .dropdown button {
+      width: 100%;
+      padding: 11px 14px;
+      font-size: 14.5px;
+      color: #fff;
+      background: none;
+      border: none;
+      border-radius: 10px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .dropdown button:hover { background: rgba(255, 255, 255, 0.12); }
+    .dropdown .danger { color: #ffb4b4; }
+
+    /* Контент */
+    .content {
+      position: relative;
+      z-index: 1;
+      padding: 40px 28px;
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 17px;
+    }
+
+    /* Модальное окно смены пароля */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(6px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      width: 100%;
+      max-width: 380px;
+      margin: 16px;
+      padding: 32px 30px;
+      border-radius: 24px;
+      background: rgba(10, 22, 40, 0.85);
+      backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    .modal h2 { color: #fff; font-size: 19px; margin-bottom: 20px; text-align: center; }
+    .modal input {
+      width: 100%;
+      padding: 13px 15px;
+      margin-bottom: 14px;
+      font-size: 15px;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+    }
+    .modal input:focus { outline: none; border-color: rgba(255,255,255,0.45); }
+    .modal .row { display: flex; gap: 10px; margin-top: 6px; }
+    .modal .row button {
+      flex: 1;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-save { background: #fff; color: #0a1628; }
+    .btn-cancel { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.2) !important; }
+    .modal .msg { font-size: 13.5px; text-align: center; margin-bottom: 10px; min-height: 17px; }
+    .msg.ok { color: #a7f3d0; }
+    .msg.err { color: #ffb4b4; }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+
+  <header class="topbar">
+    <div class="logo">
+      <div class="logo-mark">ДС</div>
+      <div class="logo-text">
+        <div class="title">ДСОМК</div>
+        <div class="subtitle">Дирекция Строительства Объектов Металлургического Комплекса</div>
+      </div>
+    </div>
+
+    <div class="user-menu">
+      <button class="user-btn" id="userBtn">
+        <span class="avatar" id="avatar">?</span>
+        <span id="username">...</span>
+      </button>
+      <div class="dropdown" id="dropdown">
+        <button id="changePassBtn">🔑 Сменить пароль</button>
+        <button class="danger" id="logoutBtn">🚪 Выйти</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    Здесь будет таблица отчётности.
+  </main>
+
+  <!-- Окно смены пароля -->
+  <div class="modal-overlay" id="passModal">
+    <div class="modal">
+      <h2>Смена пароля</h2>
+      <div class="msg" id="passMsg"></div>
+      <input type="password" id="oldPass" placeholder="Старый пароль">
+      <input type="password" id="newPass" placeholder="Новый пароль (мин. 4 символа)">
+      <div class="row">
+        <button class="btn-cancel" id="passCancel">Отмена</button>
+        <button class="btn-save" id="passSave">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Имя пользователя в шапке
+    fetch("/api/me").then(r => {
+      if (!r.ok) { window.location.href = "/login.html"; return; }
+      return r.json();
+    }).then(d => {
+      if (!d) return;
+      document.getElementById("username").textContent = d.username;
+      document.getElementById("avatar").textContent = d.username[0].toUpperCase();
+    });
+
+    // Открытие/закрытие меню
+    const dropdown = document.getElementById("dropdown");
+    document.getElementById("userBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle("open");
+    });
+    document.addEventListener("click", () => dropdown.classList.remove("open"));
+
+    // Выход
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await fetch("/api/logout", { method: "POST" });
+      window.location.href = "/login.html";
+    });
+
+    // Смена пароля
+    const passModal = document.getElementById("passModal");
+    const passMsg = document.getElementById("passMsg");
+    document.getElementById("changePassBtn").addEventListener("click", () => {
+      passModal.classList.add("open");
+    });
+    document.getElementById("passCancel").addEventListener("click", () => {
+      passModal.classList.remove("open");
+      passMsg.textContent = "";
+    });
+    document.getElementById("passSave").addEventListener("click", async () => {
+      const res = await fetch("/api/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          oldPassword: document.getElementById("oldPass").value,
+          newPassword: document.getElementById("newPass").value,
+        }),
+      });
+      const d = await res.json();
+      passMsg.textContent = d.message;
+      passMsg.className = "msg " + (res.ok ? "ok" : "err");
+      if (res.ok) setTimeout(() => passModal.classList.remove("open"), 1200);
+    });
+  </script>
+</body>
+</html>

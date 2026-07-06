@@ -4,6 +4,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const session = require("express-session");
 const MongoStore = require("connect-mongo").default || require("connect-mongo");
+const bcrypt = require("bcrypt");
+const User = require("./models/User");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,11 +31,8 @@ app.use(
   })
 );
 
-// Раздача файлов из папки public (страницы, стили)
+// Раздача файлов из папки public
 app.use(express.static("public"));
-
-const bcrypt = require("bcrypt");
-const User = require("./models/User");
 
 // Регистрация (создание пользователя)
 app.post("/api/register", async (req, res) => {
@@ -78,7 +77,46 @@ app.get("/", (req, res) => {
   if (!req.session.userId) {
     return res.redirect("/login.html");
   }
-  res.send("Вы вошли! Здесь будет отчётность.");
+  res.sendFile(__dirname + "/public/main.html");
+});
+
+// Кто я (для показа имени на странице)
+app.get("/api/me", async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: "Не авторизован" });
+  }
+  const user = await User.findById(req.session.userId);
+  res.json({ username: user.username });
+});
+
+// Выход
+app.post("/api/logout", (req, res) => {
+  req.session.destroy(() => {
+    res.json({ message: "Вы вышли" });
+  });
+});
+
+// Смена пароля
+app.post("/api/change-password", async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Не авторизован" });
+    }
+    const { oldPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 4) {
+      return res.status(400).json({ message: "Новый пароль слишком короткий" });
+    }
+    const user = await User.findById(req.session.userId);
+    const ok = await bcrypt.compare(oldPassword, user.password);
+    if (!ok) {
+      return res.status(401).json({ message: "Старый пароль неверный" });
+    }
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.json({ message: "Пароль изменён" });
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
 });
 
 app.listen(PORT, () => {
