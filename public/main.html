@@ -204,7 +204,26 @@
       border-radius: 8px;
       cursor: pointer;
     }
-    .panel-btn:hover { background: #e2e6ec; }
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8px;
+      background: #fff;
+      color: #000;
+    }
+    .report-table th {
+      background: #000;
+      color: #fff;
+      padding: 4px 6px;
+      text-align: left;
+      white-space: nowrap;
+      border: 1px solid #333;
+    }
+    .report-table td {
+      padding: 3px 6px;
+      border: 1px solid #ddd;
+      white-space: nowrap;
+    }
 
     /* Модальное окно смены пароля */
     .modal-overlay {
@@ -312,7 +331,7 @@
     </div>
   </div>
 
-  <script src="projects.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   <script>
     // Имя пользователя в шапке
     fetch("/api/me").then(r => {
@@ -376,10 +395,31 @@
                  </div>
                  <div class="project-panel" id="panel-${p.code}">
                    <div class="panel-toolbar">
-                     <button class="panel-btn">📥 импорт</button>
-                     <button class="panel-btn">📤 экспорт</button>
+                     <button class="panel-btn btn-import" data-code="${p.code}">📥 импорт</button>
+                     <button class="panel-btn btn-export" data-code="${p.code}" data-name="${p.name}">📤 экспорт</button>
+                     <input type="file" class="file-import" data-code="${p.code}" accept=".xlsx" style="display:none">
                    </div>
-                   <div class="panel-table-wrap" id="table-${p.code}">таблица появится здесь.</div>
+                   <div class="panel-table-wrap" id="table-${p.code}">
+                     <table class="report-table">
+                       <thead>
+                         <tr>
+                           <th>код</th>
+                           <th>проект</th>
+                           <th>этап</th>
+                           <th>объект</th>
+                           <th>дисциплина</th>
+                           <th>план начало</th>
+                           <th>план окончание</th>
+                           <th>факт начало</th>
+                           <th>факт окончание</th>
+                           <th>стоимость</th>
+                           <th>выполнено</th>
+                           <th>статус</th>
+                         </tr>
+                       </thead>
+                       <tbody></tbody>
+                     </table>
+                   </div>
                  </div>`;
       });
       html += `</div>`;
@@ -398,6 +438,62 @@
       });
     });
 
+    // Экспорт таблицы в Excel
+    const REPORT_COLUMNS = [
+      "Код", "Проект", "Этап", "Объект", "Дисциплина",
+      "План начало", "План окончание", "Факт начало", "Факт окончание",
+      "Стоимость", "Выполнено", "Статус"
+    ];
+
+    async function exportProject(code, name) {
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet("Отчёт");
+
+      ws.addTable({
+        name: "Report_" + code.replace(/[^a-zA-Z0-9]/g, ""),
+        ref: "A1",
+        headerRow: true,
+        style: { showRowStripes: false },
+        columns: REPORT_COLUMNS.map(c => ({ name: c })),
+        rows: [],
+      });
+
+      ws.columns.forEach(col => { col.width = 14; });
+
+      ws.getRow(1).eachCell(cell => {
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 8 };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF000000" } };
+      });
+
+      ws.eachRow(row => {
+        row.eachCell(cell => {
+          cell.font = cell.font && cell.font.bold ? cell.font : { size: 8 };
+          cell.border = {
+            top: { style: "thin", color: { argb: "FFCCCCCC" } },
+            left: { style: "thin", color: { argb: "FFCCCCCC" } },
+            bottom: { style: "thin", color: { argb: "FFCCCCCC" } },
+            right: { style: "thin", color: { argb: "FFCCCCCC" } },
+          };
+        });
+      });
+
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Отчёт_${code}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.querySelectorAll(".btn-export").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        exportProject(btn.dataset.code, btn.dataset.name);
+      });
+    });
+    
     // Раскрытие/скрытие панели проекта
     document.querySelectorAll(".project-item").forEach(item => {
       item.addEventListener("click", () => {
