@@ -292,6 +292,9 @@
     .kpi-label { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
     .kpi-big { font-size: 20px; font-weight: 700; color: #0a1628; white-space: nowrap; margin-bottom: 8px; }
     .kpi-mid { font-size: 14px; font-weight: 600; color: #0a1628; }
+    .kpi-stages { margin-top: 8px; border-top: 1px solid #e5e7eb; padding-top: 6px; }
+    .kpi-stage-row { display: flex; justify-content: space-between; gap: 8px; font-size: 10.5px; color: #374151; padding: 2px 0; white-space: nowrap; }
+    .kpi-stage-row span:first-child { color: #6b7280; }
     .kpi-flex { display: flex; gap: 18px; }
     .kpi-dates { font-size: 15px; font-weight: 700; color: #0a1628; white-space: nowrap; margin-bottom: 8px; }
     .kpi-wide { grid-column: span 2; }
@@ -355,6 +358,13 @@
     .gantt-scale { display: flex; flex: 1; }
     .gantt-year { text-align: center; font-size: 11px; font-weight: 600; color: #374151; border-left: 1px solid #d1d5db; }
     .gantt-month { text-align: center; font-size: 9px; color: #6b7280; overflow: hidden; }
+    .modal-wide { max-width: 460px; }
+    .users-add-title { font-size: 13px; margin: 14px 0 6px; }
+    .user-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #e5e7eb; }
+    .user-name { flex: 1; font-size: 13px; display: flex; flex-direction: column; color: #fff; }
+    .user-name small { color: #9ca3af; font-size: 11px; }
+    .user-role { font-size: 12px; padding: 3px 6px; }
+    .user-del { background: #fde8e8; color: #b91c1c; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
     .kpi-badge {
       display: inline-block;
       margin-top: 6px;
@@ -393,6 +403,7 @@
         <span id="username">...</span>
       </button>
       <div class="dropdown" id="dropdown">
+        <button id="usersBtn" style="display:none">👥 Пользователи</button>
         <button id="changePassBtn">🔑 Сменить пароль</button>
         <button class="danger" id="logoutBtn">🚪 Выйти</button>
       </div>
@@ -423,6 +434,27 @@
     </div>
   </div>
 
+  <!-- Окно пользователей -->
+  <div class="modal-overlay" id="usersModal">
+    <div class="modal modal-wide">
+      <h2>Пользователи</h2>
+      <div class="msg" id="usersMsg"></div>
+      <div id="usersList"></div>
+      <h3 class="users-add-title">Добавить пользователя</h3>
+      <input type="text" id="newUserName" placeholder="Имя и фамилия">
+      <input type="text" id="newUserLogin" placeholder="Логин">
+      <input type="password" id="newUserPass" placeholder="Пароль (мин. 4 символа)">
+      <select id="newUserRole">
+        <option value="user">Пользователь</option>
+        <option value="admin">Администратор</option>
+      </select>
+      <div class="row">
+        <button class="btn-cancel" id="usersClose">Закрыть</button>
+        <button class="btn-save" id="userCreate">Добавить</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script src="projects.js"></script>
@@ -434,7 +466,9 @@
       return r.json();
     }).then(d => {
       if (!d) return;
-      document.getElementById("username").textContent = d.username;
+      document.getElementById("username").textContent = d.name || d.username;
+    window.userRole = d.role;
+    applyRole();
       document.getElementById("avatar").textContent = d.username[0].toUpperCase();
     });
 
@@ -445,6 +479,70 @@
       dropdown.classList.toggle("open");
     });
     document.addEventListener("click", () => dropdown.classList.remove("open"));
+
+    // ===== ПОЛЬЗОВАТЕЛИ =====
+    const usersModal = document.getElementById("usersModal");
+
+    async function loadUsers() {
+      const res = await fetch("/api/users");
+      const users = await res.json();
+      document.getElementById("usersList").innerHTML = users.map(u => `
+        <div class="user-row">
+          <span class="user-name">${u.name || u.username}<small>${u.username}</small></span>
+          <select class="user-role" data-id="${u._id}">
+            <option value="user" ${u.role !== "admin" ? "selected" : ""}>Пользователь</option>
+            <option value="admin" ${u.role === "admin" ? "selected" : ""}>Администратор</option>
+          </select>
+          <button class="user-del" data-id="${u._id}">Удалить</button>
+        </div>`).join("");
+      document.querySelectorAll(".user-role").forEach(sel => {
+        sel.addEventListener("change", async () => {
+          const res = await fetch("/api/users/" + sel.dataset.id + "/role", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ role: sel.value })
+          });
+          const d = await res.json();
+          document.getElementById("usersMsg").textContent = d.message;
+          if (!res.ok) loadUsers();
+        });
+      });
+      document.querySelectorAll(".user-del").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Удалить пользователя?")) return;
+          const res = await fetch("/api/users/" + btn.dataset.id, { method: "DELETE" });
+          const d = await res.json();
+          document.getElementById("usersMsg").textContent = d.message;
+          loadUsers();
+        });
+      });
+    }
+
+    document.getElementById("usersBtn").addEventListener("click", () => {
+      document.getElementById("usersMsg").textContent = "";
+      usersModal.classList.add("open");
+      loadUsers();
+    });
+    document.getElementById("usersClose").addEventListener("click", () => usersModal.classList.remove("open"));
+
+    document.getElementById("userCreate").addEventListener("click", async () => {
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: document.getElementById("newUserName").value.trim(),
+          username: document.getElementById("newUserLogin").value.trim(),
+          password: document.getElementById("newUserPass").value,
+          role: document.getElementById("newUserRole").value
+        })
+      });
+      const d = await res.json();
+      document.getElementById("usersMsg").textContent = d.message;
+      if (res.ok) {
+        ["newUserName", "newUserLogin", "newUserPass"].forEach(id => document.getElementById(id).value = "");
+        loadUsers();
+      }
+    });
 
     // Выход
     document.getElementById("logoutBtn").addEventListener("click", async () => {
@@ -563,6 +661,15 @@
       URL.revokeObjectURL(url);
     }
 
+    function applyRole() {
+      if (window.userRole === "admin") {
+        document.getElementById("usersBtn").style.display = "";
+        return;
+      }
+      document.querySelectorAll(".btn-import, .btn-export").forEach(b => b.style.display = "none");
+      document.querySelectorAll(".kpi-comment-edit").forEach(t => t.setAttribute("readonly", "readonly"));
+    }
+
     document.querySelectorAll(".btn-export").forEach(btn => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -625,6 +732,13 @@
       const totalCost = rows.reduce((s, r) => s + (r.cost || 0), 0);
       const doneCost = rows.reduce((s, r) => s + (r.done || 0), 0);
       const donePct = totalCost ? Math.round(doneCost / totalCost * 100) : 0;
+      const sumBy = f => {
+        const sr = rows.filter(r => f.some(x => (r.stage || "").toLowerCase().includes(x)));
+        return { cost: sr.reduce((s, r) => s + (r.cost || 0), 0), done: sr.reduce((s, r) => s + (r.done || 0), 0) };
+      };
+      const stProj = sumBy(["базовое", "детальн"]);
+      const stSupply = sumBy(["поставка"]);
+      const stSmr = sumBy(["смр", "строительн", "пнр"]);
       const now = new Date();
       const planCost = rows.reduce((s, r) => {
         if (!r.planStart || !r.planEnd) return s;
@@ -647,10 +761,21 @@
       dash.innerHTML = `
         <div class="kpi-row">
           <div class="kpi-card">
-            <div class="kpi-label">Стоимость проекта</div>
-            <div class="kpi-big">${money(totalCost)}</div>
-            <div class="kpi-label">Освоено всего</div>
-            <div class="kpi-mid">${money(doneCost)} (${donePct}%)</div>
+            <div class="kpi-flex">
+              <div>
+                <div class="kpi-label">Стоимость проекта</div>
+                <div class="kpi-big">${money(totalCost).replace(" €", "")}</div>
+              </div>
+              <div>
+                <div class="kpi-label">Освоено всего</div>
+                <div class="kpi-big">${money(doneCost).replace(" €", "")}</div>
+              </div>
+            </div>
+            <div class="kpi-stages">
+              <div class="kpi-stage-row"><span>Проектирование</span><span>${money(stProj.cost)} / ${money(stProj.done)}</span></div>
+              <div class="kpi-stage-row"><span>Поставка</span><span>${money(stSupply.cost)} / ${money(stSupply.done)}</span></div>
+              <div class="kpi-stage-row"><span>Строительство и ПНР</span><span>${money(stSmr.cost)} / ${money(stSmr.done)}</span></div>
+            </div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">Общий прогресс</div>
@@ -712,6 +837,7 @@
           ${ganttHtml(rows)}
         </div>`;
         buildChart(code, rows);
+        applyRole();
     }
 
     const charts = {};
