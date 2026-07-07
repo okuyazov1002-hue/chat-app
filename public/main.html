@@ -119,6 +119,8 @@
     .dropdown.open { display: block; }
     .dropdown button {
       width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
       padding: 11px 14px;
       font-size: 14.5px;
       color: #fff;
@@ -274,6 +276,50 @@
     .modal .msg { font-size: 13.5px; text-align: center; margin-bottom: 10px; min-height: 17px; }
     .msg.ok { color: #a7f3d0; }
     .msg.err { color: #ffb4b4; }
+  
+    /* ===== ДАШБОРД ===== */
+    .panel-dashboard { padding: 14px 14px 0; }
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    .kpi-card {
+      background: #f3f4f6;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .kpi-label { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+    .kpi-big { font-size: 20px; font-weight: 700; color: #0a1628; white-space: nowrap; margin-bottom: 8px; }
+    .kpi-mid { font-size: 14px; font-weight: 600; color: #0a1628; }
+    .kpi-flex { display: flex; gap: 18px; }
+    .kpi-dates { font-size: 15px; font-weight: 700; color: #0a1628; white-space: nowrap; margin-bottom: 8px; }
+    .kpi-wide { grid-column: span 2; }
+    .kpi-comment { font-size: 12.5px; color: #374151; line-height: 1.5; }
+    .kpi-comment-edit {
+      width: 100%;
+      min-height: 60px;
+      border: none;
+      padding: 0;
+      font-size: 12.5px;
+      color: #374151;
+      line-height: 1.5;
+      font-family: inherit;
+      resize: none;
+      background: transparent;
+      outline: none;
+    }
+    .kpi-badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .kpi-badge.bad { background: #fde8e8; color: #b91c1c; }
+    .kpi-badge.good { background: #e8eef8; color: #0a1e3d; }
+
   </style>
 </head>
 <body>
@@ -395,7 +441,8 @@
                    <span class="project-name">${p.name}</span>
                  </div>
                  <div class="project-panel" id="panel-${p.code}">
-                   <div class="panel-toolbar">
+                  <div class="panel-dashboard" id="dash-${p.code}"></div>
+                  <div class="panel-toolbar">
                      <button class="panel-btn btn-import" data-code="${p.code}">📥 импорт</button>
                      <button class="panel-btn btn-export" data-code="${p.code}" data-name="${p.name}">📤 экспорт</button>
                      <input type="file" class="file-import" data-code="${p.code}" accept=".xlsx" style="display:none">
@@ -494,7 +541,7 @@
         exportProject(btn.dataset.code, btn.dataset.name);
       });
     });
-    
+
     // ===== ИМПОРТ =====
     async function importFile(code, file) {
       const wb = new ExcelJS.Workbook();
@@ -536,6 +583,87 @@
       });
     });
 
+    // ===== ДАШБОРД =====
+    function money(n) {
+      return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " €";
+    }
+
+    async function renderDashboard(code) {
+      const dash = document.getElementById("dash-" + code);
+      const res = await fetch("/api/reports/" + code);
+      const data = await res.json();
+      const rows = data.rows || [];
+      
+      const totalCost = rows.reduce((s, r) => s + (r.cost || 0), 0);
+      const doneCost = rows.reduce((s, r) => s + (r.cost || 0) * (r.done || 0) / 100, 0);
+      const donePct = totalCost ? Math.round(doneCost / totalCost * 100) : 0;
+      const now = new Date();
+      const planCost = rows.reduce((s, r) => {
+        if (!r.planStart || !r.planEnd) return s;
+        const ps = new Date(r.planStart), pe = new Date(r.planEnd);
+        if (now >= pe) return s + (r.cost || 0);
+        if (now <= ps) return s;
+        return s + (r.cost || 0) * (now - ps) / (pe - ps);
+      }, 0);
+      const planPct = totalCost ? Math.round(planCost / totalCost * 100) : 0;
+      const delta = donePct - planPct;
+      const dts = a => a.length ? new Date(Math.min(...a)) : null;
+      const dte = a => a.length ? new Date(Math.max(...a)) : null;
+      const fmt = d => d ? `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getFullYear()).slice(2)}` : "—";
+      const planStart = dts(rows.filter(r => r.planStart).map(r => +new Date(r.planStart)));
+      const planEnd = dte(rows.filter(r => r.planEnd).map(r => +new Date(r.planEnd)));
+      const factStart = dts(rows.filter(r => r.factStart).map(r => +new Date(r.factStart)));
+      const fcArr = rows.filter(r => r.forecastEnd).map(r => +new Date(r.forecastEnd));
+      const forecastEnd = fcArr.length ? dte(fcArr) : planEnd;
+      const late = forecastEnd && planEnd && forecastEnd > planEnd;
+      dash.innerHTML = `
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-label">Стоимость проекта</div>
+            <div class="kpi-big">${money(totalCost)}</div>
+            <div class="kpi-label">Освоено всего</div>
+            <div class="kpi-mid">${money(doneCost)} (${donePct}%)</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Общий прогресс</div>
+            <div class="kpi-flex">
+              <div>
+                <div class="kpi-label">План</div>
+                <div class="kpi-big">${planPct}%</div>
+              </div>
+              <div>
+                <div class="kpi-label">Факт</div>
+                <div class="kpi-big">${donePct}%</div>
+              </div>
+            </div>
+            <div class="kpi-badge ${delta < 0 ? "bad" : "good"}">${delta < 0 ? "Отставание " : "Опережение +"}${delta}%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Сроки</div>
+            <div class="kpi-label">План начало / окончание</div>
+            <div class="kpi-dates">${fmt(planStart)} → ${fmt(planEnd)}</div>
+            <div class="kpi-label">Факт начало</div>
+            <div class="kpi-mid">${fmt(factStart)}</div>
+            <div class="kpi-label" style="margin-top:6px;">Прогноз окончания</div>
+            <div class="kpi-badge ${late ? "bad" : "good"}">${fmt(forecastEnd)}</div>
+          </div>
+          <div class="kpi-card kpi-wide">
+            <div class="kpi-label">Примечание / комментарий</div>
+            <textarea class="kpi-comment-edit" id="comment-${code}" placeholder="Место для текстового комментария по проекту — риски, причины отставания, ключевые события за период." onblur="saveComment('${code}')" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${data.comment || ""}</textarea>
+          </div>
+        </div>`;
+    }
+
+    async function saveComment(code) {
+      const text = document.getElementById("comment-" + code).value;
+      const res = await fetch("/api/reports/" + code, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ comment: text })
+      });
+      if (!res.ok) alert("Ошибка сохранения комментария");
+    }
+
     // Раскрытие/скрытие панели проекта
     document.querySelectorAll(".project-item").forEach(item => {
       item.addEventListener("click", () => {
@@ -544,6 +672,7 @@
         const isOpen = panel.classList.contains("open");
         item.classList.toggle("open", !isOpen);
         panel.classList.toggle("open", !isOpen);
+        if (!isOpen) renderDashboard(code);
       });
     });
   </script>

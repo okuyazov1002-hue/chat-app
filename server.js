@@ -141,9 +141,12 @@ app.post("/api/reports/:code", async (req, res) => {
   }
   try {
     const { rows, comment } = req.body;
+    const update = { updatedAt: new Date() };
+    if (rows !== undefined) update.rows = rows;
+    if (comment !== undefined) update.comment = comment;
     const report = await Report.findOneAndUpdate(
       { code: req.params.code },
-      { rows: rows || [], comment: comment || "", updatedAt: new Date() },
+      update,
       { new: true, upsert: true }
     );
     res.json({ message: "Сохранено", count: report.rows.length });
