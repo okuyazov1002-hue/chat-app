@@ -6,6 +6,7 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo").default || require("connect-mongo");
 const bcrypt = require("bcrypt");
 const User = require("./models/User");
+const Report = require("./models/Report");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,7 +19,7 @@ mongoose
 
 // Чтение данных из форм
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 // Сессии (память о том, кто вошёл)
 app.use(
@@ -114,6 +115,38 @@ app.post("/api/change-password", async (req, res) => {
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
     res.json({ message: "Пароль изменён" });
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+// ===== ОТЧЁТЫ =====
+
+// Получить отчёт по коду проекта
+app.get("/api/reports/:code", async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: "Не авторизован" });
+  }
+  try {
+    const report = await Report.findOne({ code: req.params.code });
+    res.json(report || { code: req.params.code, comment: "", rows: [] });
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
+// Сохранить отчёт (полная замена строк)
+app.post("/api/reports/:code", async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: "Не авторизован" });
+  }
+  try {
+    const { rows, comment } = req.body;
+    const report = await Report.findOneAndUpdate(
+      { code: req.params.code },
+      { rows: rows || [], comment: comment || "", updatedAt: new Date() },
+      { new: true, upsert: true }
+    );
+    res.json({ message: "Сохранено", count: report.rows.length });
   } catch (err) {
     res.status(500).json({ message: "Ошибка сервера: " + err.message });
   }

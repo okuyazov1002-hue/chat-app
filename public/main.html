@@ -495,6 +495,47 @@
       });
     });
     
+    // ===== ИМПОРТ =====
+    async function importFile(code, file) {
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(await file.arrayBuffer());
+      const ws = wb.worksheets[0];
+      const rows = [];
+      ws.eachRow((row, n) => {
+        if (n === 1) return; // пропускаем шапку
+        const v = i => row.getCell(i).value;
+        const d = i => { const x = v(i); return x instanceof Date ? x : null; };
+        rows.push({
+          stage: String(v(3) || ""),
+          item: String(v(5) || v(4) || ""),
+          planStart: d(6), planEnd: d(7),
+          factStart: d(8), factEnd: d(9),
+          cost: Number(v(10)) || 0,
+          done: Number(v(11)) || 0,
+          status: String(v(12) || "")
+        });
+      });
+      const res = await fetch("/api/reports/" + code, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rows })
+      });
+      const data = await res.json();
+      alert(res.ok ? `Импортировано строк: ${data.count}` : "Ошибка: " + data.message);
+    }
+    document.querySelectorAll(".btn-import").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        document.querySelector(`.file-import[data-code="${btn.dataset.code}"]`).click();
+      });
+    });
+    document.querySelectorAll(".file-import").forEach(inp => {
+      inp.addEventListener("change", () => {
+        if (inp.files[0]) importFile(inp.dataset.code, inp.files[0]);
+        inp.value = "";
+      });
+    });
+
     // Раскрытие/скрытие панели проекта
     document.querySelectorAll(".project-item").forEach(item => {
       item.addEventListener("click", () => {

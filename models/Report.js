@@ -1,0 +1,25 @@
+const mongoose = require("mongoose");
+
+// Одна строка отчёта (из Excel)
+const rowSchema = new mongoose.Schema({
+  stage:      { type: String, required: true }, // один из 5 этапов
+  item:       { type: String, default: "" },    // дисциплина / подпункт / объект
+  planStart:  { type: Date, default: null },
+  planEnd:    { type: Date, default: null },
+  factStart:  { type: Date, default: null },
+  factEnd:    { type: Date, default: null },
+  forecastEnd:{ type: Date, default: null },    // прогноз окончания
+  cost:       { type: Number, default: 0 },     // стоимость
+  done:       { type: Number, default: 0 },     // % выполнения (0-100)
+  status:     { type: String, default: "" }
+}, { _id: false });
+
+// Отчёт по проекту: один документ на один код проекта
+const reportSchema = new mongoose.Schema({
+  code:    { type: String, required: true, unique: true }, // код проекта (PSP01 и т.д.)
+  comment: { type: String, default: "" },                  // текст для двойной KPI-карточки
+  rows:    { type: [rowSchema], default: [] },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model("Report", reportSchema);
