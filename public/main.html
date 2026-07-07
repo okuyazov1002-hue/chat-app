@@ -309,6 +309,14 @@
       background: transparent;
       outline: none;
     }
+    .chart-card {
+      background: #f3f4f6;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 10px;
+    }
+    .chart-title { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+    .chart-wrap { position: relative; width: 100%; height: 280px; }
     .kpi-badge {
       display: inline-block;
       margin-top: 6px;
@@ -378,8 +386,10 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script src="projects.js"></script>
   <script>
+
     // Имя пользователя в шапке
     fetch("/api/me").then(r => {
       if (!r.ok) { window.location.href = "/login.html"; return; }
@@ -447,27 +457,7 @@
                      <button class="panel-btn btn-export" data-code="${p.code}" data-name="${p.name}">📤 экспорт</button>
                      <input type="file" class="file-import" data-code="${p.code}" accept=".xlsx" style="display:none">
                    </div>
-                   <div class="panel-table-wrap" id="table-${p.code}">
-                     <table class="report-table">
-                       <thead>
-                         <tr>
-                           <th>код</th>
-                           <th>проект</th>
-                           <th>этап</th>
-                           <th>объект</th>
-                           <th>дисциплина</th>
-                           <th>план начало</th>
-                           <th>план окончание</th>
-                           <th>факт начало</th>
-                           <th>факт окончание</th>
-                           <th>стоимость</th>
-                           <th>выполнено</th>
-                           <th>статус</th>
-                         </tr>
-                       </thead>
-                       <tbody></tbody>
-                     </table>
-                   </div>
+                   
                  </div>`;
       });
       html += `</div>`;
@@ -595,7 +585,7 @@
       const rows = data.rows || [];
       
       const totalCost = rows.reduce((s, r) => s + (r.cost || 0), 0);
-      const doneCost = rows.reduce((s, r) => s + (r.cost || 0) * (r.done || 0) / 100, 0);
+      const doneCost = rows.reduce((s, r) => s + (r.done || 0), 0);
       const donePct = totalCost ? Math.round(doneCost / totalCost * 100) : 0;
       const now = new Date();
       const planCost = rows.reduce((s, r) => {
@@ -651,7 +641,79 @@
             <div class="kpi-label">Примечание / комментарий</div>
             <textarea class="kpi-comment-edit" id="comment-${code}" placeholder="Место для текстового комментария по проекту — риски, причины отставания, ключевые события за период." onblur="saveComment('${code}')" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${data.comment || ""}</textarea>
           </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">s-кривая — план / факт (накопительно и за период)</div>
+          <div class="chart-wrap"><canvas id="chart-${code}"></canvas></div>
         </div>`;
+        buildChart(code, rows);
+    }
+
+    const charts = {};
+
+    function buildChart(code, rows) {
+      const byMonth = {};
+      rows.forEach(r => {
+        if (!r.planStart || !r.planEnd) return;
+        const ps = new Date(r.planStart), pe = new Date(r.planEnd);
+        const months = (pe.getFullYear() - ps.getFullYear()) * 12 + (pe.getMonth() - ps.getMonth()) + 1;
+        const perMonth = (r.cost || 0) / months;
+        const d = new Date(ps.getFullYear(), ps.getMonth(), 1);
+        for (let i = 0; i < months; i++) {
+          const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+          byMonth[key] = byMonth[key] || { plan: 0, fact: 0 };
+          byMonth[key].plan += perMonth;
+          d.setMonth(d.getMonth() + 1);
+        }
+      });
+      rows.forEach(r => {
+        if (!r.factStart) return;
+        const fs = new Date(r.factStart);
+        const fe = r.factEnd ? new Date(r.factEnd) : new Date();
+        const months = (fe.getFullYear() - fs.getFullYear()) * 12 + (fe.getMonth() - fs.getMonth()) + 1;
+        const perMonth = (r.done || 0) / months;
+        const d = new Date(fs.getFullYear(), fs.getMonth(), 1);
+        for (let i = 0; i < months; i++) {
+          const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+          byMonth[key] = byMonth[key] || { plan: 0, fact: 0 };
+          byMonth[key].fact += perMonth;
+          d.setMonth(d.getMonth() + 1);
+        }
+      });
+      const keys = Object.keys(byMonth).sort();
+      const total = rows.reduce((s, r) => s + (r.cost || 0), 0) || 1;
+      const now = new Date();
+      const nowKey = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+      let cp = 0, cf = 0;
+      const labels = [], planCum = [], factCum = [], planPer = [], factPer = [];
+      keys.forEach(k => {
+        cp += byMonth[k].plan; cf += byMonth[k].fact;
+        labels.push(k.slice(5) + "." + k.slice(2, 4));
+        planCum.push(Math.round(cp / total * 100));
+        factCum.push(k <= nowKey ? Math.round(cf / total * 100) : null);
+        planPer.push(Math.round(byMonth[k].plan / total * 100 * 10) / 10);
+        factPer.push(k <= nowKey ? Math.round(byMonth[k].fact / total * 100 * 10) / 10 : null);
+      });
+      if (charts[code]) charts[code].destroy();
+      charts[code] = new Chart(document.getElementById("chart-" + code), {
+        data: {
+          labels,
+          datasets: [
+            { type: "line", label: "План накопительно", data: planCum, borderColor: "#0a1e3d", borderWidth: 2.5, pointRadius: 0, tension: 0.3 },
+            { type: "line", label: "Факт накопительно", data: factCum, borderColor: "#7da7d9", borderWidth: 2.5, pointRadius: 0, tension: 0.3 },
+            { type: "bar", label: "План за месяц", data: planPer, backgroundColor: "#0a1e3d" },
+            { type: "bar", label: "Факт за месяц", data: factPer, backgroundColor: "#7da7d9" }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } },
+          scales: {
+            y: { min: 0, max: 100, ticks: { callback: v => v + "%" } },
+            x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } }
+          }
+        }
+      });
     }
 
     async function saveComment(code) {
