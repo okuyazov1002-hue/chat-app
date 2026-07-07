@@ -317,6 +317,33 @@
     }
     .chart-title { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; }
     .chart-wrap { position: relative; width: 100%; height: 280px; }
+    .stage-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .stage-card {
+      background: #f3f4f6;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .stage-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .stage-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      padding: 4px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .stage-table td { padding: 5px 0; color: #374151; border-top: 1px solid #e5e7eb; }
+    .stage-table .st-date { text-align: right; }
+    .stage-table .st-delta { text-align: right; font-weight: 600; }
+    .stage-table .st-num { text-align: right; }
+    .st-bad { color: #b91c1c; }
+    .st-good { color: #0a1e3d; }
+    .st-empty { color: #9ca3af; text-align: center; padding: 14px 0 !important; }
     .kpi-badge {
       display: inline-block;
       margin-top: 6px;
@@ -645,11 +672,94 @@
         <div class="chart-card">
           <div class="chart-title">s-кривая — план / факт (накопительно и за период)</div>
           <div class="chart-wrap"><canvas id="chart-${code}"></canvas></div>
+        </div>
+        <div class="stage-row">
+          <div class="stage-card">
+            <div class="chart-title">проектирование</div>
+            <table class="stage-table">
+              <thead><tr><th>Дисциплина</th><th>План</th><th>Факт</th><th>Δ</th><th>План. даты</th></tr></thead>
+              <tbody>${stageTable(rows, ["базовое", "детальн"])}</tbody>
+            </table>
+          </div>
+          <div class="stage-card">
+            <div class="chart-title">поставка</div>
+            <table class="stage-table">
+              <thead><tr><th>Этап</th><th>Кол-во</th><th>Статус</th></tr></thead>
+              <tbody>${supplyTable(rows)}</tbody>
+            </table>
+          </div>
+          <div class="stage-card">
+            <div class="chart-title">смр</div>
+            <table class="stage-table">
+              <thead><tr><th>Дисциплина</th><th>План</th><th>Факт</th><th>Δ</th><th>План. даты</th></tr></thead>
+              <tbody>${stageTable(rows, ["смр", "строительн", "пнр"])}</tbody>
+            </table>
+          </div>
         </div>`;
         buildChart(code, rows);
     }
 
     const charts = {};
+
+    const SUPPLY_STAGES = [
+      "Техническая характеристика",
+      "Размещение заказа",
+      "Изготовление",
+      "Контроль и обеспечение качества",
+      "Готовность к отгрузке",
+      "Отгрузка",
+      "Таможенная очистка",
+      "Доставка на склад",
+      "Доставка на строительную площадку",
+      "Входной контроль на площадке"
+    ];
+
+    function supplyTable(rows) {
+      const data = {};
+      rows.filter(r => (r.stage || "").toLowerCase().includes("поставка")).forEach(r => {
+        const key = (r.item || "").trim().replace(/\s+/g, " ").toLowerCase();
+        if (!data[key]) data[key] = { total: 0, done: 0 };
+        data[key].total += r.cost || 0;
+        data[key].done += r.done || 0;
+      });
+      return SUPPLY_STAGES.map(name => {
+        const d = data[name.toLowerCase()];
+        if (!d || !d.total) return `<tr><td>${name}</td><td class="st-num">—</td><td class="st-delta">—</td></tr>`;
+        const left = d.total - d.done;
+        const cls = left > 0 ? "st-bad" : "st-good";
+        return `<tr><td>${name}</td><td class="st-num">${d.done} из ${d.total}</td><td class="st-delta ${cls}">${left > 0 ? "ост. " + left : "готово"}</td></tr>`;
+      }).join("");
+    }
+    function stageTable(rows, stageFilter) {
+      const groups = {};
+      const now = new Date();
+      rows.filter(r => stageFilter.some(s => (r.stage || "").toLowerCase().includes(s))).forEach(r => {
+        const clean = (r.item || "Без дисциплины").trim().replace(/\s+/g, " ");
+        const key = clean.toLowerCase();
+        if (!groups[key]) groups[key] = { name: clean[0].toUpperCase() + clean.slice(1).toLowerCase(), cost: 0, done: 0, plan: 0, starts: [], ends: [] };
+        const g = groups[key];
+        g.cost += r.cost || 0;
+        g.done += r.done || 0;
+        if (r.planStart && r.planEnd) {
+          const ps = new Date(r.planStart), pe = new Date(r.planEnd);
+          g.starts.push(+ps); g.ends.push(+pe);
+          if (now >= pe) g.plan += r.cost || 0;
+          else if (now > ps) g.plan += (r.cost || 0) * (now - ps) / (pe - ps);
+        }
+      });
+      const keys = Object.keys(groups);
+      if (!keys.length) return `<tr><td class="st-empty" colspan="5">Нет данных</td></tr>`;
+      const fmt2 = d => `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getFullYear()).slice(2)}`;
+      return keys.map(k => {
+        const g = groups[k];
+        const planPct = g.cost ? Math.round(g.plan / g.cost * 100) : 0;
+        const factPct = g.cost ? Math.round(g.done / g.cost * 100) : 0;
+        const delta = factPct - planPct;
+        const cls = delta < 0 ? "st-bad" : "st-good";
+        const dates = g.starts.length ? fmt2(new Date(Math.min(...g.starts))) + " → " + fmt2(new Date(Math.max(...g.ends))) : "—";
+        return `<tr><td>${g.name}</td><td class="st-num">${planPct}%</td><td class="st-num">${factPct}%</td><td class="st-delta ${cls}">${delta < 0 ? delta : "+" + delta}%</td><td class="st-date">${dates}</td></tr>`;
+      }).join("");
+    }
 
     function buildChart(code, rows) {
       const byMonth = {};
