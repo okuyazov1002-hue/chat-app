@@ -6,6 +6,7 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo").default || require("connect-mongo");
 const bcrypt = require("bcrypt");
 const User = require("./models/User");
+const Report = require("./models/Report");
 function adminOnly(req, res, next) {
   if (!req.session.userId) return res.status(401).json({ message: "Не авторизован" });
   if (req.session.role !== "admin") return res.status(403).json({ message: "Только для администратора" });
