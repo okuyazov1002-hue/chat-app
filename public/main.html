@@ -358,6 +358,12 @@
     .gantt-scale { display: flex; flex: 1; }
     .gantt-year { text-align: center; font-size: 11px; font-weight: 600; color: #374151; border-left: 1px solid #d1d5db; }
     .gantt-month { text-align: center; font-size: 9px; color: #6b7280; overflow: hidden; }
+    .prep-kpi { grid-template-columns: repeat(4, 1fr); }
+    .prep-red { background: #fde8e8; }
+    .prep-red .kpi-label, .prep-red .kpi-big { color: #b91c1c; }
+    .prep-bar { height: 6px; background: #e5e7eb; border-radius: 3px; margin-top: 6px; overflow: hidden; }
+    .prep-bar > div { height: 100%; background: #0a1e3d; }
+    .prep-loading { color: #9ca3af; font-size: 13px; padding: 20px; }
     .modal-wide { max-width: 460px; }
     .users-add-title { font-size: 13px; margin: 14px 0 6px; }
     .user-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #e5e7eb; }
@@ -600,7 +606,65 @@
       container.innerHTML = html;
       container.dataset.rendered = "1";
     }
-    ["prep", "main", "aux"].forEach(renderTab);
+    ["main", "aux"].forEach(renderTab);
+    renderPrepTab();
+
+    async function renderPrepTab() {
+      const container = document.getElementById("tab-prep");
+      if (!container || container.dataset.rendered) return;
+      container.dataset.rendered = "1";
+      container.innerHTML = `<h2 class="tab-title">Подготовительные работы</h2>
+        <div class="prep-board" id="prep-board"><div class="prep-loading">Загрузка данных...</div></div>`;
+
+      const prepItems = PROJECTS.prep.items;
+      const reports = {};
+      await Promise.all(prepItems.map(async p => {
+        const res = await fetch("/api/reports/" + p.code);
+        reports[p.code] = (await res.json()).rows || [];
+      }));
+
+      let done = 0, inWork = 0, notStarted = 0, totalCost = 0, doneCost = 0;
+      prepItems.forEach(p => {
+        const rows = reports[p.code];
+        totalCost += rows.reduce((s, r) => s + (r.cost || 0), 0);
+        doneCost += rows.reduce((s, r) => s + (r.done || 0), 0);
+        const pct = objPct(rows);
+        if (!rows.length || pct === 0) notStarted++;
+        else if (pct >= 100) done++;
+        else inWork++;
+      });
+      const readiness = totalCost ? Math.round(doneCost / totalCost * 100) : 0;
+
+      document.getElementById("prep-board").innerHTML = `
+        <div class="kpi-row prep-kpi">
+          <div class="kpi-card">
+            <div class="kpi-label">Всего объектов</div>
+            <div class="kpi-big">${prepItems.length}</div>
+            <div class="kpi-label">завершено ${done} · в работе ${inWork} · не начато ${notStarted}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Готовность подготовки</div>
+            <div class="kpi-big">${readiness}%</div>
+            <div class="prep-bar"><div style="width:${readiness}%"></div></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Стоимость / освоено</div>
+            <div class="kpi-mid">${money(totalCost).replace(" €", "")}</div>
+            <div class="kpi-mid">${money(doneCost).replace(" €", "")} (${readiness}%)</div>
+          </div>
+          <div class="kpi-card prep-red">
+            <div class="kpi-label">Блокируют основные</div>
+            <div class="kpi-big">—</div>
+            <div class="kpi-label">расчёт добавим следующим шагом</div>
+          </div>
+        </div>`;
+    }
+
+    function objPct(rows) {
+      const c = rows.reduce((s, r) => s + (r.cost || 0), 0);
+      const d = rows.reduce((s, r) => s + (r.done || 0), 0);
+      return c ? Math.round(d / c * 100) : 0;
+    }
 
     // Переключение вкладок
     document.querySelectorAll(".nav-btn").forEach(btn => {
