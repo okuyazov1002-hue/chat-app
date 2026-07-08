@@ -398,19 +398,20 @@
     .prep-bar > div { height: 100%; background: #0a1e3d; }
     .prep-loading { color: #9ca3af; font-size: 13px; padding: 20px; }
     #prep-groups { margin-top: 16px; }
-    .prep-group { background: #f3f4f6; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
-    .prep-group-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; cursor: pointer; }
-    .prep-group-title { font-size: 14px; font-weight: 700; color: #0a1628; display: flex; align-items: center; gap: 10px; }
-    .prep-group-title small { font-size: 11px; color: #6b7280; font-weight: 400; }
+    .prep-group { margin-bottom: 10px; }
+    .prep-group-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; cursor: pointer; background: rgba(255,255,255,0.07); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 14px 18px; }
+    .prep-group.open .prep-group-head { border-radius: 14px 14px 0 0; }
+    .prep-group-title { font-size: 14px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .prep-group-title small { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 400; }
     .prep-verdict { font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 6px; }
     .prep-verdict.bad { background: #fde8e8; color: #b91c1c; }
     .prep-verdict.good { background: #e8eef8; color: #0a1e3d; }
-    .prep-group-stats { display: flex; gap: 14px; font-size: 11.5px; color: #6b7280; align-items: center; }
-    .prep-group-stats b { color: #0a1628; }
+    .prep-group-stats { display: flex; gap: 14px; font-size: 11.5px; color: rgba(255,255,255,0.65); align-items: center; }
+    .prep-group-stats b { color: #fff; }
     .prep-group-stats .red { color: #b91c1c; }
-    .prep-minibar { width: 90px; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; }
-    .prep-minibar > div { height: 100%; background: #0a1e3d; }
-    .prep-group-body { display: none; margin-top: 10px; }
+    .prep-minibar { width: 90px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; }
+    .prep-minibar > div { height: 100%; background: #7da7d9; }
+    .prep-group-body { display: none; background: #fff; border-radius: 0 0 14px 14px; padding: 12px 14px; }
     .prep-group.open .prep-group-body { display: block; }
     .prep-gantt { background: #fff; border-radius: 8px; padding: 10px 12px; }
     .pg-scale-year { display: flex; font-size: 10px; font-weight: 600; color: #374151; }
@@ -932,11 +933,12 @@
       let ghtml = "";
       Object.keys(groups).forEach(par => {
         const items = groups[par];
-        let gDone = 0, gWork = 0, gCost = 0, gDoneCost = 0;
+        let gDone = 0, gWork = 0, gCost = 0, gDoneCost = 0, gFact = 0;
         items.forEach(p => {
           const rows = reports[p.code];
           gCost += rows.reduce((s, r) => s + (r.cost || 0), 0);
           gDoneCost += rows.reduce((s, r) => s + (r.done || 0), 0);
+          gFact += rows.reduce((s, r) => s + (r.costFact || 0), 0);
           const pct = objPct(rows);
           if (pct >= 100 && rows.length) gDone++;
           else if (pct > 0) gWork++;
@@ -964,6 +966,10 @@
           <div class="prep-group-head">
             <div class="prep-group-title">▶ ${par} — ${parName} <small>· ${items.length} объектов</small> ${verdict}</div>
             <div class="prep-group-stats">
+              <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+                <span>Факт стоимость <b>${money(gFact).replace(" €", "")}</b></span>
+                <span>Освоено <b>${money(gDoneCost).replace(" €", "")}</b></span>
+              </span>
               <span>готово <b>${gDone}</b></span>
               <span>в работе <b>${gWork}</b></span>
               <span>площадка <span class="prep-minibar"><div style="width:${gPct}%"></div></span> <b>${gPct}%</b></span>
