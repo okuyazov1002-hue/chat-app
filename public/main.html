@@ -62,7 +62,7 @@
     .logo-text .subtitle { font-size: 11.5px; color: rgba(255,255,255,0.65); margin-top: 2px; }
 
     /* Навигация по разделам */
-    .nav { display: flex; gap: 6px; flex-wrap: wrap; }
+    .nav { display: flex; gap: 6px; flex-wrap: wrap; margin-left: 28px; margin-right: auto; align-items: center; }
     .nav-btn {
       padding: 9px 16px;
       font-size: 14px;
@@ -75,6 +75,39 @@
       transition: all 0.2s ease;
     }
     .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+    .nav-drop { position: relative; display: inline-block; }
+    .nav-drop-btn {
+      background: none; border: 1px solid transparent; cursor: pointer;
+      color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 600;
+      padding: 9px 16px; border-radius: 999px;
+    }
+    .nav-drop-btn:hover, .nav-drop.open .nav-drop-btn { color: #fff; background: rgba(255,255,255,0.08); }
+    .nav-drop-list {
+      display: none; position: absolute; top: 100%; left: 0; z-index: 50;
+      background: #0a1628; border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px; padding: 4px; min-width: 200px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+    .nav-drop-list .nav-btn { font-size: 12.5px; padding: 7px 12px; white-space: nowrap; }
+    .nav-drop.open .nav-drop-list { display: block; }
+    .nav-drop-list .nav-btn { display: block; width: 100%; text-align: left; }
+    /* Персонал */
+    .pers-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .pers-card {
+      background: #f3f4f6; border-radius: 14px; padding: 16px;
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .pers-photo {
+      width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0;
+      background: #e5e7eb; color: #6b7280; font-size: 26px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; cursor: pointer;
+    }
+    .pers-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .pers-name { font-size: 14px; font-weight: 700; color: #0a1628; margin-bottom: 4px; }
+    .pers-line { font-size: 11.5px; color: #374151; margin-top: 2px; }
+    .pers-line span { color: #6b7280; }
+    @media (max-width: 1100px) { .pers-grid { grid-template-columns: repeat(2, 1fr); } }
     .nav-btn.active {
       color: #fff;
       background: rgba(255, 255, 255, 0.14);
@@ -397,10 +430,16 @@
     </div>
 
     <nav class="nav">
-      <button class="nav-btn active" data-tab="schedule">Общий график</button>
-      <button class="nav-btn" data-tab="prep">Подготовительные работы</button>
-      <button class="nav-btn" data-tab="main">Основные проекты</button>
-      <button class="nav-btn" data-tab="aux">Вспомогательные объекты</button>
+      <div class="nav-drop">
+        <button class="nav-drop-btn" id="projectsMenuBtn">Проекты ▾</button>
+        <div class="nav-drop-list" id="projectsMenuList">
+          <button class="nav-btn active" data-tab="schedule">Общий график</button>
+          <button class="nav-btn" data-tab="prep">Подготовительные работы</button>
+          <button class="nav-btn" data-tab="main">Основные проекты</button>
+          <button class="nav-btn" data-tab="aux">Вспомогательные объекты</button>
+        </div>
+      </div>
+      <button class="nav-btn" data-tab="personnel">Персонал</button>
     </nav>
 
     <div class="user-menu">
@@ -410,7 +449,7 @@
       </button>
       <div class="dropdown" id="dropdown">
         <button id="usersBtn" style="display:none">👥 Пользователи</button>
-        <button id="changePassBtn">🔑 Сменить пароль</button>
+        <button id="changePassBtn">👤 Аккаунт</button>
         <button class="danger" id="logoutBtn">🚪 Выйти</button>
       </div>
     </div>
@@ -424,18 +463,31 @@
     <div id="tab-prep" class="tab"></div>
     <div id="tab-main" class="tab"></div>
     <div id="tab-aux" class="tab"></div>
+    <div id="tab-personnel" class="tab">
+      <h2 class="tab-title">Персонал</h2>
+      <div class="pers-grid" id="pers-grid"><div class="prep-loading">Загрузка...</div></div>
+    </div>
   </main>
 
   <!-- Окно смены пароля -->
   <div class="modal-overlay" id="passModal">
     <div class="modal">
-      <h2>Смена пароля</h2>
+      <h2>Аккаунт</h2>
       <div class="msg" id="passMsg"></div>
+      <input type="text" id="accDept" placeholder="Отдел">
+      <input type="text" id="accPos" placeholder="Должность">
+      <input type="text" id="accInt" placeholder="Внутренний номер">
+      <input type="text" id="accMob" placeholder="Мобильный номер">
+      <input type="text" id="accEmail" placeholder="Почта">
+      <div class="row">
+        <button class="btn-save" id="accSave">Сохранить данные</button>
+      </div>
+      <h2 style="margin-top:14px;">Смена пароля</h2>
       <input type="password" id="oldPass" placeholder="Старый пароль">
       <input type="password" id="newPass" placeholder="Новый пароль (мин. 4 символа)">
       <div class="row">
-        <button class="btn-cancel" id="passCancel">Отмена</button>
-        <button class="btn-save" id="passSave">Сохранить</button>
+        <button class="btn-cancel" id="passCancel">Закрыть</button>
+        <button class="btn-save" id="passSave">Сменить пароль</button>
       </div>
     </div>
   </div>
@@ -559,8 +611,34 @@
     // Смена пароля
     const passModal = document.getElementById("passModal");
     const passMsg = document.getElementById("passMsg");
-    document.getElementById("changePassBtn").addEventListener("click", () => {
+    let myPersId = null;
+    document.getElementById("changePassBtn").addEventListener("click", async () => {
       passModal.classList.add("open");
+      const me = await (await fetch("/api/me")).json();
+      const users = await (await fetch("/api/personnel")).json();
+      const u = users.find(x => x.username === me.username);
+      if (!u) return;
+      myPersId = u._id;
+      document.getElementById("accDept").value = u.department || "";
+      document.getElementById("accPos").value = u.position || "";
+      document.getElementById("accInt").value = u.internalPhone || "";
+      document.getElementById("accMob").value = u.mobilePhone || "";
+      document.getElementById("accEmail").value = u.email || "";
+    });
+    document.getElementById("accSave").addEventListener("click", async () => {
+      const res = await fetch("/api/personnel/" + myPersId, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          department: document.getElementById("accDept").value,
+          position: document.getElementById("accPos").value,
+          internalPhone: document.getElementById("accInt").value,
+          mobilePhone: document.getElementById("accMob").value,
+          email: document.getElementById("accEmail").value,
+        }),
+      });
+      passMsg.textContent = res.ok ? "Данные сохранены" : "Ошибка сохранения";
+      passMsg.className = "msg " + (res.ok ? "ok" : "err");
     });
     document.getElementById("passCancel").addEventListener("click", () => {
       passModal.classList.remove("open");
@@ -665,6 +743,72 @@
       const d = rows.reduce((s, r) => s + (r.done || 0), 0);
       return c ? Math.round(d / c * 100) : 0;
     }
+
+    // Персонал
+    async function renderPersonnel() {
+      const grid = document.getElementById("pers-grid");
+      if (!grid || grid.dataset.rendered) return;
+      grid.dataset.rendered = "1";
+      const res = await fetch("/api/personnel");
+      if (!res.ok) { grid.innerHTML = "Ошибка загрузки"; return; }
+      const users = await res.json();
+      grid.innerHTML = users.map(u => {
+        const initials = (u.name || u.username || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+        const photo = u.avatar
+          ? `<img src="${u.avatar}" alt="">`
+          : initials;
+        return `<div class="pers-card" data-id="${u._id}">
+          <div class="pers-photo" data-id="${u._id}" title="Нажмите, чтобы загрузить фото">${photo}</div>
+          <div>
+            <div class="pers-name">${u.name || u.username}</div>
+            <div class="pers-line"><span>Отдел:</span> ${u.department || "—"}</div>
+            <div class="pers-line"><span>Должность:</span> ${u.position || "—"}</div>
+            <div class="pers-line"><span>Внутренний номер:</span> ${u.internalPhone || "—"}</div>
+            <div class="pers-line"><span>Мобильный номер:</span> ${u.mobilePhone || "—"}</div>
+            <div class="pers-line"><span>Почта:</span> ${u.email || "—"}</div>
+          </div>
+        </div>`;
+      }).join("");
+
+      grid.querySelectorAll(".pers-photo").forEach(ph => {
+        ph.addEventListener("click", () => {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = "image/*";
+          input.onchange = () => {
+            const file = input.files[0];
+            if (!file) return;
+            const img = new Image();
+            img.onload = async () => {
+              const canvas = document.createElement("canvas");
+              canvas.width = 200; canvas.height = 200;
+              const s = Math.min(img.width, img.height);
+              canvas.getContext("2d").drawImage(img,
+                (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 200, 200);
+              const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+              const res = await fetch("/api/personnel/" + ph.dataset.id, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ avatar: dataUrl }),
+              });
+              if (res.ok) ph.innerHTML = `<img src="${dataUrl}" alt="">`;
+              else alert("Нет прав: можно менять только своё фото");
+            };
+            img.src = URL.createObjectURL(file);
+          };
+          input.click();
+        });
+      });
+    }
+    renderPersonnel();
+
+    // Выпадающее меню "Проекты"
+    const projDrop = document.querySelector(".nav-drop");
+    document.getElementById("projectsMenuBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      projDrop.classList.toggle("open");
+    });
+    document.addEventListener("click", () => projDrop.classList.remove("open"));
 
     // Переключение вкладок
     document.querySelectorAll(".nav-btn").forEach(btn => {

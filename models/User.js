@@ -5,6 +5,12 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ["admin", "user"], default: "user" },
   name: { type: String, default: "" },
+  department: { type: String, default: "" },
+  position: { type: String, default: "" },
+  internalPhone: { type: String, default: "" },
+  mobilePhone: { type: String, default: "" },
+  email: { type: String, default: "" },
+  avatar: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },
 });
 

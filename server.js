@@ -177,6 +177,35 @@ app.delete("/api/users/:id", adminOnly, async (req, res) => {
   }
 });
 
+// ===== ПЕРСОНАЛ =====
+// Список сотрудников (все залогиненные, без паролей)
+app.get("/api/personnel", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ message: "Не авторизован" });
+  try {
+    const users = await User.find({}, "-password").sort({ name: 1 });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+// Обновить карточку: админ — любую, user — только свою
+app.patch("/api/personnel/:id", async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ message: "Не авторизован" });
+  const isSelf = String(req.params.id) === String(req.session.userId);
+  if (req.session.role !== "admin" && !isSelf)
+    return res.status(403).json({ message: "Можно редактировать только свою карточку" });
+  try {
+    const allowed = ["department", "position", "internalPhone", "mobilePhone", "email", "avatar"];
+    const update = {};
+    allowed.forEach(f => { if (req.body[f] !== undefined) update[f] = req.body[f]; });
+    if (req.session.role === "admin" && req.body.name !== undefined) update.name = req.body.name;
+    const user = await User.findByIdAndUpdate(req.params.id, update, { new: true, select: "-password" });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
 // ===== ОТЧЁТЫ =====
 
 // Получить отчёт по коду проекта
