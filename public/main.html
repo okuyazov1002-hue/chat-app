@@ -765,7 +765,9 @@
             });
           });
         });
-        if (!min || !max || min === max) return `<div class="prep-loading">Нет данных для графика</div>`;
+        if (!min) return `<div class="prep-loading">Нет данных для графика</div>`;
+        const todayStr = new Date().toISOString().slice(0, 10);
+        if (!max || max <= min) max = todayStr > min ? todayStr : min + "T99";
         const t0 = new Date(min).getTime(), t1 = new Date(max).getTime();
         const pos = d => Math.max(0, Math.min(100, (new Date(d).getTime() - t0) / (t1 - t0) * 100));
 
