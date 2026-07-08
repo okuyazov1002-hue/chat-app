@@ -412,6 +412,22 @@
     .prep-minibar > div { height: 100%; background: #0a1e3d; }
     .prep-group-body { display: none; margin-top: 10px; }
     .prep-group.open .prep-group-body { display: block; }
+    .prep-gantt { background: #fff; border-radius: 8px; padding: 10px 12px; }
+    .pg-scale { display: flex; font-size: 9.5px; color: #6b7280; margin-bottom: 5px; }
+    .pg-scale span:first-child { width: 180px; flex: none; }
+    .pg-scale span { flex: 1; }
+    .pg-body { position: relative; }
+    .pg-now { position: absolute; top: 0; bottom: 0; width: 1.5px; background: #b91c1c; z-index: 2; }
+    .pg-row { display: flex; align-items: center; margin-bottom: 3px; }
+    .pg-name { width: 180px; flex: none; font-size: 11px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
+    .pg-name.late { color: #b91c1c; font-weight: 600; }
+    .pg-track { flex: 1; position: relative; height: 13px; }
+    .pg-bar { position: absolute; height: 100%; border-radius: 3px; background: #7da7d9; overflow: hidden; }
+    .pg-bar.plan-only { background: #e5e7eb; border: 1px dashed #9ca3af; }
+    .pg-fill { height: 100%; background: #0a1e3d; }
+    .pg-fill.late { background: #b91c1c; }
+    .pg-legend { display: flex; gap: 14px; font-size: 9.5px; color: #6b7280; margin-top: 6px; }
+    .pg-sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: -1px; }
     .modal-wide { max-width: 460px; }
     .users-add-title { font-size: 13px; margin: 14px 0 6px; }
     .user-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #e5e7eb; }
@@ -737,6 +753,68 @@
         return Math.round((new Date(a) - new Date(b)) / 86400000);
       }
 
+      // Мини-Гант группы
+      function prepGantt(items) {
+        // Диапазон дат по всем объектам группы
+        let min = null, max = null;
+        items.forEach(p => {
+          reports[p.code].forEach(r => {
+            [r.planStart, r.planEnd, r.factStart, r.factEnd, r.forecastEnd].filter(Boolean).forEach(d => {
+              if (!min || d < min) min = d;
+              if (!max || d > max) max = d;
+            });
+          });
+        });
+        if (!min || !max || min === max) return `<div class="prep-loading">Нет данных для графика</div>`;
+        const t0 = new Date(min).getTime(), t1 = new Date(max).getTime();
+        const pos = d => Math.max(0, Math.min(100, (new Date(d).getTime() - t0) / (t1 - t0) * 100));
+
+        // Шкала месяцев (5-7 меток)
+        const months = [];
+        const mCount = Math.max(2, Math.round((t1 - t0) / 2592000000));
+        const step = Math.max(1, Math.ceil(mCount / 6));
+        const cur = new Date(min); cur.setDate(1);
+        while (cur.getTime() <= t1) {
+          months.push(String(cur.getMonth() + 1).padStart(2, "0") + "." + String(cur.getFullYear()).slice(2));
+          cur.setMonth(cur.getMonth() + step);
+        }
+        const today = new Date().toISOString().slice(0, 10);
+        const nowPos = pos(today);
+
+        let rowsHtml = "";
+        items.forEach(p => {
+          const rows = reports[p.code];
+          const starts = rows.map(r => r.planStart).filter(Boolean).sort();
+          const ends = rows.map(r => r.forecastEnd || r.planEnd).filter(Boolean).sort();
+          if (!starts.length || !ends.length) return;
+          const s = starts[0], e = ends[ends.length - 1];
+          const pct = objPct(rows);
+          const started = rows.some(r => r.factStart);
+          const late = pct < 100 && e < today || (smrStart[p.code.split("-")[0]] && e > smrStart[p.code.split("-")[0]]);
+          const left = pos(s), width = Math.max(1.5, pos(e) - pos(s));
+          let bar;
+          if (!started && pct === 0) bar = `<div class="pg-bar plan-only" style="left:${left}%;width:${width}%"></div>`;
+          else bar = `<div class="pg-bar" style="left:${left}%;width:${width}%"><div class="pg-fill${late ? " late" : ""}" style="width:${pct}%"></div></div>`;
+          rowsHtml += `<div class="pg-row"><span class="pg-name${late ? " late" : ""}">${p.code} ${p.name}</span><div class="pg-track">${bar}</div></div>`;
+        });
+        if (!rowsHtml) return `<div class="prep-loading">Нет данных для графика</div>`;
+
+        return `<div class="prep-gantt">
+          <div class="pg-scale"><span></span>${months.map(m => `<span>${m}</span>`).join("")}</div>
+          <div class="pg-body">
+            <div class="pg-now" style="left:calc(180px + (100% - 180px) * ${(nowPos / 100).toFixed(3)})"></div>
+            ${rowsHtml}
+          </div>
+          <div class="pg-legend">
+            <span><span class="pg-sw" style="background:#0a1e3d"></span> выполнено</span>
+            <span><span class="pg-sw" style="background:#7da7d9"></span> план</span>
+            <span><span class="pg-sw" style="background:#b91c1c"></span> отставание</span>
+            <span><span class="pg-sw" style="background:#e5e7eb;border:1px dashed #9ca3af"></span> не начато</span>
+            <span style="color:#b91c1c">│ сегодня</span>
+          </div>
+        </div>`;
+      }
+
       let done = 0, inWork = 0, notStarted = 0, totalCost = 0, doneCost = 0;
       prepItems.forEach(p => {
         const rows = reports[p.code];
@@ -824,7 +902,7 @@
             </div>
           </div>
           <div class="prep-group-body">
-            <div class="prep-loading">Содержимое группы — следующими шагами</div>
+            ${prepGantt(items)}
           </div>
         </div>`;
       });
