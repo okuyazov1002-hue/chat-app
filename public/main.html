@@ -786,8 +786,8 @@
           const rows = reports[p.code];
           const starts = rows.map(r => r.planStart).filter(Boolean).sort();
           const ends = rows.map(r => r.forecastEnd || r.planEnd).filter(Boolean).sort();
-          if (!starts.length || !ends.length) return;
-          const s = starts[0], e = ends[ends.length - 1];
+          if (!starts.length) return;
+          const s = starts[0], e = ends.length ? ends[ends.length - 1] : today;
           const pct = objPct(rows);
           const started = rows.some(r => r.factStart);
           const late = pct < 100 && e < today || (smrStart[p.code.split("-")[0]] && e > smrStart[p.code.split("-")[0]]);
@@ -851,9 +851,9 @@
           </div>
         </div>
         <div class="panel-toolbar" style="margin-top:12px;">
-          <button class="panel-btn btn-import" id="prepimportbtn">📥 импорт</button>
-          <button class="panel-btn btn-export" id="prepexportbtn">📤 экспорт</button>
-          <input type="file" id="prepimportfile" accept=".xlsx" style="display:none">
+          <button class="panel-btn btn-import" id="prepImportBtn">📥 импорт</button>
+          <button class="panel-btn btn-export" id="prepExportBtn">📤 экспорт</button>
+          <input type="file" id="prepImportFile" accept=".xlsx" style="display:none">
         </div>
         <div id="prep-groups"></div>`;
 
@@ -878,7 +878,7 @@
           if (pct >= 100 && rows.length) gDone++;
           else if (pct > 0) gWork++;
         });
-        const gPct = gCost ? Math.round(gDoneCost / gCost * 100) : 0;
+        const gPct = gCost ? Math.min(100, Math.round(gDoneCost / gCost * 100)) : 0;
         const parName = parents[par] || "Общеплощадочные объекты";
 
         // Вердикт: худший прогноз объектов группы vs старт СМР родителя
@@ -983,9 +983,10 @@
     }
 
     function objPct(rows) {
+      if (rows.length && rows.every(r => /заверш/i.test(r.status || ""))) return 100;
       const c = rows.reduce((s, r) => s + (r.cost || 0), 0);
       const d = rows.reduce((s, r) => s + (r.done || 0), 0);
-      return c ? Math.round(d / c * 100) : 0;
+      return c ? Math.min(100, Math.round(d / c * 100)) : 0;
     }
 
     // Персонал
