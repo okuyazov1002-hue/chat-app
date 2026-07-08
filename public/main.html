@@ -413,14 +413,17 @@
     .prep-group-body { display: none; margin-top: 10px; }
     .prep-group.open .prep-group-body { display: block; }
     .prep-gantt { background: #fff; border-radius: 8px; padding: 10px 12px; }
-    .pg-scale { display: flex; font-size: 9.5px; color: #6b7280; margin-bottom: 5px; }
-    .pg-scale span:first-child { width: 622px; flex: none; }
-    .pg-scale span { flex: 1; }
+    .pg-scale-year { display: flex; font-size: 10px; font-weight: 600; color: #374151; }
+    .pg-scale-year span:first-child { width: 772px; flex: none; }
+    .pg-scale-year span:not(:first-child) { text-align: center; border-left: 1px solid #d1d5db; }
+    .pg-scale-month { display: flex; font-size: 9px; color: #6b7280; margin-bottom: 5px; }
+    .pg-scale-month span:first-child { width: 772px; flex: none; }
+    .pg-scale-month span:not(:first-child) { text-align: center; }
     .pg-body { position: relative; }
     .pg-now { position: absolute; top: 0; bottom: 0; width: 1.5px; background: #b91c1c; z-index: 2; }
     .pg-row { display: flex; align-items: center; margin-bottom: 3px; }
     .pg-row > * { flex-shrink: 0; }
-    .pg-name { width: 230px; flex: none; font-size: 10.5px; color: #374151; line-height: 1.2; padding-right: 8px; }
+    .pg-name { width: 380px; flex: none; font-size: 10.5px; color: #374151; line-height: 1.2; padding-right: 8px; }
     .pg-cell { width: 62px; flex: none; font-size: 9.5px; color: #374151; text-align: center; }
     .pg-pct { width: 48px; flex: none; font-size: 9.5px; font-weight: 600; color: #0a1628; text-align: center; }
     .pg-pct.neg { color: #b91c1c; }
@@ -777,15 +780,24 @@
         const t0 = new Date(min).getTime(), t1 = new Date(max).getTime();
         const pos = d => Math.max(0, Math.min(100, (new Date(d).getTime() - t0) / (t1 - t0) * 100));
 
-        // Шкала месяцев (5-7 меток)
+        // Шкала: года сверху, месяцы 01-12 снизу
         const months = [];
-        const mCount = Math.max(2, Math.round((t1 - t0) / 2592000000));
-        const step = Math.max(1, Math.ceil(mCount / 6));
         const cur = new Date(min); cur.setDate(1);
         while (cur.getTime() <= t1) {
-          months.push(String(cur.getMonth() + 1).padStart(2, "0") + "." + String(cur.getFullYear()).slice(2));
-          cur.setMonth(cur.getMonth() + step);
+          months.push({ y: cur.getFullYear(), m: cur.getMonth() + 1 });
+          cur.setMonth(cur.getMonth() + 1);
         }
+        const mW = 100 / months.length;
+        const years = {};
+        months.forEach(mo => years[mo.y] = (years[mo.y] || 0) + 1);
+        let yearRow = `<span></span>`;
+        Object.keys(years).sort().forEach(y => {
+          yearRow += `<span style="width:${years[y] * mW}%">${y}</span>`;
+        });
+        let monthRow = `<span></span>`;
+        months.forEach(mo => {
+          monthRow += `<span style="width:${mW}%">${String(mo.m).padStart(2, "0")}</span>`;
+        });
         const today = new Date().toISOString().slice(0, 10);
         const nowPos = pos(today);
 
@@ -794,7 +806,16 @@
           const rows = reports[p.code];
           const starts = rows.map(r => r.planStart).filter(Boolean).sort();
           const ends = rows.map(r => r.forecastEnd || r.planEnd).filter(Boolean).sort();
-          if (!starts.length) return;
+          if (!starts.length) {
+            rowshtml += `<div class="pg-row">
+            <span class="pg-name">${p.name}</span>
+            <span class="pg-cell">—</span><span class="pg-cell">—</span>
+            <span class="pg-cell">—</span><span class="pg-cell">—</span>
+            <span class="pg-pct">—</span><span class="pg-pct">—</span>
+            <span class="pg-pct">—</span>
+            <div class="pg-track"></div></div>`;
+            return;
+          }
           const s = starts[0], e = ends.length ? ends[ends.length - 1] : today;
           const pct = objPct(rows);
           const started = rows.some(r => r.factStart);
@@ -821,7 +842,7 @@
           const planPct = costAll ? Math.min(100, Math.round(planNow / costAll * 100)) : 0;
           const diff = pct - planPct;
           rowsHtml += `<div class="pg-row">
-            <span class="pg-name${late ? " late" : ""}">${p.code} ${p.name}</span>
+            <span class="pg-name${late ? " late" : ""}">${p.name}</span>
             <span class="pg-cell">${fmtD(s)}</span><span class="pg-cell">${fmtD(ends.length ? e : null)}</span>
             <span class="pg-cell">${fmtD(fStarts[0])}</span><span class="pg-cell">${fmtD(fEnds[fEnds.length - 1])}</span>
             <span class="pg-pct">${planPct}%</span><span class="pg-pct">${pct}%</span>
@@ -831,10 +852,11 @@
         if (!rowsHtml) return `<div class="prep-loading">Нет данных для графика</div>`;
 
         return `<div class="prep-gantt">
-          <div class="pg-head"><span style="width:230px"></span><span style="width:124px;text-align:center">план нач. / оконч.</span><span style="width:124px;text-align:center">факт нач. / оконч.</span><span style="width:144px;text-align:center">прогресс: план / факт / δ</span></div>
-          <div class="pg-scale"><span></span>${months.map(m => `<span>${m}</span>`).join("")}</div>
+          <div class="pg-head"><span style="width:380px"></span><span style="width:124px;text-align:center">план нач. / оконч.</span><span style="width:124px;text-align:center">факт нач. / оконч.</span><span style="width:144px;text-align:center">прогресс: план / факт / δ</span></div>
+          <div class="pg-scale-year">${yearRow}</div>
+          <div class="pg-scale-month">${monthRow}</div>
           <div class="pg-body">
-            <div class="pg-now" style="left:calc(180px + (100% - 180px) * ${(nowPos / 100).toFixed(3)})"></div>
+            <div class="pg-now" style="left:calc(772px + (100% - 772px) * ${(nowPos / 100).toFixed(3)})"></div>
             ${rowsHtml}
           </div>
           <div class="pg-legend">
