@@ -414,12 +414,18 @@
     .prep-group.open .prep-group-body { display: block; }
     .prep-gantt { background: #fff; border-radius: 8px; padding: 10px 12px; }
     .pg-scale { display: flex; font-size: 9.5px; color: #6b7280; margin-bottom: 5px; }
-    .pg-scale span:first-child { width: 180px; flex: none; }
+    .pg-scale span:first-child { width: 622px; flex: none; }
     .pg-scale span { flex: 1; }
     .pg-body { position: relative; }
     .pg-now { position: absolute; top: 0; bottom: 0; width: 1.5px; background: #b91c1c; z-index: 2; }
     .pg-row { display: flex; align-items: center; margin-bottom: 3px; }
-    .pg-name { width: 180px; flex: none; font-size: 11px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
+    .pg-row > * { flex-shrink: 0; }
+    .pg-name { width: 230px; flex: none; font-size: 10.5px; color: #374151; line-height: 1.2; padding-right: 8px; }
+    .pg-cell { width: 62px; flex: none; font-size: 9.5px; color: #374151; text-align: center; }
+    .pg-pct { width: 48px; flex: none; font-size: 9.5px; font-weight: 600; color: #0a1628; text-align: center; }
+    .pg-pct.neg { color: #b91c1c; }
+    .pg-head { display: flex; align-items: center; font-size: 9px; color: #6b7280; margin-bottom: 4px; }
+    .pg-head span { font-weight: 400; color: #6b7280; }
     .pg-name.late { color: #b91c1c; font-weight: 600; }
     .pg-track { flex: 1; position: relative; height: 13px; }
     .pg-bar { position: absolute; height: 100%; border-radius: 3px; background: #7da7d9; overflow: hidden; }
@@ -797,11 +803,35 @@
           let bar;
           if (!started && pct === 0) bar = `<div class="pg-bar plan-only" style="left:${left}%;width:${width}%"></div>`;
           else bar = `<div class="pg-bar" style="left:${left}%;width:${width}%"><div class="pg-fill${late ? " late" : ""}" style="width:${pct}%"></div></div>`;
-          rowsHtml += `<div class="pg-row"><span class="pg-name${late ? " late" : ""}">${p.code} ${p.name}</span><div class="pg-track">${bar}</div></div>`;
+          const fmtD = d => d ? d.slice(8,10) + "." + d.slice(5,7) + "." + d.slice(2,4) : "—";
+          const fEnds = rows.map(r => r.factEnd).filter(Boolean).sort();
+          const fStarts = rows.map(r => r.factStart).filter(Boolean).sort();
+          // плановый % на сегодня: доля прошедшего времени план-диапазона по деньгам строк
+          let planNow = 0, costAll = 0;
+          rows.forEach(r => {
+            if (!r.planStart) return;
+            costAll += r.cost || 0;
+            const pe = r.forecastEnd || r.planEnd || today;
+            if (today >= pe) planNow += r.cost || 0;
+            else if (today > r.planStart) {
+              const t = (new Date(today) - new Date(r.planStart)) / (new Date(pe) - new Date(r.planStart));
+              planNow += (r.cost || 0) * t;
+            }
+          });
+          const planPct = costAll ? Math.min(100, Math.round(planNow / costAll * 100)) : 0;
+          const diff = pct - planPct;
+          rowsHtml += `<div class="pg-row">
+            <span class="pg-name${late ? " late" : ""}">${p.code} ${p.name}</span>
+            <span class="pg-cell">${fmtD(s)}</span><span class="pg-cell">${fmtD(ends.length ? e : null)}</span>
+            <span class="pg-cell">${fmtD(fStarts[0])}</span><span class="pg-cell">${fmtD(fEnds[fEnds.length - 1])}</span>
+            <span class="pg-pct">${planPct}%</span><span class="pg-pct">${pct}%</span>
+            <span class="pg-pct${diff < 0 ? " neg" : ""}">${diff > 0 ? "+" : ""}${diff}%</span>
+            <div class="pg-track">${bar}</div></div>`;
         });
         if (!rowsHtml) return `<div class="prep-loading">Нет данных для графика</div>`;
 
         return `<div class="prep-gantt">
+          <div class="pg-head"><span style="width:230px"></span><span style="width:124px;text-align:center">план нач. / оконч.</span><span style="width:124px;text-align:center">факт нач. / оконч.</span><span style="width:144px;text-align:center">прогресс: план / факт / δ</span></div>
           <div class="pg-scale"><span></span>${months.map(m => `<span>${m}</span>`).join("")}</div>
           <div class="pg-body">
             <div class="pg-now" style="left:calc(180px + (100% - 180px) * ${(nowPos / 100).toFixed(3)})"></div>
