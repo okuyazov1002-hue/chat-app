@@ -716,6 +716,27 @@
         reports[p.code] = (await res.json()).rows || [];
       }));
 
+      // Дата старта СМР родительских проектов (мин. planStart строк этапа СМР/строительство)
+      const parentCodes = [...PROJECTS.main.items, ...PROJECTS.aux.items].map(p => p.code);
+      const smrStart = {};
+      await Promise.all(parentCodes.map(async code => {
+        const res = await fetch("/api/reports/" + code);
+        const rows = (await res.json()).rows || [];
+        const dates = rows
+          .filter(r => /смр|строительн/i.test(r.stage || ""))
+          .map(r => r.planStart).filter(Boolean).sort();
+        smrStart[code] = dates[0] || null;
+      }));
+
+      // Прогноз окончания объекта: макс. из forecastEnd (или planEnd) его строк
+      function objFinish(rows) {
+        const dates = rows.map(r => r.forecastEnd || r.planEnd).filter(Boolean).sort();
+        return dates.length ? dates[dates.length - 1] : null;
+      }
+      function daysBetween(a, b) {
+        return Math.round((new Date(a) - new Date(b)) / 86400000);
+      }
+
       let done = 0, inWork = 0, notStarted = 0, totalCost = 0, doneCost = 0;
       prepItems.forEach(p => {
         const rows = reports[p.code];
@@ -776,9 +797,26 @@
         });
         const gPct = gCost ? Math.round(gDoneCost / gCost * 100) : 0;
         const parName = parents[par] || "Общеплощадочные объекты";
+
+        // Вердикт: худший прогноз объектов группы vs старт СМР родителя
+        let verdict = "";
+        const start = smrStart[par];
+        if (start) {
+          let worstDays = null;
+          items.forEach(p => {
+            const fin = objFinish(reports[p.code]);
+            if (!fin) return;
+            const d = daysBetween(fin, start);
+            if (worstDays === null || d > worstDays) worstDays = d;
+          });
+          if (worstDays === null) verdict = "";
+          else if (worstDays > 0) verdict = `<span class="prep-verdict bad">КРИТИЧНО — срыв старта СМР на ${worstDays} дн</span>`;
+          else if (worstDays > -14) verdict = `<span class="prep-verdict bad">ЕСТЬ РИСКИ — запас ${-worstDays} дн</span>`;
+          else verdict = `<span class="prep-verdict good">УСПЕВАЕМ</span>`;
+        }
         ghtml += `<div class="prep-group" data-par="${par}">
           <div class="prep-group-head">
-            <div class="prep-group-title">▶ ${par} — ${parName} <small>· ${items.length} объектов</small></div>
+            <div class="prep-group-title">▶ ${par} — ${parName} <small>· ${items.length} объектов</small> ${verdict}</div>
             <div class="prep-group-stats">
               <span>готово <b>${gDone}</b></span>
               <span>в работе <b>${gWork}</b></span>
