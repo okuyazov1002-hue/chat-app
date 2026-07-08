@@ -850,6 +850,11 @@
             <div class="kpi-label">расчёт добавим следующим шагом</div>
           </div>
         </div>
+        <div class="panel-toolbar" style="margin-top:12px;">
+          <button class="panel-btn btn-import" id="prepimportbtn">📥 импорт</button>
+          <button class="panel-btn btn-export" id="prepexportbtn">📤 экспорт</button>
+          <input type="file" id="prepimportfile" accept=".xlsx" style="display:none">
+        </div>
         <div id="prep-groups"></div>`;
 
       // Группы по родительским проектам (родитель = часть кода до дефиса)
@@ -907,6 +912,65 @@
         </div>`;
       });
       document.getElementById("prep-groups").innerHTML = ghtml;
+
+      // Импорт единого файла подготовительных работ (только admin)
+      const prepCodes = new Set(prepItems.map(p => p.code));
+      async function importPrepFile(file) {
+        const wb = new ExcelJS.Workbook();
+        await wb.xlsx.load(await file.arrayBuffer());
+        const ws = wb.worksheets[0];
+        const byCode = {};
+        let skipped = 0;
+        ws.eachRow((row, n) => {
+          if (n === 1) return;
+          const v = i => { const x = row.getCell(i).value; return x && x.result !== undefined ? x.result : x; };
+          const code = String(v(1) || "").trim();
+          if (!prepCodes.has(code)) { if (code) skipped++; return; }
+          const dt = i => {
+            const x = v(i);
+            if (x instanceof Date) return x.toISOString().slice(0, 10);
+            if (typeof x === "string" && /^\d{4}-\d{2}-\d{2}/.test(x)) return x.slice(0, 10);
+            return null;
+          };
+          const num = i => {
+            const x = v(i);
+            if (typeof x === "number") return x;
+            return Number(String(x || "").replace(/\s/g, "").replace(",", ".")) || 0;
+          };
+          (byCode[code] = byCode[code] || []).push({
+            stage: String(v(3) || ""),
+            item: String(v(4) || ""),
+            planStart: dt(5), planEnd: dt(6),
+            factStart: dt(7), factEnd: dt(8),
+            cost: num(9), done: num(10),
+            status: String(v(11) || ""),
+            forecastEnd: dt(12),
+            mhPlan: num(13), mhFact: num(14),
+            eqPlan: num(15), eqFact: num(16),
+          });
+        });
+        const codes = Object.keys(byCode);
+        if (!codes.length) { alert("В файле не найдено ни одного объекта из списка"); return; }
+        let ok = 0;
+        for (const code of codes) {
+          const res = await fetch("/api/reports/" + code, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ rows: byCode[code] })
+          });
+          if (res.ok) ok++;
+        }
+        alert(`Обновлено объектов: ${ok} из ${codes.length}` + (skipped ? `, строк пропущено (нет в списке): ${skipped}` : ""));
+        location.reload();
+      }
+      document.getElementById("prepImportBtn").addEventListener("click", () =>
+        document.getElementById("prepImportFile").click());
+      document.getElementById("prepImportFile").addEventListener("change", e => {
+        if (e.target.files[0]) importPrepFile(e.target.files[0]);
+        e.target.value = "";
+      });
+      document.getElementById("prepExportBtn").addEventListener("click", () =>
+        alert("Экспорт сделаем следующим шагом"));
 
       document.querySelectorAll(".prep-group-head").forEach(h => {
         h.addEventListener("click", () => {
