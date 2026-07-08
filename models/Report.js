@@ -9,9 +9,15 @@ const rowSchema = new mongoose.Schema({
   factStart:  { type: Date, default: null },
   factEnd:    { type: Date, default: null },
   forecastEnd:{ type: Date, default: null },    // прогноз окончания
-  cost:       { type: Number, default: 0 },     // стоимость
-  done:       { type: Number, default: 0 },     // % выполнения (0-100)
-  status:     { type: String, default: "" }
+  cost:       { type: Number, default: 0 },     // стоимость без НДС
+  costVat:    { type: Number, default: 0 },     // стоимость с НДС (для информации)
+  costFact:   { type: Number, default: 0 },     // фактическая стоимость
+  done:       { type: Number, default: 0 },     // освоено (деньги)
+  status:     { type: String, default: "" },
+  mhPlan:     { type: Number, default: 0 },     // чел.-часы план
+  mhFact:     { type: Number, default: 0 },     // чел.-часы факт
+  eqPlan:     { type: Number, default: 0 },     // маш.-часы план
+  eqFact:     { type: Number, default: 0 }      // маш.-часы факт
 }, { _id: false });
 
 // Отчёт по проекту: один документ на один код проекта

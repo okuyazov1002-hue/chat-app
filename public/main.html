@@ -774,8 +774,9 @@
             });
           });
         });
-        if (!min) return `<div class="prep-loading">Нет данных для графика</div>`;
+
         const todayStr = new Date().toISOString().slice(0, 10);
+        if (!min) { min = todayStr; max = todayStr; }
         if (!max || max <= min) max = todayStr > min ? todayStr : min + "T99";
         const t0 = new Date(min).getTime(), t1 = new Date(max).getTime();
         const pos = d => Math.max(0, Math.min(100, (new Date(d).getTime() - t0) / (t1 - t0) * 100));
@@ -807,7 +808,7 @@
           const starts = rows.map(r => r.planStart).filter(Boolean).sort();
           const ends = rows.map(r => r.forecastEnd || r.planEnd).filter(Boolean).sort();
           if (!starts.length) {
-            rowshtml += `<div class="pg-row">
+            rowsHtml += `<div class="pg-row">
             <span class="pg-name">${p.name}</span>
             <span class="pg-cell">—</span><span class="pg-cell">—</span>
             <span class="pg-cell">—</span><span class="pg-cell">—</span>
@@ -869,11 +870,14 @@
         </div>`;
       }
 
-      let done = 0, inWork = 0, notStarted = 0, totalCost = 0, doneCost = 0;
+      let done = 0, inWork = 0, notStarted = 0, totalCost = 0, doneCost = 0, totalCostVat = 0, totalFact = 0;
+      const effCost = r => /заверш/i.test(r.status || "") ? Math.min(r.cost || 0, r.done || 0) || (r.done || r.cost || 0) : (r.cost || 0);
       prepItems.forEach(p => {
         const rows = reports[p.code];
-        totalCost += rows.reduce((s, r) => s + (r.cost || 0), 0);
+        totalCost += rows.reduce((s, r) => s + effCost(r), 0);
         doneCost += rows.reduce((s, r) => s + (r.done || 0), 0);
+        totalCostVat += rows.reduce((s, r) => s + (r.costVat || 0), 0);
+        totalFact += rows.reduce((s, r) => s + (r.costFact || 0), 0);
         const pct = objPct(rows);
         if (!rows.length || pct === 0) notStarted++;
         else if (pct >= 100) done++;
@@ -886,7 +890,9 @@
           <div class="kpi-card">
             <div class="kpi-label">Всего объектов</div>
             <div class="kpi-big">${prepItems.length}</div>
-            <div class="kpi-label">завершено ${done} · в работе ${inWork} · не начато ${notStarted}</div>
+            <div class="kpi-stage-row"><span>Завершено</span><span>${done}</span></div>
+            <div class="kpi-stage-row"><span>Выполняется</span><span>${inWork}</span></div>
+            <div class="kpi-stage-row"><span>Не начато</span><span>${notStarted}</span></div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">Готовность подготовки</div>
@@ -894,9 +900,12 @@
             <div class="prep-bar"><div style="width:${readiness}%"></div></div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">Стоимость / освоено</div>
-            <div class="kpi-mid">${money(totalCost).replace(" €", "")}</div>
-            <div class="kpi-mid">${money(doneCost).replace(" €", "")} (${readiness}%)</div>
+            <div class="kpi-label">Стоимость с НДС</div>
+            <div class="kpi-big">${money(totalCostVat).replace(" €", "")}</div>
+            <div class="kpi-stage-row"><span>Стоимость без НДС</span><span>${money(totalCost).replace(" €", "")}</span></div>
+            <div class="kpi-stage-row"><span>Факт стоимость</span><span>${money(totalFact).replace(" €", "")}</span></div>
+            <div class="kpi-stage-row"><span>Освоение</span><span>${money(doneCost).replace(" €", "")} (${readiness}%)</span></div>
+            <div class="kpi-stage-row"><span>Остаток</span><span>${money(totalFact - doneCost).replace(" €", "")}</span></div>
           </div>
           <div class="kpi-card prep-red">
             <div class="kpi-label">Блокируют основные</div>
@@ -996,11 +1005,12 @@
             item: String(v(4) || ""),
             planStart: dt(5), planEnd: dt(6),
             factStart: dt(7), factEnd: dt(8),
-            cost: num(9), done: num(10),
-            status: String(v(11) || ""),
-            forecastEnd: dt(12),
-            mhPlan: num(13), mhFact: num(14),
-            eqPlan: num(15), eqFact: num(16),
+            cost: num(9), costVat: num(10), costFact: num(11),
+            done: num(12),
+            status: String(v(13) || ""),
+            forecastEnd: dt(14),
+            mhPlan: num(15), mhFact: num(16),
+            eqPlan: num(17), eqFact: num(18),
           });
         });
         const codes = Object.keys(byCode);
