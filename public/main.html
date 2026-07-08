@@ -397,6 +397,21 @@
     .prep-bar { height: 6px; background: #e5e7eb; border-radius: 3px; margin-top: 6px; overflow: hidden; }
     .prep-bar > div { height: 100%; background: #0a1e3d; }
     .prep-loading { color: #9ca3af; font-size: 13px; padding: 20px; }
+    #prep-groups { margin-top: 16px; }
+    .prep-group { background: #f3f4f6; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+    .prep-group-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; cursor: pointer; }
+    .prep-group-title { font-size: 14px; font-weight: 700; color: #0a1628; display: flex; align-items: center; gap: 10px; }
+    .prep-group-title small { font-size: 11px; color: #6b7280; font-weight: 400; }
+    .prep-verdict { font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 6px; }
+    .prep-verdict.bad { background: #fde8e8; color: #b91c1c; }
+    .prep-verdict.good { background: #e8eef8; color: #0a1e3d; }
+    .prep-group-stats { display: flex; gap: 14px; font-size: 11.5px; color: #6b7280; align-items: center; }
+    .prep-group-stats b { color: #0a1628; }
+    .prep-group-stats .red { color: #b91c1c; }
+    .prep-minibar { width: 90px; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; }
+    .prep-minibar > div { height: 100%; background: #0a1e3d; }
+    .prep-group-body { display: none; margin-top: 10px; }
+    .prep-group.open .prep-group-body { display: block; }
     .modal-wide { max-width: 460px; }
     .users-add-title { font-size: 13px; margin: 14px 0 6px; }
     .user-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #e5e7eb; }
@@ -735,7 +750,56 @@
             <div class="kpi-big">—</div>
             <div class="kpi-label">расчёт добавим следующим шагом</div>
           </div>
+        </div>
+        <div id="prep-groups"></div>`;
+
+      // Группы по родительским проектам (родитель = часть кода до дефиса)
+      const parents = {};
+      [...PROJECTS.main.items, ...PROJECTS.aux.items].forEach(p => { parents[p.code] = p.name; });
+      const groups = {};
+      prepItems.forEach(p => {
+        const par = p.code.split("-")[0];
+        (groups[par] = groups[par] || []).push(p);
+      });
+
+      let ghtml = "";
+      Object.keys(groups).forEach(par => {
+        const items = groups[par];
+        let gDone = 0, gWork = 0, gCost = 0, gDoneCost = 0;
+        items.forEach(p => {
+          const rows = reports[p.code];
+          gCost += rows.reduce((s, r) => s + (r.cost || 0), 0);
+          gDoneCost += rows.reduce((s, r) => s + (r.done || 0), 0);
+          const pct = objPct(rows);
+          if (pct >= 100 && rows.length) gDone++;
+          else if (pct > 0) gWork++;
+        });
+        const gPct = gCost ? Math.round(gDoneCost / gCost * 100) : 0;
+        const parName = parents[par] || "Общеплощадочные объекты";
+        ghtml += `<div class="prep-group" data-par="${par}">
+          <div class="prep-group-head">
+            <div class="prep-group-title">▶ ${par} — ${parName} <small>· ${items.length} объектов</small></div>
+            <div class="prep-group-stats">
+              <span>готово <b>${gDone}</b></span>
+              <span>в работе <b>${gWork}</b></span>
+              <span>площадка <span class="prep-minibar"><div style="width:${gPct}%"></div></span> <b>${gPct}%</b></span>
+            </div>
+          </div>
+          <div class="prep-group-body">
+            <div class="prep-loading">Содержимое группы — следующими шагами</div>
+          </div>
         </div>`;
+      });
+      document.getElementById("prep-groups").innerHTML = ghtml;
+
+      document.querySelectorAll(".prep-group-head").forEach(h => {
+        h.addEventListener("click", () => {
+          const g = h.parentElement;
+          g.classList.toggle("open");
+          h.querySelector(".prep-group-title").innerHTML =
+            h.querySelector(".prep-group-title").innerHTML.replace(g.classList.contains("open") ? "▶" : "▼", g.classList.contains("open") ? "▼" : "▶");
+        });
+      });
     }
 
     function objPct(rows) {
