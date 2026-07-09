@@ -3,7 +3,7 @@ async function renderSchedule() {
   const tab = document.getElementById("tab-schedule");
   if (!tab || tab.dataset.rendered) return;
   tab.dataset.rendered = "1";
-  tab.innerHTML = `<h2 class="tab-title">Общий график</h2><div class="prep-loading">Загрузка данных...</div>`;
+  tab.innerHTML = `<div class="prep-loading">Загрузка данных...</div>`;
 
   const allCodes = [
     ...PROJECTS.prep.items,
@@ -59,7 +59,7 @@ async function renderSchedule() {
   allCodes.forEach(c => allRows.push(...byCode[c]));
   const allD = calc(allRows);
   if (!allD.s) {
-    tab.innerHTML = `<h2 class="tab-title">Общий график</h2><p class="tab-empty">Нет данных ни по одному проекту.</p>`;
+    tab.innerHTML = `<p class="tab-empty">Нет данных ни по одному проекту.</p>`;
     return;
   }
   const min = allD.s;
@@ -75,16 +75,31 @@ async function renderSchedule() {
     cur.setMonth(cur.getMonth() + 1);
   }
   const mW = 100 / months.length;
-  // Окно 4 года (48 месяцев): K — ширина растянутого слоя в % от видимой области
-  const K = Math.max(100, months.length / 48 * 100);
   const years = {};
   months.forEach(mo => years[mo.y] = (years[mo.y] || 0) + 1);
-  let yearSpans = "";
-  Object.keys(years).sort().forEach(y => { yearSpans += `<span style="width:${years[y] * mW}%">${y}</span>`; });
-  let monthSpans = "";
-  months.forEach(mo => { monthSpans += `<span style="width:${mW}%">${String(mo.m).padStart(2, "0")}</span>`; });
   const nowPos = pos(today);
   const fmtD = d => d ? d.slice(8,10) + "." + d.slice(5,7) + "." + d.slice(2,4) : "—";
+
+  // Шкала и масштаб для трёх режимов
+  function buildScale(mode) {
+    let yearSpans = "";
+    Object.keys(years).sort().forEach(y => { yearSpans += `<span style="width:${years[y] * mW}%">${y}</span>`; });
+    let row2 = "", K = 100;
+    if (mode === "month") {
+      months.forEach(mo => { row2 += `<span style="width:${mW}%">${String(mo.m).padStart(2, "0")}</span>`; });
+      K = Math.max(100, months.length / 48 * 100);
+    } else if (mode === "quarter") {
+      const q = [];
+      months.forEach(mo => {
+        const qn = Math.floor((mo.m - 1) / 3) + 1, key = mo.y + "-" + qn;
+        if (q.length && q[q.length - 1].key === key) q[q.length - 1].n++;
+        else q.push({ key, qn, n: 1 });
+      });
+      q.forEach(x => { row2 += `<span style="width:${x.n * mW}%">0${x.qn} К</span>`; });
+      K = Math.max(100, months.length / 96 * 100);
+    }
+    return { yearSpans, row2, K };
+  }
 
   function rowHtml(name, d, cls, arrow) {
     const arr = arrow ? `<span class="sch-arr">▸</span>` : "";
@@ -118,7 +133,7 @@ async function renderSchedule() {
     </div>`;
   }
 
-  // Подготовительные: объекты, сгруппированные по родительским проектам
+  // Подготовительные: объекты по родительским проектам
   let prepBody = "";
   const prepAllRows = [];
   const parents = {};
@@ -170,16 +185,21 @@ async function renderSchedule() {
     sectionHtml("Основные проекты", mainS.body, mainS.secRows) +
     sectionHtml("Вспомогательные проекты", auxS.body, auxS.secRows);
 
-  const sliderHtml = K > 100
-    ? `<div class="sch-slider"><input type="range" id="schSlider" min="0" max="${(K - 100).toFixed(1)}" step="0.1" value="${(K - 100).toFixed(1)}"></div>`
-    : "";
-
-  tab.innerHTML = `<h2 class="tab-title">Общий график</h2>
-    <div class="prep-gantt sch-gantt" id="schGantt" style="--gw:${K}%;--gx:0%">
-      <div class="pg-head"><span style="width:280px"></span><span style="width:124px;text-align:center">план нач. / оконч.</span><span style="width:124px;text-align:center">факт нач. / оконч.</span><span style="width:144px;text-align:center">прогресс: план / факт / δ</span></div>
-      ${sliderHtml}
-      <div class="pg-scale-year"><span></span><div class="pg-zoomer"><div class="pg-zoom">${yearSpans}</div></div></div>
-      <div class="pg-scale-month"><span></span><div class="pg-zoomer"><div class="pg-zoom">${monthSpans}</div></div></div>
+  tab.innerHTML = `<div class="sch-topbar">
+      <div class="sch-period">
+        <button class="sch-period-btn" id="schPeriodBtn">Период ▾</button>
+        <div class="sch-period-menu" id="schPeriodMenu">
+          <button class="sch-mode" data-mode="year">Год</button>
+          <button class="sch-mode" data-mode="quarter">Квартал</button>
+          <button class="sch-mode active" data-mode="month">Месяц</button>
+        </div>
+      </div>
+    </div>
+    <div class="prep-gantt sch-gantt" id="schGantt" style="--gw:100%;--gx:0%">
+      <div class="pg-head"><span style="width:420px"></span><span style="width:124px;text-align:center">план нач. / оконч.</span><span style="width:124px;text-align:center">факт нач. / оконч.</span><span style="width:144px;text-align:center">прогресс: план / факт / δ</span></div>
+      <div class="sch-slider" id="schSliderWrap" style="display:none"><input type="range" id="schSlider" min="0" max="0" step="0.1" value="0"></div>
+      <div class="pg-scale-year"><span></span><div class="pg-zoomer"><div class="pg-zoom" id="schYearRow"></div></div></div>
+      <div class="pg-scale-month"><span></span><div class="pg-zoomer"><div class="pg-zoom" id="schRow2"></div></div></div>
       <div class="pg-body">
         <div class="pg-now" id="schNow"></div>
         ${rowsHtml}
@@ -203,22 +223,52 @@ async function renderSchedule() {
     });
   });
 
-  // Ползунок окна 4 года
+  // Режимы масштаба и ползунок
   const gEl = document.getElementById("schGantt");
+  const slider = document.getElementById("schSlider");
+  const sliderWrap = document.getElementById("schSliderWrap");
+  let K = 100;
   function updateNow(gx) {
     const el = document.getElementById("schNow");
     const p = nowPos / 100 * K - gx;
     if (p < 0 || p > 100) { el.style.display = "none"; return; }
     el.style.display = "";
-    el.style.left = `calc(672px + (100% - 672px) * ${(p / 100).toFixed(4)})`;
+    el.style.left = `calc(812px + (100% - 812px) * ${(p / 100).toFixed(4)})`;
   }
-  const slider = document.getElementById("schSlider");
-  if (slider) {
-    const setGx = v => { gEl.style.setProperty("--gx", v + "%"); updateNow(v); };
-    slider.addEventListener("input", e => setGx(parseFloat(e.target.value)));
-    setGx(parseFloat(slider.value));
-  } else {
-    updateNow(0);
+  function setGx(v) { gEl.style.setProperty("--gx", v + "%"); updateNow(v); }
+  slider.addEventListener("input", e => setGx(parseFloat(e.target.value)));
+
+  function applyMode(mode) {
+    const sc = buildScale(mode);
+    K = sc.K;
+    document.getElementById("schYearRow").innerHTML = sc.yearSpans;
+    document.getElementById("schRow2").innerHTML = sc.row2;
+    document.querySelector(".pg-scale-month").style.display = sc.row2 ? "" : "none";
+    gEl.style.setProperty("--gw", K + "%");
+    if (K > 100) {
+      sliderWrap.style.display = "";
+      slider.max = (K - 100).toFixed(1);
+      slider.value = (K - 100).toFixed(1);
+      setGx(K - 100);
+    } else {
+      sliderWrap.style.display = "none";
+      setGx(0);
+    }
+    tab.querySelectorAll(".sch-mode").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
   }
+  const pBtn = document.getElementById("schPeriodBtn");
+  const pMenu = document.getElementById("schPeriodMenu");
+  pBtn.addEventListener("click", e => { e.stopPropagation(); pMenu.classList.toggle("open"); });
+  document.addEventListener("click", () => pMenu.classList.remove("open"));
+  const NAMES = { year: "Год", quarter: "Квартал", month: "Месяц" };
+  tab.querySelectorAll(".sch-mode").forEach(b => {
+    b.addEventListener("click", () => {
+      applyMode(b.dataset.mode);
+      pBtn.textContent = "Период: " + NAMES[b.dataset.mode] + " ▾";
+      pMenu.classList.remove("open");
+    });
+  });
+  applyMode("month");
+  pBtn.textContent = "Период: Месяц ▾";
 }
 document.addEventListener("DOMContentLoaded", renderSchedule);
