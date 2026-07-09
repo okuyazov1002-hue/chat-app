@@ -401,6 +401,29 @@
     #prep-groups { margin-top: 16px; }
     .prep-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
     @media (max-width: 1100px) { .prep-charts { grid-template-columns: 1fr; } }
+    .prep-objs { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 10px; }
+    @media (max-width: 1100px) { .prep-objs { grid-template-columns: 1fr; } }
+    .prep-obj { display: flex; align-items: center; gap: 8px; background: #f3f4f6; border: 1px solid #f3f4f6; border-radius: 8px; padding: 7px 10px; font-size: 11px; color: #374151; cursor: pointer; }
+    .prep-obj:hover { border-color: #7da7d9; }
+    .prep-obj.late { border-color: #f5c6c6; background: #fdf3f3; }
+    .prep-obj b { color: #0a1628; font-family: Consolas, monospace; font-size: 10.5px; }
+    .prep-obj .po-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .po-tag { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 5px; background: #e8eef8; color: #0a1e3d; flex: none; }
+    .po-hours { font-size: 9.5px; color: #6b7280; flex: none; }
+    .po-pct { font-weight: 700; color: #0a1628; flex: none; width: 34px; text-align: right; }
+    .po-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+    .prep-det { display: none; grid-column: 1 / -1; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; }
+    .prep-det.open { display: block; }
+    .prep-det-head { font-size: 12px; font-weight: 700; color: #0a1628; margin-bottom: 8px; }
+    .prep-det-head small { font-weight: 400; color: #6b7280; margin-left: 8px; }
+    .prep-det-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 1100px) { .prep-det-grid { grid-template-columns: 1fr; } }
+    .prep-det h5 { font-size: 10.5px; color: #6b7280; font-weight: 600; margin: 6px 0 4px; }
+    .pd-work { display: flex; justify-content: space-between; font-size: 11px; color: #374151; padding: 3px 0; border-top: 1px solid #f3f4f6; }
+    .pd-bar { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; margin: 2px 0 6px; }
+    .pd-bar > div { height: 100%; background: #0a1e3d; }
+    .pd-nums { font-size: 10.5px; color: #6b7280; }
+    .pd-comment { width: 100%; min-height: 48px; font-size: 11px; color: #374151; border: 1px solid #e5e7eb; border-radius: 6px; padding: 6px 8px; font-family: inherit; resize: vertical; }
     .prep-cost-table { width: 100%; border-collapse: collapse; }
     .prep-cost-table th { font-size: 10.5px; color: #6b7280; font-weight: 400; text-align: right; padding: 2px 0; }
     .prep-cost-table td { text-align: right; padding: 2px 0 2px 10px; color: #0a1628; white-space: nowrap; }
@@ -1038,6 +1061,7 @@
               <div class="chart-card"><div class="chart-title">Освоение за период — план / факт по месяцам</div><div class="chart-wrap" style="height:200px;"><canvas id="cash-${par}"></canvas></div></div>
               <div class="chart-card"><div class="chart-title">Мобилизация — рабочая сила, чел (план / факт)</div><div class="chart-wrap" style="height:200px;" id="wfwrap-${par}"><canvas id="wf-${par}"></canvas></div></div>
             </div>
+            ${prepObjRows(items)}
           </div>
         </div>`;
       });
@@ -1139,6 +1163,64 @@
       });
       document.getElementById("prepExportBtn").addEventListener("click", () =>
         alert("Экспорт сделаем следующим шагом"));
+
+      // Компактные строки объектов группы
+      function prepObjRows(items) {
+        const today = new Date().toISOString().slice(0, 10);
+        return `<div class="prep-objs">` + items.map(p => {
+          const rows = reports[p.code];
+          const pct = objPct(rows);
+          const stage = (rows[0] || {}).stage || "";
+          const mhP = rows.reduce((s, r) => s + (r.mhPlan || 0), 0);
+          const mhF = rows.reduce((s, r) => s + (r.mhFact || 0), 0);
+          const hrs = mhP || mhF ? `чч ${(mhF / 1000).toFixed(1)}/${(mhP / 1000).toFixed(1)}т` : "";
+          const ends = rows.map(r => r.forecastEnd || r.planEnd).filter(Boolean).sort();
+          const e = ends[ends.length - 1];
+          const late = pct < 100 && ((e && e < today) || (smrStart[p.code.split("-")[0]] && e && e > smrStart[p.code.split("-")[0]]));
+          const dot = pct >= 100 ? "#0a1e3d" : (pct > 0 ? "#7da7d9" : "#d1d5db");
+          return `<div class="prep-obj${late ? " late" : ""}" data-obj="${p.code}">
+            <b>${p.code}</b>
+            <span class="po-name">${p.name}</span>
+            ${stage ? `<span class="po-tag">${stage}</span>` : ""}
+            ${hrs ? `<span class="po-hours">${hrs}</span>` : ""}
+            <span class="po-pct">${pct}%</span>
+            <span class="po-dot" style="background:${late ? "#b91c1c" : dot}"></span>
+          </div>`;
+        }).join("") + `</div>`;
+      }
+
+      // Панель деталей объекта
+      function prepObjDetails(code) {
+        const p = prepItems.find(x => x.code === code);
+        const rows = reports[code];
+        const full = reportsFull[code] || {};
+        const fmtD = d => d ? d.slice(8, 10) + "." + d.slice(5, 7) + "." + d.slice(2, 4) : "—";
+        const ends = rows.map(r => r.forecastEnd || r.planEnd).filter(Boolean).sort();
+        const fin = ends[ends.length - 1];
+        const start = smrStart[code.split("-")[0]];
+        const cost = rows.reduce((s, r) => s + (r.costFact || r.cost || 0), 0);
+        const done = rows.reduce((s, r) => s + (r.done || 0), 0);
+        const mhP = rows.reduce((s, r) => s + (r.mhPlan || 0), 0);
+        const mhF = rows.reduce((s, r) => s + (r.mhFact || 0), 0);
+        const works = rows.map(r => `<div class="pd-work"><span>${r.stage}${r.item && r.item !== r.stage + " по объекту" ? " — " + r.item : ""}</span><span>${r.status || "—"} · ${fmtD(r.planStart ? String(r.planStart).slice(0,10) : null)} → ${fmtD((r.forecastEnd || r.planEnd) ? String(r.forecastEnd || r.planEnd).slice(0,10) : null)}</span></div>`).join("");
+        return `<div class="prep-det open" id="det-${code}">
+          <div class="prep-det-head">${code} ${p ? p.name : ""}<small>прогноз ${fmtD(fin)}${start ? " при старте СМР " + fmtD(start) : ""}</small></div>
+          <div class="prep-det-grid">
+            <div>
+              <h5>Работы объекта</h5>
+              ${works || '<div class="pd-nums">Нет строк</div>'}
+              <h5>Стоимость / освоено</h5>
+              <div class="pd-nums">${money(cost).replace(" €", "")} / ${money(done).replace(" €", "")} (${objPct(rows)}%)</div>
+            </div>
+            <div>
+              <h5>Чел.-часы: факт ${Math.round(mhF).toLocaleString("ru")} из ${Math.round(mhP).toLocaleString("ru")}</h5>
+              <div class="pd-bar"><div style="width:${mhP ? Math.min(100, Math.round(mhF / mhP * 100)) : 0}%"></div></div>
+              <h5>Комментарий</h5>
+              <textarea class="pd-comment" data-code="${code}" placeholder="Причины отставания, риски, решения...">${full.comment || ""}</textarea>
+            </div>
+          </div>
+        </div>`;
+      }
 
       // Графики группы: освоение по месяцам + мобилизация
       function drawGroupCharts(par, items) {
@@ -1247,6 +1329,23 @@
         }
       }
       Object.keys(groups).forEach(par => drawGroupCharts(par, groups[par]));
+      document.querySelectorAll(".prep-obj").forEach(el => {
+        el.addEventListener("click", () => {
+          const code = el.dataset.obj;
+          const exist = document.getElementById("det-" + code);
+          if (exist) { exist.remove(); return; }
+          el.insertAdjacentHTML("afterend", prepObjDetails(code));
+          const ta = document.querySelector(`#det-${code} .pd-comment`);
+          if (window.userRole !== "admin") ta.setAttribute("readonly", "readonly");
+          else ta.addEventListener("blur", async () => {
+            await fetch("/api/reports/" + code, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ comment: ta.value })
+            });
+          });
+        });
+      });
 
         document.querySelectorAll(".prep-group-head").forEach(h => {
         h.addEventListener("click", () => {
