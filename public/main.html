@@ -399,6 +399,18 @@
     .prep-bar > div { height: 100%; background: #0a1e3d; }
     .prep-loading { color: #9ca3af; font-size: 13px; padding: 20px; }
     #prep-groups { margin-top: 16px; }
+    .prep-cost-table { width: 100%; border-collapse: collapse; }
+    .prep-cost-table th { font-size: 10.5px; color: #6b7280; font-weight: 400; text-align: right; padding: 2px 0; }
+    .prep-cost-table td { text-align: right; padding: 2px 0 2px 10px; color: #0a1628; white-space: nowrap; }
+    .prep-cost-table th:first-child, .prep-cost-table td:first-child { text-align: left; color: #6b7280; font-size: 11px; }
+    .prep-cost-table tr.pcm td { font-weight: 700; }
+    .prep-cost-table tr.pcm td:nth-child(2) { font-size: 15px; }
+    .prep-cost-table tr.pcm td:nth-child(3), .prep-cost-table tr.pcm td:nth-child(4) { font-size: 13px; }
+    .prep-cost-table tr.pcc td { font-size: 11px; }
+    .prep-crit { background: #fde8e8; border: 1px solid #f5c6c6; border-radius: 14px; padding: 12px 18px; margin-top: 16px; }
+    .prep-crit-title { font-size: 13px; font-weight: 700; color: #b91c1c; margin-bottom: 8px; }
+    .prep-crit-row { font-size: 12px; color: #374151; padding: 3px 0; }
+    .prep-crit-days { color: #b91c1c; font-weight: 700; margin-left: 8px; }
     .prep-group { margin-bottom: 10px; }
     .prep-group-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; cursor: pointer; background: rgba(255,255,255,0.07); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 14px 18px; }
     .prep-group.open .prep-group-head { border-radius: 14px 14px 0 0; }
@@ -874,7 +886,7 @@
         </div>`;
       }
 
-      let done = 0, inWork = 0, notStarted = 0, totalCost = 0, doneCost = 0, totalCostVat = 0, totalFact = 0;
+      let done = 0, inWork = 0, notStarted = 0, totalCost = 0, doneCost = 0, totalCostVat = 0, totalFact = 0, inC = { cost: 0, done: 0, fact: 0 }, exC = { cost: 0, done: 0, fact: 0 };
       const effCost = r => /заверш/i.test(r.status || "") ? Math.min(r.cost || 0, r.done || 0) || (r.done || r.cost || 0) : (r.cost || 0);
       prepItems.forEach(p => {
         const rows = reports[p.code];
@@ -882,39 +894,72 @@
         doneCost += rows.reduce((s, r) => s + (r.done || 0), 0);
         totalCostVat += rows.reduce((s, r) => s + (r.costVat || 0), 0);
         totalFact += rows.reduce((s, r) => s + (r.costFact || 0), 0);
+        let wIn = 0, wEx = 0;
+        rows.forEach(r => {
+          const c = /внутр/i.test(r.contractor || "") ? inC : (/внеш/i.test(r.contractor || "") ? exC : null);
+          if (!c) return;
+          c.cost += r.costVat || 0;
+          c.fact += r.costFact || 0;
+          c.done += r.done || 0;
+          if (c === inC) wIn += r.costVat || 0; else wEx += r.costVat || 0;
+        });
+        const oc = wIn >= wEx && wIn > 0 ? inC : (wEx > 0 ? exC : null);
+        if (oc) {
+          const pct = objPct(rows);
+          oc.total = (oc.total || 0) + 1;
+          if (!rows.length || pct === 0) oc.ns = (oc.ns || 0) + 1;
+          else if (pct >= 100) oc.fin = (oc.fin || 0) + 1;
+          else oc.wip = (oc.wip || 0) + 1;
+        }
         const pct = objPct(rows);
         if (!rows.length || pct === 0) notStarted++;
         else if (pct >= 100) done++;
         else inWork++;
       });
-      const readiness = totalCost ? Math.round(doneCost / totalCost * 100) : 0;
+      const readiness = totalFact ? Math.min(100, Math.round(doneCost / totalFact * 100)) : 0;
+
+      // Объекты, блокирующие старт СМР основных проектов
+      const blockers = [];
+      prepItems.forEach(p => {
+        const rows = reports[p.code];
+        if (!rows.length || objPct(rows) >= 100) return;
+        const start = smrStart[p.code.split("-")[0]];
+        const fin = objFinish(rows);
+        if (!start || !fin) return;
+        const d = daysBetween(fin, start);
+        if (d > 0) blockers.push({ code: p.code, name: p.name, par: p.code.split("-")[0], days: d });
+      });
+      blockers.sort((a, b) => b.days - a.days);
 
       document.getElementById("prep-board").innerHTML = `
         <div class="kpi-row prep-kpi">
           <div class="kpi-card">
-            <div class="kpi-label">Всего объектов</div>
-            <div class="kpi-big">${prepItems.length}</div>
-            <div class="kpi-stage-row"><span>Завершено</span><span>${done}</span></div>
-            <div class="kpi-stage-row"><span>Выполняется</span><span>${inWork}</span></div>
-            <div class="kpi-stage-row"><span>Не начато</span><span>${notStarted}</span></div>
+            <table class="prep-cost-table">
+              <tr><th></th><th>Всего</th><th>Заверш.</th><th>Выполн.</th><th>Не нач.</th></tr>
+              <tr class="pcm"><td></td><td>${prepItems.length}</td><td>${done}</td><td>${inWork}</td><td>${notStarted}</td></tr>
+              <tr class="pcc"><td>Внутренний</td><td>${inC.total || 0}</td><td>${inC.fin || 0}</td><td>${inC.wip || 0}</td><td>${inC.ns || 0}</td></tr>
+              <tr class="pcc"><td>Внешний</td><td>${exC.total || 0}</td><td>${exC.fin || 0}</td><td>${exC.wip || 0}</td><td>${exC.ns || 0}</td></tr>
+            </table>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">Готовность подготовки</div>
             <div class="kpi-big">${readiness}%</div>
             <div class="prep-bar"><div style="width:${readiness}%"></div></div>
+            <div class="kpi-stage-row" style="margin-top:8px;"><span>Внутренний</span><span>${inC.fact ? Math.min(100, Math.round(inC.done / inC.fact * 100)) : 0}%</span></div>
+            <div class="kpi-stage-row"><span>Внешний</span><span>${exC.fact ? Math.min(100, Math.round(exC.done / exC.fact * 100)) : 0}%</span></div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">Стоимость с НДС</div>
-            <div class="kpi-big">${money(totalCostVat).replace(" €", "")}</div>
-            <div class="kpi-stage-row"><span>Стоимость без НДС</span><span>${money(totalCost).replace(" €", "")}</span></div>
-            <div class="kpi-stage-row"><span>Факт стоимость</span><span>${money(totalFact).replace(" €", "")}</span></div>
-            <div class="kpi-stage-row"><span>Освоение</span><span>${money(doneCost).replace(" €", "")} (${readiness}%)</span></div>
-            <div class="kpi-stage-row"><span>Остаток</span><span>${money(totalFact - doneCost).replace(" €", "")}</span></div>
+            <table class="prep-cost-table">
+              <tr><th></th><th>Стоимость с НДС</th><th>Освоено</th><th>Остаток</th></tr>
+              <tr class="pcm"><td></td><td>${money(totalCostVat).replace(" €", "")}</td><td>${money(doneCost).replace(" €", "")}</td><td>${money(totalCostVat - doneCost).replace(" €", "")}</td></tr>
+              <tr class="pcc"><td>Внутренний</td><td>${money(inC.cost).replace(" €", "")}</td><td>${money(inC.done).replace(" €", "")}</td><td>${money(inC.cost - inC.done).replace(" €", "")}</td></tr>
+              <tr class="pcc"><td>Внешний</td><td>${money(exC.cost).replace(" €", "")}</td><td>${money(exC.done).replace(" €", "")}</td><td>${money(exC.cost - exC.done).replace(" €", "")}</td></tr>
+            </table>
           </div>
           <div class="kpi-card prep-red">
             <div class="kpi-label">Блокируют основные</div>
-            <div class="kpi-big">—</div>
-            <div class="kpi-label">расчёт добавим следующим шагом</div>
+            <div class="kpi-big">${blockers.length || "—"}</div>
+            <div class="kpi-label">${blockers.length ? "объектов срывают старт смр" : "срывов старта смр нет"}</div>
           </div>
         </div>
         <div class="panel-toolbar" style="margin-top:12px;">
@@ -922,6 +967,10 @@
           <button class="panel-btn btn-export" id="prepExportBtn">📤 экспорт</button>
           <input type="file" id="prepImportFile" accept=".xlsx" style="display:none">
         </div>
+        ${blockers.length ? `<div class="prep-crit">
+          <div class="prep-crit-title">⚠ критично — блокируют старт смр</div>
+          ${blockers.map(b => `<div class="prep-crit-row"><b>${b.code}</b> ${b.name} <span class="prep-crit-days">+${b.days} дн к старту ${b.par}</span></div>`).join("")}
+        </div>` : ""}
         <div id="prep-groups"></div>`;
 
       // Группы по родительским проектам (родитель = часть кода до дефиса)
@@ -1010,18 +1059,51 @@
             return Number(String(x || "").replace(/\s/g, "").replace(",", ".")) || 0;
           };
           (byCode[code] = byCode[code] || []).push({
-            stage: String(v(3) || ""),
-            item: String(v(4) || ""),
-            planStart: dt(5), planEnd: dt(6),
-            factStart: dt(7), factEnd: dt(8),
-            cost: num(9), costVat: num(10), costFact: num(11),
-            done: num(12),
-            status: String(v(13) || ""),
-            forecastEnd: dt(14),
-            mhPlan: num(15), mhFact: num(16),
-            eqPlan: num(17), eqFact: num(18),
+            contractor: String(v(3) || ""),
+            stage: String(v(4) || ""),
+            item: String(v(5) || ""),
+            planStart: dt(6), planEnd: dt(7),
+            factStart: dt(8), factEnd: dt(9),
+            cost: num(10), costVat: num(11), costFact: num(12),
+            done: num(13),
+            status: String(v(14) || ""),
+            forecastEnd: dt(15),
+            mhPlan: num(16), mhFact: num(17),
+            eqPlan: num(18), eqFact: num(19),
           });
         });
+        // Мобилизация: листы "Рабочая сила" и "Спец техника" (строки парами План/Факт, колонки-месяцы)
+        const name2code = {};
+        prepItems.forEach(p => { name2code[p.name.trim().toLowerCase()] = p.code; });
+        const mob = { workforce: {}, equipment: {} };
+        [["Рабочая сила", "workforce"], ["Спец техника", "equipment"]].forEach(([sheetName, key]) => {
+          const sh = wb.worksheets.find(w => w.name.trim().toLowerCase() === sheetName.toLowerCase());
+          if (!sh) return;
+          const months = [];
+          sh.getRow(1).eachCell((cell, col) => {
+            const x = cell.value && cell.value.result !== undefined ? cell.value.result : cell.value;
+            if (x instanceof Date) months[col] = x.toISOString().slice(0, 7);
+          });
+          let curCode = null;
+          sh.eachRow((row, n) => {
+            if (n === 1) return;
+            const rv = i => { const x = row.getCell(i).value; return x && x.result !== undefined ? x.result : x; };
+            const oname = String(rv(1) || "").trim().toLowerCase();
+            if (oname) curCode = name2code[oname] || null;
+            if (!curCode) return;
+            const kind = String(rv(2) || "").trim().toLowerCase();
+            if (kind !== "план" && kind !== "факт") return;
+            const store = (mob[key][curCode] = mob[key][curCode] || {});
+            months.forEach((m, col) => {
+              if (!m) return;
+              const val = Number(String(rv(col) || "").replace(/\s/g, "").replace(",", ".")) || 0;
+              if (!val) return;
+              store[m] = store[m] || { month: m, plan: 0, fact: 0 };
+              store[m][kind === "план" ? "plan" : "fact"] = val;
+            });
+          });
+        });
+
         const codes = Object.keys(byCode);
         if (!codes.length) { alert("В файле не найдено ни одного объекта из списка"); return; }
         let ok = 0;
@@ -1029,7 +1111,11 @@
           const res = await fetch("/api/reports/" + code, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ rows: byCode[code] })
+            body: JSON.stringify({
+              rows: byCode[code],
+              workforce: Object.values(mob.workforce[code] || {}),
+              equipment: Object.values(mob.equipment[code] || {})
+            })
           });
           if (res.ok) ok++;
         }

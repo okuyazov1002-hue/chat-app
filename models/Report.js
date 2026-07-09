@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const rowSchema = new mongoose.Schema({
   stage:      { type: String, required: true }, // один из 5 этапов
   item:       { type: String, default: "" },    // дисциплина / подпункт / объект
+  contractor: { type: String, default: "" },    // Внутренний / Внешний
   planStart:  { type: Date, default: null },
   planEnd:    { type: Date, default: null },
   factStart:  { type: Date, default: null },
@@ -25,6 +26,8 @@ const reportSchema = new mongoose.Schema({
   code:    { type: String, required: true, unique: true }, // код проекта (PSP01 и т.д.)
   comment: { type: String, default: "" },                  // текст для двойной KPI-карточки
   rows:    { type: [rowSchema], default: [] },
+  workforce: { type: [{ month: String, plan: Number, fact: Number, _id: false }], default: [] },
+  equipment: { type: [{ month: String, plan: Number, fact: Number, _id: false }], default: [] },
   updatedAt: { type: Date, default: Date.now }
 });
 

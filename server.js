@@ -227,10 +227,12 @@ app.post("/api/reports/:code", adminOnly, async (req, res) => {
     return res.status(401).json({ message: "Не авторизован" });
   }
   try {
-    const { rows, comment } = req.body;
+    const { rows, comment, workforce, equipment } = req.body;
     const update = { updatedAt: new Date() };
     if (rows !== undefined) update.rows = rows;
     if (comment !== undefined) update.comment = comment;
+    if (workforce !== undefined) update.workforce = workforce;
+    if (equipment !== undefined) update.equipment = equipment;
     const report = await Report.findOneAndUpdate(
       { code: req.params.code },
       update,
