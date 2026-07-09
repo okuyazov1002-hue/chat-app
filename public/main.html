@@ -399,6 +399,8 @@
     .prep-bar > div { height: 100%; background: #0a1e3d; }
     .prep-loading { color: #9ca3af; font-size: 13px; padding: 20px; }
     #prep-groups { margin-top: 16px; }
+    .prep-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+    @media (max-width: 1100px) { .prep-charts { grid-template-columns: 1fr; } }
     .prep-cost-table { width: 100%; border-collapse: collapse; }
     .prep-cost-table th { font-size: 10.5px; color: #6b7280; font-weight: 400; text-align: right; padding: 2px 0; }
     .prep-cost-table td { text-align: right; padding: 2px 0 2px 10px; color: #0a1628; white-space: nowrap; }
@@ -752,9 +754,12 @@
 
       const prepItems = PROJECTS.prep.items;
       const reports = {};
+      const reportsFull = {};
       await Promise.all(prepItems.map(async p => {
         const res = await fetch("/api/reports/" + p.code);
-        reports[p.code] = (await res.json()).rows || [];
+        const data = await res.json();
+        reportsFull[p.code] = data;
+        reports[p.code] = data.rows || [];
       }));
 
       // Дата старта СМР родительских проектов (мин. planStart строк этапа СМР/строительство)
@@ -1029,6 +1034,10 @@
           </div>
           <div class="prep-group-body">
             ${prepGantt(items)}
+            <div class="prep-charts">
+              <div class="chart-card"><div class="chart-title">Освоение за период — план / факт по месяцам</div><div class="chart-wrap" style="height:200px;"><canvas id="cash-${par}"></canvas></div></div>
+              <div class="chart-card"><div class="chart-title">Мобилизация — рабочая сила, чел (план / факт)</div><div class="chart-wrap" style="height:200px;" id="wfwrap-${par}"><canvas id="wf-${par}"></canvas></div></div>
+            </div>
           </div>
         </div>`;
       });
@@ -1131,7 +1140,115 @@
       document.getElementById("prepExportBtn").addEventListener("click", () =>
         alert("Экспорт сделаем следующим шагом"));
 
-      document.querySelectorAll(".prep-group-head").forEach(h => {
+      // Графики группы: освоение по месяцам + мобилизация
+      function drawGroupCharts(par, items) {
+        const cashByMonth = {};
+        items.forEach(p => {
+          reports[p.code].forEach(r => {
+            if (r.planStart && (r.planEnd || r.forecastEnd)) {
+              const ps = new Date(r.planStart), pe = new Date(r.forecastEnd || r.planEnd);
+              const months = Math.max(1, (pe.getFullYear() - ps.getFullYear()) * 12 + (pe.getMonth() - ps.getMonth()) + 1);
+              const per = (r.costFact || r.cost || 0) / months;
+              const d = new Date(ps.getFullYear(), ps.getMonth(), 1);
+              for (let i = 0; i < months; i++) {
+                const k = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+                (cashByMonth[k] = cashByMonth[k] || { plan: 0, fact: 0 }).plan += per;
+                d.setMonth(d.getMonth() + 1);
+              }
+            }
+            if (r.factStart && (r.done || 0) > 0) {
+              const fs = new Date(r.factStart), fe = r.factEnd ? new Date(r.factEnd) : new Date();
+              const months = Math.max(1, (fe.getFullYear() - fs.getFullYear()) * 12 + (fe.getMonth() - fs.getMonth()) + 1);
+              const per = (r.done || 0) / months;
+              const d = new Date(fs.getFullYear(), fs.getMonth(), 1);
+              for (let i = 0; i < months; i++) {
+                const k = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+                (cashByMonth[k] = cashByMonth[k] || { plan: 0, fact: 0 }).fact += per;
+                d.setMonth(d.getMonth() + 1);
+              }
+            }
+          });
+        });
+        const nowKey = new Date().toISOString().slice(0, 7);
+        const cashKeys = Object.keys(cashByMonth).sort();
+        if (cashKeys.length) {
+          const WIN = 48;
+          const cnv = document.getElementById("cash-" + par);
+          const mkData = from => {
+            const keys = cashKeys.slice(from, from + WIN);
+            return {
+              labels: keys.map(k => k.slice(5) + "." + k.slice(2, 4)),
+              datasets: [
+                { label: "План", data: keys.map(k => Math.round(cashByMonth[k].plan / 1e9 * 100) / 100), backgroundColor: "#7da7d9" },
+                { label: "Факт", data: keys.map(k => k <= nowKey ? Math.round(cashByMonth[k].fact / 1e9 * 100) / 100 : null), backgroundColor: "#0a1e3d" }
+              ]
+            };
+          };
+          const start = Math.max(0, cashKeys.length - WIN);
+          const chart = new Chart(cnv, {
+            type: "bar",
+            data: mkData(start),
+            options: { responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 10 } } } },
+              scales: { y: { title: { display: true, text: "млрд" } }, x: { grid: { display: false }, ticks: { font: { size: 8 }, maxRotation: 0, autoSkip: false, callback: function(v, i) { const l = this.getLabelForValue(v); const mm = l.slice(0, 2); return mm === "01" || i === 0 ? [mm, "20" + l.slice(3)] : mm; } } } } }
+          });
+          if (cashKeys.length > WIN) {
+            const rng = document.createElement("input");
+            rng.type = "range"; rng.min = 0; rng.max = cashKeys.length - WIN; rng.value = start;
+            rng.style.width = "100%";
+            cnv.parentElement.after(rng);
+            rng.addEventListener("input", () => {
+              chart.data = mkData(Number(rng.value));
+              chart.update("none");
+            });
+          }
+        }
+
+        const wfByMonth = {};
+        items.forEach(p => {
+          ((reportsFull[p.code] || {}).workforce || []).forEach(w => {
+            (wfByMonth[w.month] = wfByMonth[w.month] || { plan: 0, fact: 0 }).plan += w.plan || 0;
+            wfByMonth[w.month].fact += w.fact || 0;
+          });
+        });
+        const wfKeys = Object.keys(wfByMonth).sort();
+        if (!wfKeys.length) document.getElementById("wfwrap-" + par).innerHTML = `<div class="prep-loading">Нет данных мобилизации</div>`;
+        else {
+          const WIN2 = 48;
+          const cnv2 = document.getElementById("wf-" + par);
+          const mkWf = from => {
+            const keys = wfKeys.slice(from, from + WIN2);
+            return {
+              labels: keys.map(k => k.slice(5) + "." + k.slice(2, 4)),
+              datasets: [
+                { label: "План", data: keys.map(k => wfByMonth[k].plan), backgroundColor: "#7da7d9" },
+                { label: "Факт", data: keys.map(k => k <= nowKey ? wfByMonth[k].fact : null), backgroundColor: "#0a1e3d" }
+              ]
+            };
+          };
+          const start2 = Math.max(0, wfKeys.length - WIN2);
+          const chart2 = new Chart(cnv2, {
+            type: "bar",
+            data: mkWf(start2),
+            options: { responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 10 } } } },
+              scales: { y: { title: { display: true, text: "чел" } }, x: { grid: { display: false }, ticks: { font: { size: 8 }, maxRotation: 0, autoSkip: false, callback: function(v, i) { const l = this.getLabelForValue(v); const mm = l.slice(0, 2); return mm === "01" || i === 0 ? [mm, "20" + l.slice(3)] : mm; } } } } }
+          });
+          if (wfKeys.length > WIN2) {
+            const rng2 = document.createElement("input");
+            rng2.type = "range"; rng2.min = 0; rng2.max = wfKeys.length - WIN2; rng2.value = start2;
+            rng2.style.width = "100%";
+            cnv2.parentElement.after(rng2);
+            rng2.addEventListener("input", () => {
+              chart2.data = mkWf(Number(rng2.value));
+              chart2.update("none");
+            });
+          }
+        }
+      }
+      Object.keys(groups).forEach(par => drawGroupCharts(par, groups[par]));
+
+        document.querySelectorAll(".prep-group-head").forEach(h => {
         h.addEventListener("click", () => {
           const g = h.parentElement;
           g.classList.toggle("open");
