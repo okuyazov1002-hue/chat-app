@@ -186,6 +186,8 @@
     .project-item {
       display: flex;
       align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
       gap: 16px;
       padding: 14px 18px;
       border-radius: 14px;
@@ -211,6 +213,20 @@
       font-family: "Consolas", monospace;
     }
     .project-name { color: #fff; font-size: 15px; }
+    .project-left { display: flex; align-items: center; gap: 16px; }
+    .project-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+    .project-stat-box {
+      display: flex;
+      gap: 16px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.65);
+      white-space: nowrap;
+    }
+    .stat-col { display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; }
+    .project-stat-box b { color: #fff; font-size: 12.5px; }
     .project-panel {
       display: none;
       background: #fff;
@@ -324,6 +340,7 @@
       padding: 12px 14px;
     }
     .kpi-label { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+    .kpi-title { font-size: 12.5px; font-weight: 700; color: #2e3d54; margin-bottom: 8px; }
     .kpi-big { font-size: 20px; font-weight: 700; color: #0a1628; white-space: nowrap; margin-bottom: 8px; }
     .kpi-mid { font-size: 14px; font-weight: 600; color: #0a1628; }
     .kpi-stages { margin-top: 8px; border-top: 1px solid #e5e7eb; padding-top: 6px; }
@@ -365,6 +382,13 @@
       border-radius: 10px;
       padding: 12px 14px;
     }
+    .stage-card-head { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .stage-card-body { display: none; margin-top: 8px; }
+    .stage-card.open .stage-card-body { display: block; }
+    .stage-summary { display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin: 4px 0 8px; padding-bottom: 6px; border-bottom: 1px dashed #d1d5db; }
+    .stage-summary b { color: #0a1e3d; }
+    .stage-arrow { display: inline-block; transition: transform .2s; font-size: 10px; }
+    .stage-card:not(.open) .stage-arrow { transform: rotate(-90deg); }
     .stage-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .stage-table th {
       text-align: left;
@@ -741,15 +765,41 @@
     });
 
     // Отрисовка списков проектов
-    function renderTab(key) {
+    async function renderTab(key) {
       const container = document.getElementById("tab-" + key);
       if (!container || container.dataset.rendered) return;
+      container.dataset.rendered = "1";
       const section = PROJECTS[key];
-      let html = `<h2 class="tab-title">${section.title}</h2><div class="project-list">`;
+      container.innerHTML = `<h2 class="tab-title">${section.title}</h2><div class="project-list" id="list-${key}"><div class="tab-empty">Загрузка данных...</div></div>`;
+      const rowsByCode = {};
+      await Promise.all(section.items.map(async p => {
+        const res = await fetch("/api/reports/" + p.code);
+        const data = await res.json();
+        rowsByCode[p.code] = data.rows || [];
+      }));
+      let html = "";
       section.items.forEach(p => {
+        const s = projectSummary(rowsByCode[p.code]);
         html += `<div class="project-item" data-code="${p.code}">
-                   <span class="project-code">${p.code}</span>
-                   <span class="project-name">${p.name}</span>
+                   <div class="project-left">
+                     <span class="project-code">${p.code}</span>
+                     <span class="project-name">${p.name}</span>
+                   </div>
+                   <div class="project-stats">
+                     <div class="project-stat-box">
+                       <span>Факт стоимость <b>${money(s.totalCost).replace(" €", "")}</b></span>
+                       <span>Освоено <b>${money(s.doneCost).replace(" €", "")}</b></span>
+                     </div>
+                     <div class="project-stat-box">
+                       <span>План <b>${s.planPct}%</b></span>
+                       <span>Факт <b>${s.donePct}%</b></span>
+                       <span style="color:${s.donePct - s.planPct < 0 ? "#f87171" : "#4ade80"};font-weight:600;">${s.donePct - s.planPct < 0 ? "Отставание " : "Опережение +"}${s.donePct - s.planPct}%</span>
+                     </div>
+                     <div class="project-stat-box">
+                       <span>Начало <b>${s.startFmt}</b></span>
+                       <span>Окончание <b>${s.endFmt}</b></span>
+                     </div>
+                   </div>
                  </div>
                  <div class="project-panel" id="panel-${p.code}">
                   <div class="panel-dashboard" id="dash-${p.code}"></div>
@@ -761,9 +811,18 @@
                    
                  </div>`;
       });
-      html += `</div>`;
-      container.innerHTML = html;
-      container.dataset.rendered = "1";
+      document.getElementById("list-" + key).outerHTML = `<div class="project-list" id="list-${key}">${html}</div>`;
+      document.querySelectorAll("#list-" + key + " .project-item").forEach(item => {
+        item.addEventListener("click", () => {
+          const code = item.dataset.code;
+          const panel = document.getElementById("panel-" + code);
+          const isOpen = panel.classList.contains("open");
+          item.classList.toggle("open", !isOpen);
+          panel.classList.toggle("open", !isOpen);
+          if (!isOpen) renderDashboard(code);
+        });
+      });
+      applyRole();
     }
     ["main", "aux"].forEach(renderTab);
     renderPrepTab();
@@ -1161,8 +1220,61 @@
         if (e.target.files[0]) importPrepFile(e.target.files[0]);
         e.target.value = "";
       });
-      document.getElementById("prepExportBtn").addEventListener("click", () =>
-        alert("Экспорт сделаем следующим шагом"));
+      async function exportPrepFile() {
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet("Подготовительные работы");
+        const cols = ["Код","Объект","Исполнитель","Этап","Работа","План начало","План окончание",
+          "Факт начало","Факт окончание","Стоимость без НДС","Стоимость с НДС","Факт","Освоено",
+          "Статус","Прогноз","чч план","чч факт","мч план","мч факт"];
+        ws.addRow(cols);
+        ws.getRow(1).eachCell(cell => {
+          cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 9 };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0A1628" } };
+        });
+        const toDate = s => s ? new Date(s) : null;
+        prepItems.forEach(p => {
+          (reports[p.code] || []).forEach(r => {
+            ws.addRow([
+              p.code, p.name, r.contractor || "", r.stage || "", r.item || "",
+              toDate(r.planStart), toDate(r.planEnd), toDate(r.factStart), toDate(r.factEnd),
+              r.cost || 0, r.costVat || 0, r.costFact || 0, r.done || 0,
+              r.status || "", toDate(r.forecastEnd),
+              r.mhPlan || 0, r.mhFact || 0, r.eqPlan || 0, r.eqFact || 0
+            ]);
+          });
+        });
+        ws.columns.forEach((col, i) => { col.width = i === 1 ? 34 : (i === 4 ? 30 : 14); });
+        [6, 7, 8, 9, 15].forEach(c => { ws.getColumn(c).numFmt = "dd.mm.yyyy"; });
+
+        [["Рабочая сила", "workforce"], ["Спец техника", "equipment"]].forEach(([sheetName, key]) => {
+          const sh = wb.addWorksheet(sheetName);
+          const monthsSet = new Set();
+          prepItems.forEach(p => ((reportsFull[p.code] || {})[key] || []).forEach(m => monthsSet.add(m.month)));
+          const months = [...monthsSet].sort();
+          sh.addRow(["Объект", "", ...months.map(m => new Date(m + "-01"))]);
+          months.forEach((m, i) => { sh.getColumn(3 + i).numFmt = "mmm yyyy"; sh.getColumn(3 + i).width = 12; });
+          sh.getColumn(1).width = 34;
+          sh.getRow(1).eachCell(cell => { cell.font = { bold: true, size: 9 }; });
+          prepItems.forEach(p => {
+            const data = (reportsFull[p.code] || {})[key] || [];
+            if (!data.length) return;
+            const byMonth = {};
+            data.forEach(m => byMonth[m.month] = m);
+            sh.addRow([p.name, "План", ...months.map(m => (byMonth[m] || {}).plan || "")]);
+            sh.addRow(["", "Факт", ...months.map(m => (byMonth[m] || {}).fact || "")]);
+          });
+        });
+
+        const buffer = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: "application/octet-stream" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Подготовительные_работы_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      document.getElementById("prepExportBtn").addEventListener("click", () => exportPrepFile());
 
       // Компактные строки объектов группы
       function prepObjRows(items) {
@@ -1547,6 +1659,66 @@
     });
 
     // ===== ДАШБОРД =====
+    function projectsummary(rows) {
+      const totalcost = rows.reduce((s, r) => s + (r.cost || 0), 0);
+      const donecost = rows.reduce((s, r) => s + (r.done || 0), 0);
+      const donepct = totalcost ? math.round(donecost / totalcost * 100) : 0;
+      const now = new date();
+      const plancost = rows.reduce((s, r) => {
+        if (!r.planstart || !r.planend) return s;
+        const ps = new date(r.planstart), pe = new date(r.planend);
+        if (now >= pe) return s + (r.cost || 0);
+        if (now <= ps) return s;
+        return s + (r.cost || 0) * (now - ps) / (pe - ps);
+      }, 0);
+      const planpct = totalcost ? math.round(plancost / totalcost * 100) : 0;
+      const starts = rows.filter(r => r.planstart).map(r => +new date(r.planstart));
+      const ends = rows.filter(r => r.planend).map(r => +new date(r.planend));
+      const fmt3 = d => `${string(d.getdate()).padstart(2,"0")}.${string(d.getmonth()+1).padstart(2,"0")}.${string(d.getfullyear()).slice(2)}`;
+      const startfmt = starts.length ? fmt3(new date(math.min(...starts))) : "—";
+      const endfmt = ends.length ? fmt3(new date(math.max(...ends))) : "—";
+      return { totalcost, donecost, donepct, planpct, startfmt, endfmt };
+    }
+    function projectsummary(rows) {
+      const totalcost = rows.reduce((s, r) => s + (r.cost || 0), 0);
+      const donecost = rows.reduce((s, r) => s + (r.done || 0), 0);
+      const donepct = totalcost ? math.round(donecost / totalcost * 100) : 0;
+      const now = new date();
+      const plancost = rows.reduce((s, r) => {
+        if (!r.planstart || !r.planend) return s;
+        const ps = new date(r.planstart), pe = new date(r.planend);
+        if (now >= pe) return s + (r.cost || 0);
+        if (now <= ps) return s;
+        return s + (r.cost || 0) * (now - ps) / (pe - ps);
+      }, 0);
+      const planpct = totalcost ? math.round(plancost / totalcost * 100) : 0;
+      const starts = rows.filter(r => r.planstart).map(r => +new date(r.planstart));
+      const ends = rows.filter(r => r.planend).map(r => +new date(r.planend));
+      const fmt3 = d => `${string(d.getdate()).padstart(2,"0")}.${string(d.getmonth()+1).padstart(2,"0")}.${string(d.getfullyear()).slice(2)}`;
+      const startfmt = starts.length ? fmt3(new date(math.min(...starts))) : "—";
+      const endfmt = ends.length ? fmt3(new date(math.max(...ends))) : "—";
+      return { totalcost, donecost, donepct, planpct, startfmt, endfmt };
+    }
+    function projectSummary(rows) {
+      const totalCost = rows.reduce((s, r) => s + (r.cost || 0), 0);
+      const doneCost = rows.reduce((s, r) => s + (r.done || 0), 0);
+      const donePct = totalCost ? Math.round(doneCost / totalCost * 100) : 0;
+      const now = new Date();
+      const planCost = rows.reduce((s, r) => {
+        if (!r.planStart || !r.planEnd) return s;
+        const ps = new Date(r.planStart), pe = new Date(r.planEnd);
+        if (now >= pe) return s + (r.cost || 0);
+        if (now <= ps) return s;
+        return s + (r.cost || 0) * (now - ps) / (pe - ps);
+      }, 0);
+      const planPct = totalCost ? Math.round(planCost / totalCost * 100) : 0;
+      const starts = rows.filter(r => r.planStart).map(r => +new Date(r.planStart));
+      const ends = rows.filter(r => r.planEnd).map(r => +new Date(r.planEnd));
+      const fmt3 = d => `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getFullYear()).slice(2)}`;
+      const startFmt = starts.length ? fmt3(new Date(Math.min(...starts))) : "—";
+      const endFmt = ends.length ? fmt3(new Date(Math.max(...ends))) : "—";
+      return { totalCost, doneCost, donePct, planPct, startFmt, endFmt };
+    }
     function money(n) {
       return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " €";
     }
@@ -1564,9 +1736,18 @@
         const sr = rows.filter(r => f.some(x => (r.stage || "").toLowerCase().includes(x)));
         return { cost: sr.reduce((s, r) => s + (r.cost || 0), 0), done: sr.reduce((s, r) => s + (r.done || 0), 0) };
       };
-      const stProj = sumBy(["базовое", "детальн"]);
-      const stSupply = sumBy(["поставка"]);
-      const stSmr = sumBy(["смр", "строительн", "пнр"]);
+      const stBasic = sumBy(["базовое"]);
+      const stDetailed = sumBy(["детальн"]);
+      const sumByItem = f => {
+        const sr = rows.filter(r => (r.stage || "").toLowerCase().includes("поставка") && f.some(x => (r.item || "").toLowerCase().includes(x)));
+        return { cost: sr.reduce((s, r) => s + (r.cost || 0), 0), done: sr.reduce((s, r) => s + (r.done || 0), 0) };
+      };
+      const stManuf = sumByItem(["изготовление"]);
+      const supplyAll = sumBy(["поставка"]);
+      const stLogistics = { cost: supplyAll.cost - stManuf.cost, done: supplyAll.done - stManuf.done };
+      const stSmr = sumBy(["смр", "строительн"]);
+      const stPnr = sumBy(["пнр"]);
+      const pct = c => c.cost ? Math.round(c.done / c.cost * 100) : 0;
       const now = new Date();
       const planCost = rows.reduce((s, r) => {
         if (!r.planStart || !r.planEnd) return s;
@@ -1580,6 +1761,14 @@
       const dts = a => a.length ? new Date(Math.min(...a)) : null;
       const dte = a => a.length ? new Date(Math.max(...a)) : null;
       const fmt = d => d ? `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getFullYear()).slice(2)}` : "—";
+      const stageDates = sr => fmt(dts(sr.filter(r => r.planStart).map(r => +new Date(r.planStart)))) + " → " + fmt(dte(sr.filter(r => r.planEnd).map(r => +new Date(r.planEnd))));
+      const rowsBy = f => rows.filter(r => f.some(x => (r.stage || "").toLowerCase().includes(x)));
+      const dtBasic = stageDates(rowsBy(["базовое"]));
+      const dtDetailed = stageDates(rowsBy(["детальн"]));
+      const dtManuf = stageDates(rows.filter(r => (r.stage || "").toLowerCase().includes("поставка") && (r.item || "").toLowerCase().includes("изготовление")));
+      const dtLogistics = stageDates(rows.filter(r => (r.stage || "").toLowerCase().includes("поставка") && !(r.item || "").toLowerCase().includes("изготовление")));
+      const dtSmr = stageDates(rowsBy(["смр", "строительн"]));
+      const dtPnr = stageDates(rowsBy(["пнр"]));
       const planStart = dts(rows.filter(r => r.planStart).map(r => +new Date(r.planStart)));
       const planEnd = dte(rows.filter(r => r.planEnd).map(r => +new Date(r.planEnd)));
       const factStart = dts(rows.filter(r => r.factStart).map(r => +new Date(r.factStart)));
@@ -1589,47 +1778,41 @@
       dash.innerHTML = `
         <div class="kpi-row">
           <div class="kpi-card">
-            <div class="kpi-flex">
-              <div>
-                <div class="kpi-label">Стоимость проекта</div>
-                <div class="kpi-big">${money(totalCost).replace(" €", "")}</div>
-              </div>
-              <div>
-                <div class="kpi-label">Освоено всего</div>
-                <div class="kpi-big">${money(doneCost).replace(" €", "")}</div>
-              </div>
-            </div>
+            <div class="kpi-title">Стоимость проекта (стоимость / освоено)</div>
             <div class="kpi-stages">
-              <div class="kpi-stage-row"><span>Проектирование</span><span>${money(stProj.cost)} / ${money(stProj.done)}</span></div>
-              <div class="kpi-stage-row"><span>Поставка</span><span>${money(stSupply.cost)} / ${money(stSupply.done)}</span></div>
-              <div class="kpi-stage-row"><span>Строительство и ПНР</span><span>${money(stSmr.cost)} / ${money(stSmr.done)}</span></div>
+              <div class="kpi-stage-row"><span>Базовое проектирование</span><span>${money(stBasic.cost).replace(" €", "")} / ${money(stBasic.done).replace(" €", "")}</span></div>
+              <div class="kpi-stage-row"><span>Детальное проектирование</span><span>${money(stDetailed.cost).replace(" €", "")} / ${money(stDetailed.done).replace(" €", "")}</span></div>
+              <div class="kpi-stage-row"><span>Изготовление</span><span>${money(stManuf.cost).replace(" €", "")} / ${money(stManuf.done).replace(" €", "")}</span></div>
+              <div class="kpi-stage-row"><span>Логистика</span><span>${money(stLogistics.cost).replace(" €", "")} / ${money(stLogistics.done).replace(" €", "")}</span></div>
+              <div class="kpi-stage-row"><span>Строительно-монтажные работы</span><span>${money(stSmr.cost).replace(" €", "")} / ${money(stSmr.done).replace(" €", "")}</span></div>
+              <div class="kpi-stage-row"><span>ПНР</span><span>${money(stPnr.cost).replace(" €", "")} / ${money(stPnr.done).replace(" €", "")}</span></div>
             </div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">Общий прогресс</div>
-            <div class="kpi-flex">
-              <div>
-                <div class="kpi-label">План</div>
-                <div class="kpi-big">${planPct}%</div>
-              </div>
-              <div>
-                <div class="kpi-label">Факт</div>
-                <div class="kpi-big">${donePct}%</div>
-              </div>
+            <div class="kpi-title">Общий прогресс</div>
+            
+            <div class="kpi-stages">
+              <div class="kpi-stage-row"><span>Базовое проектирование</span><span>${pct(stBasic)}%</span></div>
+              <div class="kpi-stage-row"><span>Детальное проектирование</span><span>${pct(stDetailed)}%</span></div>
+              <div class="kpi-stage-row"><span>Изготовление</span><span>${pct(stManuf)}%</span></div>
+              <div class="kpi-stage-row"><span>Логистика</span><span>${pct(stLogistics)}%</span></div>
+              <div class="kpi-stage-row"><span>Строительно-монтажные работы</span><span>${pct(stSmr)}%</span></div>
+              <div class="kpi-stage-row"><span>ПНР</span><span>${pct(stPnr)}%</span></div>
             </div>
-            <div class="kpi-badge ${delta < 0 ? "bad" : "good"}">${delta < 0 ? "Отставание " : "Опережение +"}${delta}%</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">Сроки</div>
-            <div class="kpi-label">План начало / окончание</div>
-            <div class="kpi-dates">${fmt(planStart)} → ${fmt(planEnd)}</div>
-            <div class="kpi-label">Факт начало</div>
-            <div class="kpi-mid">${fmt(factStart)}</div>
-            <div class="kpi-label" style="margin-top:6px;">Прогноз окончания</div>
-            <div class="kpi-badge ${late ? "bad" : "good"}">${fmt(forecastEnd)}</div>
+            <div class="kpi-title">Сроки (план начало → окончание)</div>
+            <div class="kpi-stages">
+              <div class="kpi-stage-row"><span>Базовое проектирование</span><span>${dtBasic}</span></div>
+              <div class="kpi-stage-row"><span>Детальное проектирование</span><span>${dtDetailed}</span></div>
+              <div class="kpi-stage-row"><span>Изготовление</span><span>${dtManuf}</span></div>
+              <div class="kpi-stage-row"><span>Логистика</span><span>${dtLogistics}</span></div>
+              <div class="kpi-stage-row"><span>Строительно-монтажные работы</span><span>${dtSmr}</span></div>
+              <div class="kpi-stage-row"><span>ПНР</span><span>${dtPnr}</span></div>
+            </div>
           </div>
           <div class="kpi-card kpi-wide">
-            <div class="kpi-label">Примечание / комментарий</div>
+            <div class="kpi-title">Примечание / комментарий</div>
             <textarea class="kpi-comment-edit" id="comment-${code}" placeholder="Место для текстового комментария по проекту — риски, причины отставания, ключевые события за период." onblur="saveComment('${code}')" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${data.comment || ""}</textarea>
           </div>
         </div>
@@ -1638,26 +1821,35 @@
           <div class="chart-wrap"><canvas id="chart-${code}"></canvas></div>
         </div>
         <div class="stage-row">
-          <div class="stage-card">
-            <div class="chart-title">проектирование</div>
-            <table class="stage-table">
-              <thead><tr><th>Дисциплина</th><th>План</th><th>Факт</th><th>Δ</th><th>План. даты</th></tr></thead>
-              <tbody>${stageTable(rows, ["базовое", "детальн"])}</tbody>
-            </table>
+          <div class="stage-card open">
+            <div class="chart-title stage-card-head"><span>Проектирование <span class="stage-arrow">▼</span></span></div>
+            ${stageSummary(rows, r => ["базовое", "детальн"].some(x => (r.stage || "").toLowerCase().includes(x)))}
+            <div class="stage-card-body">
+              <table class="stage-table">
+                <thead><tr><th>Дисциплина</th><th>План</th><th>Факт</th><th>Δ</th><th>План. даты</th></tr></thead>
+                <tbody>${stageTable(rows, ["базовое", "детальн"])}</tbody>
+              </table>
+            </div>
           </div>
-          <div class="stage-card">
-            <div class="chart-title">поставка</div>
-            <table class="stage-table">
-              <thead><tr><th>Этап</th><th>Кол-во</th><th>Статус</th></tr></thead>
-              <tbody>${supplyTable(rows)}</tbody>
-            </table>
+          <div class="stage-card open">
+            <div class="chart-title stage-card-head"><span>Поставка <span class="stage-arrow">▼</span></span></div>
+            ${stageSummary(rows, r => (r.stage || "").toLowerCase().includes("поставка"))}
+            <div class="stage-card-body">
+              <table class="stage-table">
+                <thead><tr><th>Этап</th><th>Кол-во</th><th>Статус</th></tr></thead>
+                <tbody>${supplyTable(rows)}</tbody>
+              </table>
+            </div>
           </div>
-          <div class="stage-card">
-            <div class="chart-title">смр и пнр</div>
-            <table class="stage-table">
-              <thead><tr><th>Дисциплина</th><th>План</th><th>Факт</th><th>Δ</th><th>План. даты</th></tr></thead>
-              <tbody>${stageTable(rows, ["смр", "строительн", "пнр"])}</tbody>
-            </table>
+          <div class="stage-card open">
+            <div class="chart-title stage-card-head"><span>СМР и ПНР <span class="stage-arrow">▼</span></span></div>
+            ${stageSummary(rows, r => ["смр", "Строительн", "пнр"].some(x => (r.stage || "").toLowerCase().includes(x)))}
+            <div class="stage-card-body">
+              <table class="stage-table">
+                <thead><tr><th>Дисциплина</th><th>План</th><th>Факт</th><th>Δ</th><th>План. даты</th></tr></thead>
+                <tbody>${stageTable(rows, ["смр", "Строительн", "пнр"])}</tbody>Ы
+              </table>
+            </div>
           </div>
         </div>
         <div class="chart-card">
@@ -1666,6 +1858,9 @@
         </div>`;
         buildChart(code, rows);
         applyRole();
+        document.querySelectorAll(".stage-card-head").forEach(h => {
+          h.addEventListener("click", () => h.parentElement.classList.toggle("open"));
+        });
     }
 
     const charts = {};
@@ -1683,6 +1878,18 @@
       "Входной контроль на площадке"
     ];
 
+    function stageSummary(rows, filterFn) {
+      const fr = rows.filter(filterFn);
+      const starts = fr.filter(r => r.planStart).map(r => +new Date(r.planStart));
+      const ends = fr.filter(r => r.planEnd).map(r => +new Date(r.planEnd));
+      const cost = fr.reduce((s, r) => s + (r.cost || 0), 0);
+      const done = fr.reduce((s, r) => s + (r.done || 0), 0);
+      const pct = cost ? Math.round(done / cost * 100) : 0;
+      const fmt2s = d => `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getFullYear()).slice(2)}`;
+      const start = starts.length ? fmt2s(new Date(Math.min(...starts))) : "—";
+      const end = ends.length ? fmt2s(new Date(Math.max(...ends))) : "—";
+      return `<div class="stage-summary"><span>${start} → ${end}</span><span>Выполнено: <b>${pct}%</b></span></div>`;
+    }
     function supplyTable(rows) {
       const data = {};
       rows.filter(r => (r.stage || "").toLowerCase().includes("поставка")).forEach(r => {
