@@ -187,7 +187,7 @@ async function renderSchedule() {
 
   tab.innerHTML = `<div class="sch-topbar">
       <div class="sch-period">
-        <button class="sch-period-btn" id="schPrintBtn">🖨 Печать</button> <button class="sch-period-btn" id="schPeriodBtn">Период ▾</button>
+        <div class="sch-period"><button class="sch-period-btn" id="schLevelBtn">Уровень ▾</button><div class="sch-period-menu" id="schLevelMenu"><button class="sch-mode" data-level="1">1 уровень</button><button class="sch-mode" data-level="2">2 уровень</button><button class="sch-mode active" data-level="3">3 уровень</button></div></div> <button class="sch-period-btn" id="schPrintBtn">🖨 Печать</button> <button class="sch-period-btn" id="schPeriodBtn">Период ▾</button>
         <div class="sch-period-menu" id="schPeriodMenu">
           <button class="sch-mode" data-mode="year">Год</button>
           <button class="sch-mode" data-mode="quarter">Квартал</button>
@@ -256,6 +256,22 @@ async function renderSchedule() {
     }
     tab.querySelectorAll(".sch-mode").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
   }
+  const lBtn = document.getElementById("schLevelBtn");
+  const lMenu = document.getElementById("schLevelMenu");
+  lBtn.addEventListener("click", e => { e.stopPropagation(); lMenu.classList.toggle("open"); });
+  document.addEventListener("click", () => lMenu.classList.remove("open"));
+  function applyLevel(lv) {
+    tab.querySelectorAll(".sch-sec > .sch-body").forEach(b => b.classList.toggle("open", lv >= 2));
+    tab.querySelectorAll(".sch-sec-head").forEach(h => h.classList.toggle("open", lv >= 2));
+    tab.querySelectorAll(".sch-proj > .sch-body").forEach(b => b.classList.toggle("open", lv >= 3));
+    tab.querySelectorAll(".sch-proj-head").forEach(h => h.classList.toggle("open", lv >= 3));
+    lBtn.textContent = "Уровень: " + lv + " ▾";
+    lMenu.querySelectorAll(".sch-mode").forEach(b => b.classList.toggle("active", b.dataset.level == lv));
+    lMenu.classList.remove("open");
+  }
+  lMenu.querySelectorAll(".sch-mode").forEach(b => {
+    b.addEventListener("click", () => applyLevel(parseInt(b.dataset.level)));
+  });
   document.getElementById("schPrintBtn").addEventListener("click", () => window.print());
   const pBtn = document.getElementById("schPeriodBtn");
   const pMenu = document.getElementById("schPeriodMenu");
