@@ -187,7 +187,7 @@ async function renderSchedule() {
 
   tab.innerHTML = `<div class="sch-topbar">
       <div class="sch-period">
-        <button class="sch-period-btn" id="schPeriodBtn">Период ▾</button>
+        <button class="sch-period-btn" id="schPrintBtn">🖨 Печать</button> <button class="sch-period-btn" id="schPeriodBtn">Период ▾</button>
         <div class="sch-period-menu" id="schPeriodMenu">
           <button class="sch-mode" data-mode="year">Год</button>
           <button class="sch-mode" data-mode="quarter">Квартал</button>
@@ -256,6 +256,7 @@ async function renderSchedule() {
     }
     tab.querySelectorAll(".sch-mode").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
   }
+  document.getElementById("schPrintBtn").addEventListener("click", () => window.print());
   const pBtn = document.getElementById("schPeriodBtn");
   const pMenu = document.getElementById("schPeriodMenu");
   pBtn.addEventListener("click", e => { e.stopPropagation(); pMenu.classList.toggle("open"); });

@@ -512,6 +512,7 @@
     .sch-gantt .pg-zoomer .pg-zoom { display: flex; width: var(--gw); margin-left: calc(-1 * var(--gx)); }
     .sch-topbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
     .sch-period { position: relative; }
+    @media print { .bg { display: none !important; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } header.topbar, .sch-topbar, .sch-slider { display: none !important; } body { background: #fff !important; } .content { padding: 0 !important; margin: 0 !important; } .tab { display: none !important; } .tab.active { display: block !important; } .prep-gantt { box-shadow: none !important; border: none !important; } }
     .sch-period-btn { border: 1px solid #cbd5e1; background: #2e3d54; color: #fff; border-radius: 6px; padding: 5px 14px; font-size: 12px; cursor: pointer; font-weight: 600; }
     .sch-period-menu { display: none; position: absolute; right: 0; top: 110%; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px; z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,.12); }
     .sch-period-menu.open { display: flex; flex-direction: column; gap: 2px; }
