@@ -493,6 +493,8 @@
     .pg-head { display: flex; align-items: center; font-size: 9px; color: #6b7280; margin-bottom: 4px; }
     .pg-head span { font-weight: 400; color: #6b7280; }
     .pg-name.late { color: #b91c1c; font-weight: 600; }
+    .proj-gantt .pg-name { width: 180px; }
+    .proj-gantt .pg-scale-year span:first-child, .proj-gantt .pg-scale-month span:first-child { width: 572px; }
     .pg-track { flex: 1; position: relative; height: 13px; }
     .pg-bar { position: absolute; height: 100%; border-radius: 3px; background: #7da7d9; overflow: hidden; }
     .pg-bar.plan-only { background: #e5e7eb; border: 1px dashed #9ca3af; }
@@ -2003,6 +2005,8 @@
     }
 
     function ganttHtml(rows) {
+      const today = new Date().toISOString().slice(0, 10);
+      const D = v => v ? String(v).slice(0, 10) : null;
       const stages = [
         { name: "Базовое проектирование", f: ["базовое"] },
         { name: "Детальное проектирование", f: ["детальн"] },
@@ -2010,59 +2014,97 @@
         { name: "СМР", f: ["смр", "строительн"] },
         { name: "ПНР", f: ["пнр"] }
       ];
-      const items = stages.map(s => {
-        const sr = rows.filter(r => s.f.some(x => (r.stage || "").toLowerCase().includes(x)) && r.planStart && r.planEnd);
-        if (!sr.length) return { name: s.name, start: null };
-        return {
-          name: s.name,
-          start: Math.min(...sr.map(r => +new Date(r.planStart))),
-          end: Math.max(...sr.map(r => +new Date(r.planEnd)))
-        };
+      const items = stages.map(st => {
+        const sr = rows.filter(r => st.f.some(x => (r.stage || "").toLowerCase().includes(x)));
+        const ps = sr.map(r => D(r.planStart)).filter(Boolean).sort();
+        const pe = sr.map(r => D(r.forecastEnd || r.planEnd)).filter(Boolean).sort();
+        const fs = sr.map(r => D(r.factStart)).filter(Boolean).sort();
+        const fe = sr.map(r => D(r.factEnd)).filter(Boolean).sort();
+        const cost = sr.reduce((s, r) => s + (r.cost || 0), 0);
+        const doneSum = sr.reduce((s, r) => s + (r.done || 0), 0);
+        const pct = cost ? Math.round(doneSum / cost * 100) : 0;
+        let planNow = 0;
+        sr.forEach(r => {
+          const rs = D(r.planStart);
+          if (!rs) return;
+          const end = D(r.forecastEnd || r.planEnd) || today;
+          if (today >= end) planNow += r.cost || 0;
+          else if (today > rs) {
+            const t = (new Date(today) - new Date(rs)) / (new Date(end) - new Date(rs));
+            planNow += (r.cost || 0) * t;
+          }
+        });
+        const planPct = cost ? Math.min(100, Math.round(planNow / cost * 100)) : 0;
+        return { name: st.name, s: ps[0] || null, e: pe.length ? pe[pe.length - 1] : null,
+                 fs: fs[0] || null, fe: fe.length ? fe[fe.length - 1] : null,
+                 pct, planPct, started: sr.some(r => r.factStart) };
       });
-      const has = items.filter(i => i.start);
+      const has = items.filter(i => i.s);
       if (!has.length) return `<div class="st-empty">Нет данных для диаграммы</div>`;
-      const minD = new Date(Math.min(...has.map(i => i.start)));
-      const maxD = new Date(Math.max(...has.map(i => i.end)));
-      const min = +new Date(minD.getFullYear(), minD.getMonth(), 1);
-      const max = +new Date(maxD.getFullYear(), maxD.getMonth() + 1, 0);
-      const span = max - min || 1;
-      const now = Date.now();
-      const nowPct = Math.max(0, Math.min(100, (now - min) / span * 100));
+      const min = has.map(i => i.s).sort()[0];
+      let max = has.map(i => i.e || i.s).sort().slice(-1)[0];
+      if (!max || max <= min) max = today > min ? today : min;
+      const t0 = new Date(min).getTime(), t1 = new Date(max).getTime();
+      const pos = d => Math.max(0, Math.min(100, (new Date(d).getTime() - t0) / (t1 - t0 || 1) * 100));
 
       const months = [];
-      const cur = new Date(min);
-      while (+cur <= max) {
+      const cur = new Date(min); cur.setDate(1);
+      while (cur.getTime() <= t1) {
         months.push({ y: cur.getFullYear(), m: cur.getMonth() + 1 });
         cur.setMonth(cur.getMonth() + 1);
       }
       const mW = 100 / months.length;
       const years = {};
       months.forEach(mo => years[mo.y] = (years[mo.y] || 0) + 1);
-      let scale = `<div class="gantt-row"><div class="gantt-label"></div><div class="gantt-scale">`;
-      Object.keys(years).sort().forEach(y => {
-        scale += `<div class="gantt-year" style="width:${years[y] * mW}%">${y}</div>`;
-      });
-      scale += `</div></div><div class="gantt-row"><div class="gantt-label"></div><div class="gantt-scale">`;
-      months.forEach(mo => {
-        scale += `<div class="gantt-month" style="width:${mW}%">${String(mo.m).padStart(2, "0")}</div>`;
-      });
-      scale += `</div></div>`;
+      let yearRow = `<span></span>`;
+      Object.keys(years).sort().forEach(y => { yearRow += `<span style="width:${years[y] * mW}%">${y}</span>`; });
+      let monthRow = `<span></span>`;
+      months.forEach(mo => { monthRow += `<span style="width:${mW}%">${String(mo.m).padStart(2, "0")}</span>`; });
+      const nowPos = pos(today);
+      const fmtD = d => d ? d.slice(8,10) + "." + d.slice(5,7) + "." + d.slice(2,4) : "—";
 
-      let html = `<div class="gantt">` + scale;
+      let rowsHtml = "";
       items.forEach(i => {
-        html += `<div class="gantt-row"><div class="gantt-label">${i.name}</div><div class="gantt-track">`;
-        if (i.start) {
-          const left = (i.start - min) / span * 100;
-          const width = (i.end - i.start) / span * 100;
-          const doneW = Math.max(0, Math.min(100, (now - i.start) / (i.end - i.start) * 100));
-          html += `<div class="gantt-bar" style="left:${left}%;width:${width}%">` +
-                  `<div class="gantt-done" style="width:${doneW}%"></div>` +
-                  `<span class="gantt-dates">${i.name.length < 15 ? "" : ""}</span></div>`;
+        if (!i.s) {
+          rowsHtml += `<div class="pg-row"><span class="pg-name">${i.name}</span>
+            <span class="pg-cell">—</span><span class="pg-cell">—</span>
+            <span class="pg-cell">—</span><span class="pg-cell">—</span>
+            <span class="pg-pct">—</span><span class="pg-pct">—</span><span class="pg-pct">—</span>
+            <div class="pg-track"></div></div>`;
+          return;
         }
-        html += `</div></div>`;
+        const e = i.e || today;
+        const late = i.pct < 100 && e < today;
+        const diff = i.pct - i.planPct;
+        const left = pos(i.s), width = Math.max(1.5, pos(e) - pos(i.s));
+        let bar;
+        if (!i.started && i.pct === 0) bar = `<div class="pg-bar plan-only" style="left:${left}%;width:${width}%"></div>`;
+        else bar = `<div class="pg-bar" style="left:${left}%;width:${width}%"><div class="pg-fill${late ? " late" : ""}" style="width:${i.pct}%"></div></div>`;
+        rowsHtml += `<div class="pg-row">
+          <span class="pg-name${late ? " late" : ""}">${i.name}</span>
+          <span class="pg-cell">${fmtD(i.s)}</span><span class="pg-cell">${fmtD(i.e)}</span>
+          <span class="pg-cell">${fmtD(i.fs)}</span><span class="pg-cell">${fmtD(i.fe)}</span>
+          <span class="pg-pct">${i.planPct}%</span><span class="pg-pct">${i.pct}%</span>
+          <span class="pg-pct${diff < 0 ? " neg" : ""}">${diff > 0 ? "+" : ""}${diff}%</span>
+          <div class="pg-track">${bar}</div></div>`;
       });
-      html += `<div class="gantt-now" style="left:calc(140px + (100% - 140px) * ${nowPct / 100})"></div></div>`;
-      return html;
+
+      return `<div class="prep-gantt proj-gantt">
+        <div class="pg-head"><span style="width:180px"></span><span style="width:124px;text-align:center">план нач. / оконч.</span><span style="width:124px;text-align:center">факт нач. / оконч.</span><span style="width:144px;text-align:center">прогресс: план / факт / δ</span></div>
+        <div class="pg-scale-year">${yearRow}</div>
+        <div class="pg-scale-month">${monthRow}</div>
+        <div class="pg-body">
+          <div class="pg-now" style="left:calc(572px + (100% - 572px) * ${(nowPos / 100).toFixed(3)})"></div>
+          ${rowsHtml}
+        </div>
+        <div class="pg-legend">
+          <span><span class="pg-sw" style="background:#0a1e3d"></span> выполнено</span>
+          <span><span class="pg-sw" style="background:#7da7d9"></span> план</span>
+          <span><span class="pg-sw" style="background:#b91c1c"></span> отставание</span>
+          <span><span class="pg-sw" style="background:#e5e7eb;border:1px dashed #9ca3af"></span> не начато</span>
+          <span style="color:#b91c1c">│ сегодня</span>
+        </div>
+      </div>`;
     }
 
     async function saveComment(code) {
