@@ -55,33 +55,15 @@ async function renderSchedule() {
              pct, planPct, started: rows.some(r => r.factStart) };
   }
 
-  // Собираем строки: level 0 = проект/раздел, level 1 = объект/этап
-  const lines = [];
-  const prepAllRows = [];
-  PROJECTS.prep.items.forEach(p => prepAllRows.push(...byCode[p.code]));
-  lines.push({ name: PROJECTS.prep.title, level: 0, d: calc(prepAllRows) });
-  PROJECTS.prep.items.forEach(p => {
-    lines.push({ name: p.name, level: 1, d: calc(byCode[p.code]) });
-  });
-  ["main", "aux"].forEach(key => {
-    PROJECTS[key].items.forEach(p => {
-      const rows = byCode[p.code];
-      lines.push({ name: p.code + " — " + p.name, level: 0, d: calc(rows) });
-      STAGES.forEach(st => {
-        const sr = rows.filter(r => st.f.some(x => (r.stage || "").toLowerCase().includes(x)));
-        lines.push({ name: st.name, level: 1, d: calc(sr) });
-      });
-    });
-  });
-
-  // Общая шкала
-  const has = lines.filter(l => l.d.s);
-  if (!has.length) {
+  const allRows = [];
+  allCodes.forEach(c => allRows.push(...byCode[c]));
+  const allD = calc(allRows);
+  if (!allD.s) {
     tab.innerHTML = `<h2 class="tab-title">Общий график</h2><p class="tab-empty">Нет данных ни по одному проекту.</p>`;
     return;
   }
-  const min = has.map(l => l.d.s).sort()[0];
-  let max = has.map(l => l.d.e || l.d.s).sort().slice(-1)[0];
+  const min = allD.s;
+  let max = allD.e || allD.s;
   if (!max || max <= min) max = today > min ? today : min;
   const t0 = new Date(min).getTime(), t1 = new Date(max).getTime();
   const pos = d => Math.max(0, Math.min(100, (new Date(d).getTime() - t0) / (t1 - t0 || 1) * 100));
@@ -93,50 +75,113 @@ async function renderSchedule() {
     cur.setMonth(cur.getMonth() + 1);
   }
   const mW = 100 / months.length;
+  // Окно 4 года (48 месяцев): K — ширина растянутого слоя в % от видимой области
+  const K = Math.max(100, months.length / 48 * 100);
   const years = {};
   months.forEach(mo => years[mo.y] = (years[mo.y] || 0) + 1);
-  let yearRow = `<span></span>`;
-  Object.keys(years).sort().forEach(y => { yearRow += `<span style="width:${years[y] * mW}%">${y}</span>`; });
-  let monthRow = `<span></span>`;
-  months.forEach(mo => { monthRow += `<span style="width:${mW}%">${String(mo.m).padStart(2, "0")}</span>`; });
+  let yearSpans = "";
+  Object.keys(years).sort().forEach(y => { yearSpans += `<span style="width:${years[y] * mW}%">${y}</span>`; });
+  let monthSpans = "";
+  months.forEach(mo => { monthSpans += `<span style="width:${mW}%">${String(mo.m).padStart(2, "0")}</span>`; });
   const nowPos = pos(today);
   const fmtD = d => d ? d.slice(8,10) + "." + d.slice(5,7) + "." + d.slice(2,4) : "—";
 
-  let rowsHtml = "";
-  lines.forEach(l => {
-    const d = l.d;
-    const cls = l.level === 0 ? "parent" : "child";
+  function rowHtml(name, d, cls, arrow) {
+    const arr = arrow ? `<span class="sch-arr">▸</span>` : "";
     if (!d.s) {
-      rowsHtml += `<div class="pg-row ${cls}"><span class="pg-name">${l.name}</span>
+      return `<div class="pg-row ${cls}"><span class="pg-name">${arr}${name}</span>
         <span class="pg-cell">—</span><span class="pg-cell">—</span>
         <span class="pg-cell">—</span><span class="pg-cell">—</span>
         <span class="pg-pct">—</span><span class="pg-pct">—</span><span class="pg-pct">—</span>
-        <div class="pg-track"></div></div>`;
-      return;
+        <div class="pg-track"><div class="pg-zoom"></div></div></div>`;
     }
     const e = d.e || today;
     const late = d.pct < 100 && e < today;
     const diff = d.pct - d.planPct;
-    const left = pos(d.s), width = Math.max(1, pos(e) - pos(d.s));
+    const left = pos(d.s), width = Math.max(0.5, pos(e) - pos(d.s));
     let bar;
     if (!d.started && d.pct === 0) bar = `<div class="pg-bar plan-only" style="left:${left}%;width:${width}%"></div>`;
     else bar = `<div class="pg-bar" style="left:${left}%;width:${width}%"><div class="pg-fill${late ? " late" : ""}" style="width:${d.pct}%"></div></div>`;
-    rowsHtml += `<div class="pg-row ${cls}">
-      <span class="pg-name${late ? " late" : ""}">${l.name}</span>
+    return `<div class="pg-row ${cls}">
+      <span class="pg-name${late ? " late" : ""}">${arr}${name}</span>
       <span class="pg-cell">${fmtD(d.s)}</span><span class="pg-cell">${fmtD(d.e)}</span>
       <span class="pg-cell">${fmtD(d.fs)}</span><span class="pg-cell">${fmtD(d.fe)}</span>
       <span class="pg-pct">${d.planPct}%</span><span class="pg-pct">${d.pct}%</span>
       <span class="pg-pct${diff < 0 ? " neg" : ""}">${diff > 0 ? "+" : ""}${diff}%</span>
-      <div class="pg-track">${bar}</div></div>`;
+      <div class="pg-track"><div class="pg-zoom">${bar}</div></div></div>`;
+  }
+
+  function sectionHtml(title, bodyHtml, rows) {
+    return `<div class="sch-sec">
+      ${rowHtml(title, calc(rows), "sch-sec-head", true)}
+      <div class="sch-body open">${bodyHtml}</div>
+    </div>`;
+  }
+
+  // Подготовительные: объекты, сгруппированные по родительским проектам
+  let prepBody = "";
+  const prepAllRows = [];
+  const parents = {};
+  [...PROJECTS.main.items, ...PROJECTS.aux.items].forEach(p => { parents[p.code] = p.name; });
+  const prepGroups = {};
+  PROJECTS.prep.items.forEach(p => {
+    prepAllRows.push(...byCode[p.code]);
+    const par = p.code.split("-")[0];
+    (prepGroups[par] = prepGroups[par] || []).push(p);
+  });
+  Object.keys(prepGroups).forEach(par => {
+    const items = prepGroups[par];
+    const grpRows = [];
+    let objsHtml = "";
+    items.forEach(p => {
+      grpRows.push(...byCode[p.code]);
+      objsHtml += rowHtml(p.name, calc(byCode[p.code]), "child stage");
+    });
+    prepBody += `<div class="sch-proj">
+      ${rowHtml(parents[par] || "Общеплощадочные объекты", calc(grpRows), "sch-proj-head", true)}
+      <div class="sch-body">${objsHtml}</div>
+    </div>`;
   });
 
+  // Основные/вспомогательные: проекты + этапы
+  function projSection(key) {
+    let body = "";
+    const secRows = [];
+    PROJECTS[key].items.forEach(p => {
+      const rows = byCode[p.code];
+      secRows.push(...rows);
+      let stagesHtml = "";
+      STAGES.forEach(st => {
+        const sr = rows.filter(r => st.f.some(x => (r.stage || "").toLowerCase().includes(x)));
+        stagesHtml += rowHtml(st.name, calc(sr), "child stage");
+      });
+      body += `<div class="sch-proj">
+        ${rowHtml(p.name, calc(rows), "sch-proj-head", true)}
+        <div class="sch-body">${stagesHtml}</div>
+      </div>`;
+    });
+    return { body, secRows };
+  }
+  const mainS = projSection("main");
+  const auxS = projSection("aux");
+
+  const rowsHtml =
+    sectionHtml("Подготовительные работы", prepBody, prepAllRows) +
+    sectionHtml("Основные проекты", mainS.body, mainS.secRows) +
+    sectionHtml("Вспомогательные проекты", auxS.body, auxS.secRows);
+
+  const sliderHtml = K > 100
+    ? `<div class="sch-slider"><input type="range" id="schSlider" min="0" max="${(K - 100).toFixed(1)}" step="0.1" value="${(K - 100).toFixed(1)}"></div>`
+    : "";
+
   tab.innerHTML = `<h2 class="tab-title">Общий график</h2>
-    <div class="prep-gantt sch-gantt">
+    <div class="prep-gantt sch-gantt" id="schGantt" style="--gw:${K}%;--gx:0%">
       <div class="pg-head"><span style="width:280px"></span><span style="width:124px;text-align:center">план нач. / оконч.</span><span style="width:124px;text-align:center">факт нач. / оконч.</span><span style="width:144px;text-align:center">прогресс: план / факт / δ</span></div>
-      <div class="pg-scale-year">${yearRow}</div>
-      <div class="pg-scale-month">${monthRow}</div>
+      ${sliderHtml}
+      <div class="pg-scale-year"><span></span><div class="pg-zoomer"><div class="pg-zoom">${yearSpans}</div></div></div>
+      <div class="pg-scale-month"><span></span><div class="pg-zoomer"><div class="pg-zoom">${monthSpans}</div></div></div>
       <div class="pg-body">
-        <div class="pg-now" style="left:calc(672px + (100% - 672px) * ${(nowPos / 100).toFixed(3)})"></div>
+        <div class="pg-now" id="schNow"></div>
         ${rowsHtml}
       </div>
       <div class="pg-legend">
@@ -147,5 +192,33 @@ async function renderSchedule() {
         <span style="color:#b91c1c">│ сегодня</span>
       </div>
     </div>`;
+
+  // Раскрытие/сворачивание
+  tab.querySelectorAll(".sch-sec-head, .sch-proj-head").forEach(head => {
+    head.style.cursor = "pointer";
+    head.addEventListener("click", () => {
+      const body = head.nextElementSibling;
+      if (body) body.classList.toggle("open");
+      head.classList.toggle("open");
+    });
+  });
+
+  // Ползунок окна 4 года
+  const gEl = document.getElementById("schGantt");
+  function updateNow(gx) {
+    const el = document.getElementById("schNow");
+    const p = nowPos / 100 * K - gx;
+    if (p < 0 || p > 100) { el.style.display = "none"; return; }
+    el.style.display = "";
+    el.style.left = `calc(672px + (100% - 672px) * ${(p / 100).toFixed(4)})`;
+  }
+  const slider = document.getElementById("schSlider");
+  if (slider) {
+    const setGx = v => { gEl.style.setProperty("--gx", v + "%"); updateNow(v); };
+    slider.addEventListener("input", e => setGx(parseFloat(e.target.value)));
+    setGx(parseFloat(slider.value));
+  } else {
+    updateNow(0);
+  }
 }
 document.addEventListener("DOMContentLoaded", renderSchedule);
