@@ -1592,6 +1592,8 @@
     ];
 
     async function exportProject(code, name) {
+      const res = await fetch("/api/reports/" + code);
+      const rows = (await res.json()).rows || [];
       const wb = new ExcelJS.Workbook();
       const ws = wb.addWorksheet("Отчёт");
 
@@ -1601,7 +1603,12 @@
         headerRow: true,
         style: { showRowStripes: false },
         columns: REPORT_COLUMNS.map(c => ({ name: c })),
-        rows: [ REPORT_COLUMNS.map(() => "") ],
+        rows: rows.length ? rows.map(r => {
+          const d = v => v ? new Date(v) : "";
+          return [code, name, r.stage || "", "", r.item || "",
+            d(r.planStart), d(r.planEnd), d(r.factStart), d(r.factEnd),
+            r.cost || 0, r.done || 0, r.status || ""];
+        }) : [ REPORT_COLUMNS.map(() => "") ],
       });
 
       ws.columns.forEach(col => { col.width = 14; });
