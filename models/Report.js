@@ -3,7 +3,9 @@ const mongoose = require("mongoose");
 // Одна строка отчёта (из Excel)
 const rowSchema = new mongoose.Schema({
   stage:      { type: String, required: true }, // один из 5 этапов
-  item:       { type: String, default: "" },    // дисциплина / подпункт / объект
+  item:       { type: String, default: "" },    // вид работы (было: дисциплина / подпункт / объект)
+  obj:        { type: String, default: "" },    // объект (колонка D нового шаблона)
+  equip:      { type: String, default: "" },    // дисциплина / оборудование (колонка E, пусто для проектирования)
   contractor: { type: String, default: "" },    // Внутренний / Внешний
   planStart:  { type: Date, default: null },
   planEnd:    { type: Date, default: null },

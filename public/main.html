@@ -511,6 +511,9 @@
     .sch-gantt .pg-zoomer { flex: 1; position: relative; overflow: hidden; }
     .sch-gantt .pg-zoomer .pg-zoom { display: flex; width: var(--gw); margin-left: calc(-1 * var(--gx)); }
     .sch-topbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+    .kpi-grid { display: grid !important; grid-template-columns: 1fr 88px 88px; gap: 0 6px; align-items: baseline; }
+    .kpi-grid > span:nth-child(2), .kpi-grid > span:nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; }
+    .kpi-grid-head > span { font-size: 11px; color: #2e3d54; font-weight: 700; }
     .sch-period { position: relative; display: flex; align-items: center; gap: 8px; }
     @media print { .bg { display: none !important; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } header.topbar, .sch-topbar, .sch-slider { display: none !important; } body { background: #fff !important; } .content { padding: 0 !important; margin: 0 !important; } .tab { display: none !important; } .tab.active { display: block !important; } .prep-gantt { box-shadow: none !important; border: none !important; } .pg-row { break-inside: avoid; } .sch-gantt .pg-scale-year { position: fixed; top: 0; left: 0; right: 0; background: #fff; z-index: 30; } .sch-gantt .pg-scale-month { position: fixed; top: 14px; left: 0; right: 0; background: #fff; z-index: 30; } .sch-gantt .pg-body { margin-top: 34px; } .sch-sec { break-inside: auto; } .sch-proj { break-inside: avoid; } }
     .sch-period-btn { border: 1px solid #cbd5e1; background: #2e3d54; color: #fff; border-radius: 6px; padding: 5px 14px; font-size: 12px; cursor: pointer; font-weight: 600; }
@@ -1586,8 +1589,8 @@
 
     // Экспорт таблицы в Excel
     const REPORT_COLUMNS = [
-      "Код", "Проект", "Этап", "Объект", "Дисциплина",
-      "План начало", "План окончание", "Факт начало", "Факт окончание",
+      "Код", "Проект", "Этап", "Объект", "Дисциплина", "Вид работы",
+      "П Начало", "П Окончание", "Ф Начало", "Ф Окончание",
       "Стоимость", "Выполнено", "Статус"
     ];
 
@@ -1605,7 +1608,7 @@
         columns: REPORT_COLUMNS.map(c => ({ name: c })),
         rows: rows.length ? rows.map(r => {
           const d = v => v ? new Date(v) : "";
-          return [code, name, r.stage || "", "", r.item || "",
+          return [code, name, r.stage || "", r.obj || "", r.equip || "", r.item || "",
             d(r.planStart), d(r.planEnd), d(r.factStart), d(r.factEnd),
             r.cost || 0, r.done || 0, r.status || ""];
         }) : [ REPORT_COLUMNS.map(() => "") ],
@@ -1665,15 +1668,17 @@
       ws.eachRow((row, n) => {
         if (n === 1) return; // пропускаем шапку
         const v = i => row.getCell(i).value;
-        const d = i => { const x = v(i); return x instanceof Date ? x : null; };
+        const d = i => { const x = v(i); return (x instanceof Date && x.getFullYear() > 2000) ? x : null; };
         rows.push({
           stage: String(v(3) || ""),
-          item: String(v(5) || v(4) || ""),
-          planStart: d(6), planEnd: d(7),
-          factStart: d(8), factEnd: d(9),
-          cost: Number(v(10)) || 0,
-          done: Number(v(11)) || 0,
-          status: String(v(12) || "")
+          obj: String(v(4) || ""),
+          equip: String(v(5) || ""),
+          item: String(v(6) || ""),
+          planStart: d(7), planEnd: d(8),
+          factStart: d(9), factEnd: d(10),
+          cost: Number(v(11)) || 0,
+          done: Number(v(12)) || 0,
+          status: String(v(13) || "")
         });
       });
       const res = await fetch("/api/reports/" + code, {
@@ -1763,22 +1768,26 @@
       const totalCost = rows.reduce((s, r) => s + (r.cost || 0), 0);
       const doneCost = rows.reduce((s, r) => s + (r.done || 0), 0);
       const donePct = totalCost ? Math.round(doneCost / totalCost * 100) : 0;
+      const planOf = sr => { const nw = new Date(); return sr.reduce((s, r) => { if (!r.planStart || !r.planEnd) return s; const ps = new Date(r.planStart), pe = new Date(r.planEnd); if (nw >= pe) return s + (r.cost || 0); if (nw <= ps) return s; return s + (r.cost || 0) * (nw - ps) / (pe - ps); }, 0); };
       const sumBy = f => {
         const sr = rows.filter(r => f.some(x => (r.stage || "").toLowerCase().includes(x)));
-        return { cost: sr.reduce((s, r) => s + (r.cost || 0), 0), done: sr.reduce((s, r) => s + (r.done || 0), 0) };
+        return { cost: sr.reduce((s, r) => s + (r.cost || 0), 0), done: sr.reduce((s, r) => s + (r.done || 0), 0), plan: planOf(sr) };
       };
-      const stBasic = sumBy(["базовое"]);
-      const stDetailed = sumBy(["детальн"]);
+      const stDesign = sumBy(["проектирован"]);
       const sumByItem = f => {
         const sr = rows.filter(r => (r.stage || "").toLowerCase().includes("поставка") && f.some(x => (r.item || "").toLowerCase().includes(x)));
-        return { cost: sr.reduce((s, r) => s + (r.cost || 0), 0), done: sr.reduce((s, r) => s + (r.done || 0), 0) };
+        return { cost: sr.reduce((s, r) => s + (r.cost || 0), 0), done: sr.reduce((s, r) => s + (r.done || 0), 0), plan: planOf(sr) };
       };
-      const stManuf = sumByItem(["изготовление"]);
+      const stManufOld = sumByItem(["изготовление"]);
+      const stManufNew = sumBy(["изготовлен"]);
+      const stManuf = { cost: stManufOld.cost + stManufNew.cost, done: stManufOld.done + stManufNew.done, plan: stManufOld.plan + stManufNew.plan };
       const supplyAll = sumBy(["поставка"]);
-      const stLogistics = { cost: supplyAll.cost - stManuf.cost, done: supplyAll.done - stManuf.done };
+      const stLogNew = sumBy(["логистик"]);
+      const stLogistics = { cost: supplyAll.cost - stManufOld.cost + stLogNew.cost, done: supplyAll.done - stManufOld.done + stLogNew.done, plan: supplyAll.plan - stManufOld.plan + stLogNew.plan };
       const stSmr = sumBy(["смр", "строительн"]);
       const stPnr = sumBy(["пнр"]);
       const pct = c => c.cost ? Math.round(c.done / c.cost * 100) : 0;
+      const pctP = c => c.cost ? Math.round((c.plan || 0) / c.cost * 100) : 0;
       const now = new Date();
       const planCost = rows.reduce((s, r) => {
         if (!r.planStart || !r.planEnd) return s;
@@ -1794,10 +1803,9 @@
       const fmt = d => d ? `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getFullYear()).slice(2)}` : "—";
       const stageDates = sr => fmt(dts(sr.filter(r => r.planStart).map(r => +new Date(r.planStart)))) + " → " + fmt(dte(sr.filter(r => r.planEnd).map(r => +new Date(r.planEnd))));
       const rowsBy = f => rows.filter(r => f.some(x => (r.stage || "").toLowerCase().includes(x)));
-      const dtBasic = stageDates(rowsBy(["базовое"]));
-      const dtDetailed = stageDates(rowsBy(["детальн"]));
-      const dtManuf = stageDates(rows.filter(r => (r.stage || "").toLowerCase().includes("поставка") && (r.item || "").toLowerCase().includes("изготовление")));
-      const dtLogistics = stageDates(rows.filter(r => (r.stage || "").toLowerCase().includes("поставка") && !(r.item || "").toLowerCase().includes("изготовление")));
+      const dtDesign = stageDates(rowsBy(["проектирован"]));
+      const dtManuf = stageDates(rows.filter(r => (r.stage || "").toLowerCase().includes("изготовлен") || ((r.stage || "").toLowerCase().includes("поставка") && (r.item || "").toLowerCase().includes("изготовление"))));
+      const dtLogistics = stageDates(rows.filter(r => (r.stage || "").toLowerCase().includes("логистик") || ((r.stage || "").toLowerCase().includes("поставка") && !(r.item || "").toLowerCase().includes("изготовление"))));
       const dtSmr = stageDates(rowsBy(["смр", "строительн"]));
       const dtPnr = stageDates(rowsBy(["пнр"]));
       const planStart = dts(rows.filter(r => r.planStart).map(r => +new Date(r.planStart)));
@@ -1811,31 +1819,30 @@
           <div class="kpi-card">
             <div class="kpi-title">Стоимость проекта (стоимость / освоено)</div>
             <div class="kpi-stages">
-              <div class="kpi-stage-row"><span>Базовое проектирование</span><span>${money(stBasic.cost).replace(" €", "")} / ${money(stBasic.done).replace(" €", "")}</span></div>
-              <div class="kpi-stage-row"><span>Детальное проектирование</span><span>${money(stDetailed.cost).replace(" €", "")} / ${money(stDetailed.done).replace(" €", "")}</span></div>
-              <div class="kpi-stage-row"><span>Изготовление</span><span>${money(stManuf.cost).replace(" €", "")} / ${money(stManuf.done).replace(" €", "")}</span></div>
-              <div class="kpi-stage-row"><span>Логистика</span><span>${money(stLogistics.cost).replace(" €", "")} / ${money(stLogistics.done).replace(" €", "")}</span></div>
-              <div class="kpi-stage-row"><span>Строительно-монтажные работы</span><span>${money(stSmr.cost).replace(" €", "")} / ${money(stSmr.done).replace(" €", "")}</span></div>
-              <div class="kpi-stage-row"><span>ПНР</span><span>${money(stPnr.cost).replace(" €", "")} / ${money(stPnr.done).replace(" €", "")}</span></div>
+              <div class="kpi-stage-row kpi-grid kpi-grid-head"><span></span><span>Стоимость</span><span>Выполнено</span></div>
+              <div class="kpi-stage-row kpi-grid"><span>Проектирование</span><span>${money(stDesign.cost).replace(" €", "")}</span><span>${money(stDesign.done).replace(" €", "")}</span></div>
+              <div class="kpi-stage-row kpi-grid"><span>Изготовление</span><span>${money(stManuf.cost).replace(" €", "")}</span><span>${money(stManuf.done).replace(" €", "")}</span></div>
+              <div class="kpi-stage-row kpi-grid"><span>Логистика</span><span>${money(stLogistics.cost).replace(" €", "")}</span><span>${money(stLogistics.done).replace(" €", "")}</span></div>
+              <div class="kpi-stage-row kpi-grid"><span>Строительно-монтажные работы</span><span>${money(stSmr.cost).replace(" €", "")}</span><span>${money(stSmr.done).replace(" €", "")}</span></div>
+              <div class="kpi-stage-row kpi-grid"><span>ПНР</span><span>${money(stPnr.cost).replace(" €", "")}</span><span>${money(stPnr.done).replace(" €", "")}</span></div>
             </div>
           </div>
           <div class="kpi-card">
             <div class="kpi-title">Общий прогресс</div>
             
             <div class="kpi-stages">
-              <div class="kpi-stage-row"><span>Базовое проектирование</span><span>${pct(stBasic)}%</span></div>
-              <div class="kpi-stage-row"><span>Детальное проектирование</span><span>${pct(stDetailed)}%</span></div>
-              <div class="kpi-stage-row"><span>Изготовление</span><span>${pct(stManuf)}%</span></div>
-              <div class="kpi-stage-row"><span>Логистика</span><span>${pct(stLogistics)}%</span></div>
-              <div class="kpi-stage-row"><span>Строительно-монтажные работы</span><span>${pct(stSmr)}%</span></div>
-              <div class="kpi-stage-row"><span>ПНР</span><span>${pct(stPnr)}%</span></div>
+              <div class="kpi-stage-row kpi-grid kpi-grid-head"><span></span><span>План</span><span>Факт</span></div>
+              <div class="kpi-stage-row kpi-grid"><span>Проектирование</span><span>${pctP(stDesign)}%</span><span>${pct(stDesign)}%</span></div>
+              <div class="kpi-stage-row kpi-grid"><span>Изготовление</span><span>${pctP(stManuf)}%</span><span>${pct(stManuf)}%</span></div>
+              <div class="kpi-stage-row kpi-grid"><span>Логистика</span><span>${pctP(stLogistics)}%</span><span>${pct(stLogistics)}%</span></div>
+              <div class="kpi-stage-row kpi-grid"><span>Строительно-монтажные работы</span><span>${pctP(stSmr)}%</span><span>${pct(stSmr)}%</span></div>
+              <div class="kpi-stage-row kpi-grid"><span>ПНР</span><span>${pctP(stPnr)}%</span><span>${pct(stPnr)}%</span></div>
             </div>
           </div>
           <div class="kpi-card">
             <div class="kpi-title">Сроки (план начало → окончание)</div>
             <div class="kpi-stages">
-              <div class="kpi-stage-row"><span>Базовое проектирование</span><span>${dtBasic}</span></div>
-              <div class="kpi-stage-row"><span>Детальное проектирование</span><span>${dtDetailed}</span></div>
+              <div class="kpi-stage-row"><span>Проектирование</span><span>${dtDesign}</span></div>
               <div class="kpi-stage-row"><span>Изготовление</span><span>${dtManuf}</span></div>
               <div class="kpi-stage-row"><span>Логистика</span><span>${dtLogistics}</span></div>
               <div class="kpi-stage-row"><span>Строительно-монтажные работы</span><span>${dtSmr}</span></div>
@@ -1854,17 +1861,17 @@
         <div class="stage-row">
           <div class="stage-card open">
             <div class="chart-title stage-card-head"><span>Проектирование <span class="stage-arrow">▼</span></span></div>
-            ${stageSummary(rows, r => ["базовое", "детальн"].some(x => (r.stage || "").toLowerCase().includes(x)))}
+            ${stageSummary(rows, r => ["базовое", "детальн", "проектирован"].some(x => (r.stage || "").toLowerCase().includes(x)))}
             <div class="stage-card-body">
               <table class="stage-table">
                 <thead><tr><th>Дисциплина</th><th>План</th><th>Факт</th><th>Δ</th><th>План. даты</th></tr></thead>
-                <tbody>${stageTable(rows, ["базовое", "детальн"])}</tbody>
+                <tbody>${stageTable(rows, ["базовое", "детальн", "проектирован"])}</tbody>
               </table>
             </div>
           </div>
           <div class="stage-card open">
             <div class="chart-title stage-card-head"><span>Поставка <span class="stage-arrow">▼</span></span></div>
-            ${stageSummary(rows, r => (r.stage || "").toLowerCase().includes("поставка"))}
+            ${supplySummary(rows)}
             <div class="stage-card-body">
               <table class="stage-table">
                 <thead><tr><th>Этап</th><th>Кол-во</th><th>Статус</th></tr></thead>
@@ -1878,7 +1885,7 @@
             <div class="stage-card-body">
               <table class="stage-table">
                 <thead><tr><th>Дисциплина</th><th>План</th><th>Факт</th><th>Δ</th><th>План. даты</th></tr></thead>
-                <tbody>${stageTable(rows, ["смр", "Строительн", "пнр"])}</tbody>Ы
+                <tbody>${stageTable(rows, ["смр", "Строительн", "пнр"])}</tbody>
               </table>
             </div>
           </div>
@@ -1921,20 +1928,48 @@
       const end = ends.length ? fmt2s(new Date(Math.max(...ends))) : "—";
       return `<div class="stage-summary"><span>${start} → ${end}</span><span>Выполнено: <b>${pct}%</b></span></div>`;
     }
+    function supplySummary(rows) {
+      const sup = rows.filter(r => (r.equip || "").trim() && ["поставка", "изготовлен", "логистик"].some(x => (r.stage || "").toLowerCase().includes(x)));
+      const eqAll = {};
+      sup.forEach(r => {
+        const eq = (r.equip || "").trim().replace(/\s+/g, " ").toLowerCase();
+        if (!eqAll[eq]) eqAll[eq] = { all: 0, fin: 0 };
+        eqAll[eq].all++;
+        if (/заверш/i.test(r.status || "") || !!r.factEnd) eqAll[eq].fin++;
+      });
+      const keys = Object.keys(eqAll);
+      const total = keys.length;
+      const done = keys.filter(k => eqAll[k].fin === eqAll[k].all).length;
+      const cost = sup.reduce((s, r) => s + (r.cost || 0), 0);
+      const doneMoney = sup.reduce((s, r) => s + (r.done || 0), 0);
+      const pct = cost ? Math.round(doneMoney / cost * 100) : 0;
+      const starts = sup.filter(r => r.planStart).map(r => +new Date(r.planStart));
+      const ends = sup.filter(r => r.planEnd).map(r => +new Date(r.planEnd));
+      const fmt2s = d => `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getFullYear()).slice(2)}`;
+      const start = starts.length ? fmt2s(new Date(Math.min(...starts))) : "—";
+      const end = ends.length ? fmt2s(new Date(Math.max(...ends))) : "—";
+      return `<div class="stage-summary"><span>${start} → ${end}</span><span>Оборудование: <b>${total}</b> · Готово: <b>${done}</b> · Остаток: <b>${total - done}</b> · Выполнено: <b>${pct}%</b></span></div>`;
+    }
     function supplyTable(rows) {
+      // Единица счёта — уникальное оборудование (r.equip). Для каждого вида работы:
+      // у скольких единиц оборудования он завершён (статус "Завершено" или есть факт. окончание).
+      const sup = rows.filter(r => (r.equip || "").trim() && ["поставка", "изготовлен", "логистик"].some(x => (r.stage || "").toLowerCase().includes(x)));
+      const totalEquip = new Set(sup.map(r => (r.equip || "").trim().replace(/\s+/g, " ").toLowerCase())).size;
       const data = {};
-      rows.filter(r => (r.stage || "").toLowerCase().includes("поставка")).forEach(r => {
-        const key = (r.item || "").trim().replace(/\s+/g, " ").toLowerCase();
-        if (!data[key]) data[key] = { total: 0, done: 0 };
-        data[key].total += r.cost || 0;
-        data[key].done += r.done || 0;
+      sup.forEach(r => {
+        const work = (r.item || "").trim().replace(/\s+/g, " ").toLowerCase();
+        const eq = (r.equip || "").trim().replace(/\s+/g, " ").toLowerCase();
+        if (!data[work]) data[work] = { total: new Set(), done: new Set() };
+        data[work].total.add(eq);
+        const finished = /заверш/i.test(r.status || "") || !!r.factEnd;
+        if (finished) data[work].done.add(eq);
       });
       return SUPPLY_STAGES.map(name => {
         const d = data[name.toLowerCase()];
-        if (!d || !d.total) return `<tr><td>${name}</td><td class="st-num">—</td><td class="st-delta">—</td></tr>`;
-        const left = d.total - d.done;
+        if (!d || !d.total.size) return `<tr><td>${name}</td><td class="st-num">—</td><td class="st-delta">—</td></tr>`;
+        const left = d.total.size - d.done.size;
         const cls = left > 0 ? "st-bad" : "st-good";
-        return `<tr><td>${name}</td><td class="st-num">${d.done} из ${d.total}</td><td class="st-delta ${cls}">${left > 0 ? "ост. " + left : "готово"}</td></tr>`;
+        return `<tr><td>${name}</td><td class="st-num">${d.done.size}</td><td class="st-delta ${cls}">${left > 0 ? "ост. " + left : "готово"}</td></tr>`;
       }).join("");
     }
     function stageTable(rows, stageFilter) {
@@ -2037,9 +2072,8 @@
       const today = new Date().toISOString().slice(0, 10);
       const D = v => v ? String(v).slice(0, 10) : null;
       const stages = [
-        { name: "Базовое проектирование", f: ["базовое"] },
-        { name: "Детальное проектирование", f: ["детальн"] },
-        { name: "Поставка", f: ["поставка"] },
+        { name: "Проектирование", f: ["проектирован"] },
+        { name: "Поставка", f: ["поставка", "изготовлен", "логистик"] },
         { name: "СМР", f: ["смр", "строительн"] },
         { name: "ПНР", f: ["пнр"] }
       ];
