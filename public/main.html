@@ -511,7 +511,7 @@
     .sch-gantt .pg-zoomer { flex: 1; position: relative; overflow: hidden; }
     .sch-gantt .pg-zoomer .pg-zoom { display: flex; width: var(--gw); margin-left: calc(-1 * var(--gx)); }
     .sch-topbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
-    .sch-period { position: relative; }
+    .sch-period { position: relative; display: flex; align-items: center; gap: 8px; }
     @media print { .bg { display: none !important; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } header.topbar, .sch-topbar, .sch-slider { display: none !important; } body { background: #fff !important; } .content { padding: 0 !important; margin: 0 !important; } .tab { display: none !important; } .tab.active { display: block !important; } .prep-gantt { box-shadow: none !important; border: none !important; } .pg-row { break-inside: avoid; } .sch-gantt .pg-scale-year { position: fixed; top: 0; left: 0; right: 0; background: #fff; z-index: 30; } .sch-gantt .pg-scale-month { position: fixed; top: 14px; left: 0; right: 0; background: #fff; z-index: 30; } .sch-gantt .pg-body { margin-top: 34px; } .sch-sec { break-inside: auto; } .sch-proj { break-inside: avoid; } }
     .sch-period-btn { border: 1px solid #cbd5e1; background: #2e3d54; color: #fff; border-radius: 6px; padding: 5px 14px; font-size: 12px; cursor: pointer; font-weight: 600; }
     .sch-period-menu { display: none; position: absolute; right: 0; top: 110%; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px; z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,.12); }
@@ -1642,11 +1642,11 @@
       document.querySelectorAll(".kpi-comment-edit").forEach(t => t.setAttribute("readonly", "readonly"));
     }
 
-    document.querySelectorAll(".btn-export").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        exportProject(btn.dataset.code, btn.dataset.name);
-      });
+    document.addEventListener("click", (e) => {
+      const ex = e.target.closest(".btn-export");
+      if (ex && ex.dataset.code) { e.stopPropagation(); exportProject(ex.dataset.code, ex.dataset.name); return; }
+      const im = e.target.closest(".btn-import");
+      if (im && im.dataset.code) { e.stopPropagation(); document.querySelector(`.file-import[data-code="${im.dataset.code}"]`).click(); }
     });
 
     // ===== ИМПОРТ =====
@@ -1677,17 +1677,9 @@
       const data = await res.json();
       alert(res.ok ? `Импортировано строк: ${data.count}` : "Ошибка: " + data.message);
     }
-    document.querySelectorAll(".btn-import").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        document.querySelector(`.file-import[data-code="${btn.dataset.code}"]`).click();
-      });
-    });
-    document.querySelectorAll(".file-import").forEach(inp => {
-      inp.addEventListener("change", () => {
-        if (inp.files[0]) importFile(inp.dataset.code, inp.files[0]);
-        inp.value = "";
-      });
+    document.addEventListener("change", (e) => {
+      const inp = e.target.closest(".file-import");
+      if (inp && inp.files[0]) { importFile(inp.dataset.code, inp.files[0]); inp.value = ""; }
     });
 
     // ===== ДАШБОРД =====
