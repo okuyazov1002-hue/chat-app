@@ -92,7 +92,7 @@
     .nav-drop.open .nav-drop-list { display: block; }
     .nav-drop-list .nav-btn { display: block; width: 100%; text-align: left; }
     /* Персонал */
-    .chrono-table { width: 100%; table-layout: fixed; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; font-size: 13px; color: #1c2a3d; }
+    .chrono-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; background: #fff; font-size: 13px; color: #1c2a3d; }
     .chrono-table thead th:nth-child(1) { width: 14%; }
     .chrono-table thead th:nth-child(2) { width: 8%; }
     .chrono-table thead th:nth-child(3) { width: 12%; }
@@ -108,15 +108,19 @@
     .ct-ctx button:hover { background: #eef2f8; }
     .chrono-table td { word-wrap: break-word; }
     .chrono-table th, .chrono-table td { border: 1px solid #e3e8f0; padding: 7px 10px; text-align: left; vertical-align: top; }
-    .chrono-table thead tr:first-child th { background: #0a1e3d; color: #fff; font-size: 12.5px; }
+    .chrono-scroll { max-height: calc(100vh - 220px); overflow-y: auto; border-radius: 10px; }
+    .chrono-table thead tr:first-child th { background: #0a1e3d; color: #fff; font-size: 12.5px; position: sticky; top: 0; z-index: 15; }
+    .ct-filters th { position: sticky; top: var(--ct-top2, 31px); z-index: 15; }
     .ct-filters th { background: #eef2f8; padding: 4px 6px; }
     .ct-filters input, .ct-filters select { width: 100%; box-sizing: border-box; border: 1px solid #d5dbe5; border-radius: 6px; padding: 5px 8px; font-size: 12.5px; background: #fff; }
-    .ct-proj { font-weight: 700; color: #0a1e3d; background: #f6f8fb; }
+    .ct-proj { font-weight: 700; color: #0a1e3d; background: #f6f8fb; vertical-align: top; }
+    .ct-proj-stick { position: sticky; top: var(--ct-top4, 64px); }
     .ct-date { font-weight: 700; color: #0a1e3d; }
     .chrono-table th:nth-child(3), .chrono-table td:nth-child(3) { width: 180px; }
     .ct-user { color: #5a6a84; }
     .ct-org {}
-    .chrono-form { display: flex; gap: 8px; margin: 0 0 18px; flex-wrap: wrap; align-items: center; }
+    .chrono-topbtns { display: flex; gap: 8px; justify-content: flex-end; margin: -20px 0 8px; }
+    .chrono-form { display: flex; gap: 8px; margin: 0 0 12px; flex-wrap: wrap; align-items: center; position: sticky; top: 0; z-index: 20; background: #0f2138; padding: 10px 12px; border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
     .chrono-form select, .chrono-form input { background: #fff; border: 1px solid #d5dbe5; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
     .chrono-form input[type="text"] { flex: 1; min-width: 240px; }
     .chrono-sec { font-weight: 800; font-size: 14px; margin: 18px 0 6px; color: #0a1e3d; }
@@ -636,7 +640,11 @@
     <div id="tab-main" class="tab"></div>
     <div id="tab-aux" class="tab"></div>
     <div id="tab-chrono" class="tab">
-      <h2 class="tab-title">Хронология</h2>
+      <div class="chrono-topbtns">
+        <button class="panel-btn" id="chronoExportBtn">📤 экспорт</button>
+        <button class="panel-btn" id="chronoImportBtn">📥 импорт</button>
+        <input type="file" id="chronoImportFile" accept=".xlsx" style="display:none">
+      </div>
       <div class="chrono-form">
         <select id="chronoCode"></select>
         <input type="text" id="chronoProject" placeholder="Название проекта..." style="display:none;min-width:220px;">
@@ -1644,12 +1652,12 @@
           const d = new Date(e.date).toLocaleDateString("ru-RU");
           const hist = [`${esc(e.author || "?")} добавил`].concat((e.history || []).map(h => `${esc(h.user)} ${esc(h.action)} ${new Date(h.at).toLocaleDateString("ru-RU")}`)).join("&#10;");
           rows += `<tr data-id="${e._id}">`;
-          if (i === 0) rows += `<td class="ct-proj" rowspan="${arr.length}">${esc(k)}</td>`;
+          if (i === 0) rows += `<td class="ct-proj" rowspan="${arr.length}"><div class="ct-proj-stick">${esc(k)}</div></td>`;
           const edited = (e.history || []).length ? ` <span class="ct-edited">✎</span>` : "";
           rows += `<td class="ct-date">${d}</td><td class="ct-org">${esc(e.org || "")}</td><td class="ct-text">${esc(e.text)}</td><td class="ct-user" title="${hist}">${esc(e.author || "")}${edited}</td><td class="ct-menu-cell"><button class="ct-dots" data-id="${e._id}">⋮</button></td></tr>`;
         });
       });
-      const table = `<table class="chrono-table">
+      const table = `<div class="chrono-scroll"><table class="chrono-table">
         <thead>
           <tr><th>Проект</th><th>Дата</th><th>Исполнитель</th><th>Работа</th><th>Пользователь</th><th class="ct-menu-cell"></th></tr>
           <tr class="ct-filters">
@@ -1662,7 +1670,7 @@
           </tr>
         </thead>
         <tbody>${rows || '<tr><td colspan="6" class="tab-empty">Ничего не найдено.</td></tr>'}</tbody>
-      </table>`;
+      </table></div>`;
       // Сохраняем значения фильтров при перерисовке
       const saved = { cfProj: fv("cfProj"), cfDate: fv("cfDate"), cfOrg: fv("cfOrg"), cfText: fv("cfText"), cfUser: fv("cfUser") };
       const focusedId = document.activeElement && document.activeElement.id;
@@ -1675,6 +1683,7 @@
         if (caret !== null && caret !== undefined) el.setSelectionRange(caret, caret);
       }
       body.querySelectorAll(".ct-filters input, .ct-filters select").forEach(inp => { inp.addEventListener("input", chronoDraw); inp.addEventListener("change", chronoDraw); });
+      chronoStickTops();
     }
     async function renderChrono() {
       const body = document.getElementById("chrono-body");
@@ -1739,6 +1748,96 @@
       const row = ev.target.closest(".chrono-table tbody tr[data-id]");
       if (row) { ev.preventDefault(); chronoOpenCtx(ev.clientX, ev.clientY, row.dataset.id); }
     });
+    // Экспорт Хронологии в Excel (с учётом фильтров)
+    function chronoFiltered() {
+      const fv = id => (document.getElementById(id) ? document.getElementById(id).value.trim().toLowerCase() : "");
+      const fProj = fv("cfProj"), fDate = fv("cfDate"), fOrg = fv("cfOrg"), fText = fv("cfText"), fUser = fv("cfUser");
+      const fDateFmt = fDate ? new Date(fDate).toLocaleDateString("ru-RU") : "";
+      return chronoEntries.filter(e => {
+        const proj = (e.project || e.code || "").toLowerCase();
+        const d = new Date(e.date).toLocaleDateString("ru-RU");
+        return (!fProj || proj === fProj) &&
+               (!fDateFmt || d === fDateFmt) &&
+               (!fOrg || (e.org || "").toLowerCase().includes(fOrg)) &&
+               (!fText || (e.text || "").toLowerCase().includes(fText)) &&
+               (!fUser || (e.author || "").toLowerCase().includes(fUser));
+      });
+    }
+    document.getElementById("chronoExportBtn").addEventListener("click", async () => {
+      const list = chronoFiltered().slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+      const wb = new ExcelJS.Workbook();
+      const sh = wb.addWorksheet("Лист1");
+      sh.addRow(["Дата", "Наименования проекта", "Организация", "Наименование работ", "Пользователь"]);
+      sh.getRow(1).font = { bold: true };
+      list.forEach(e => {
+        sh.addRow([new Date(e.date), e.project || e.code || "", e.org || "", e.text || "", e.author || ""]);
+      });
+      sh.getColumn(1).width = 12; sh.getColumn(1).numFmt = "dd.mm.yyyy";
+      sh.getColumn(2).width = 30; sh.getColumn(3).width = 20;
+      sh.getColumn(4).width = 90; sh.getColumn(4).alignment = { wrapText: true, vertical: "top" };
+      sh.getColumn(5).width = 22;
+      const buf = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "Хронология_ДСОМК.xlsx";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+    // Импорт Хронологии из Excel
+    document.getElementById("chronoImportBtn").addEventListener("click", () => {
+      document.getElementById("chronoImportFile").click();
+    });
+    document.getElementById("chronoImportFile").addEventListener("change", async ev => {
+      const file = ev.target.files[0];
+      ev.target.value = "";
+      if (!file) return;
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(await file.arrayBuffer());
+      const sh = wb.worksheets[0];
+      // Ищем строку шапки: где есть "Дата" и колонка с "проект"
+      let headRow = 0, cDate = 0, cProj = 0, cOrg = 0, cText = 0;
+      sh.eachRow((row, rn) => {
+        if (headRow) return;
+        const vals = {};
+        row.eachCell((cell, cn) => { vals[cn] = String(cell.value || "").toLowerCase(); });
+        let d = 0, p = 0, o = 0, t = 0;
+        Object.keys(vals).forEach(cn => {
+          if (vals[cn].includes("дата")) d = +cn;
+          if (vals[cn].includes("проект")) p = +cn;
+          if (vals[cn].includes("орган")) o = +cn;
+          if (vals[cn].includes("работ")) t = +cn;
+        });
+        if (d && p && t) { headRow = rn; cDate = d; cProj = p; cOrg = o; cText = t; }
+      });
+      if (!headRow) { alert("Не найдена шапка (нужны колонки: Дата, проект, работы)"); return; }
+      const entries = [];
+      sh.eachRow((row, rn) => {
+        if (rn <= headRow) return;
+        const dv = row.getCell(cDate).value;
+        const date = dv instanceof Date ? dv : (dv && dv.result instanceof Date ? dv.result : null);
+        const cellText = c => { const v = row.getCell(c).value; return v == null ? "" : (typeof v === "object" && v.richText ? v.richText.map(r => r.text).join("") : String(v)); };
+        const project = cellText(cProj).trim();
+        const text = cellText(cText).trim();
+        const org = cOrg ? cellText(cOrg).trim() : "";
+        if (date && project && text) entries.push({ date: date.toISOString(), project, org, text });
+      });
+      if (!entries.length) { alert("В файле не найдено записей"); return; }
+      if (!confirm("Импортировать записей: " + entries.length + "?")) return;
+      const res = await fetch("/api/chrono/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entries }) });
+      if (res.ok) { const d = await res.json(); alert("Импортировано: " + d.count); renderChrono(); }
+      else { const d = await res.json().catch(() => ({})); alert(d.message || "Ошибка импорта"); }
+    });
+    // Точное закрепление шапки таблицы под формой (автозамер высот)
+    function chronoStickTops() {
+      const head = document.querySelector(".chrono-table thead tr:first-child th");
+      if (!head) return;
+      const h1 = head.getBoundingClientRect().height;
+      document.documentElement.style.setProperty("--ct-top2", h1 + "px");
+      const filt = document.querySelector(".ct-filters th");
+      document.documentElement.style.setProperty("--ct-top4", (h1 + (filt ? filt.getBoundingClientRect().height : 31) + 6) + "px");
+    }
+    window.addEventListener("resize", chronoStickTops);
     // Календарь открывается кликом в любое место поля даты
     document.addEventListener("click", ev => {
       const d = ev.target.closest('input[type="date"]');

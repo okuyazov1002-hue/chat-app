@@ -222,6 +222,36 @@ app.get("/api/chrono", async (req, res) => {
     res.status(500).json({ message: "Ошибка сервера: " + err.message });
   }
 });
+// Хронология: массовый импорт записей
+app.post("/api/chrono/import", async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: "Не авторизован" });
+  }
+  try {
+    const { entries } = req.body;
+    if (!Array.isArray(entries) || !entries.length) {
+      return res.status(400).json({ message: "Нет записей для импорта" });
+    }
+    const user = await User.findById(req.session.userId);
+    const author = (user && (user.name || user.username)) || "";
+    const docs = entries
+      .filter(e => e && e.project && e.text && e.date)
+      .map(e => ({
+        code: "",
+        project: String(e.project).trim(),
+        org: e.org ? String(e.org).trim() : "",
+        text: String(e.text).trim(),
+        date: new Date(e.date),
+        author
+      }))
+      .filter(e => e.date instanceof Date && !isNaN(e.date) && e.date.getFullYear() > 2000);
+    if (!docs.length) return res.status(400).json({ message: "Не найдено корректных записей" });
+    await Chrono.insertMany(docs);
+    res.json({ ok: true, count: docs.length });
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
 // Хронология: изменить запись (автор или админ)
 app.put("/api/chrono/:id", async (req, res) => {
   if (!req.session.userId) {
