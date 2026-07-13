@@ -7,6 +7,7 @@ const MongoStore = require("connect-mongo").default || require("connect-mongo");
 const bcrypt = require("bcrypt");
 const User = require("./models/User");
 const Report = require("./models/Report");
+const Chrono = require("./models/Chrono");
 function adminOnly(req, res, next) {
   if (!req.session.userId) return res.status(401).json({ message: "Не авторизован" });
   if (req.session.role !== "admin") return res.status(403).json({ message: "Только для администратора" });
@@ -209,6 +210,89 @@ app.patch("/api/personnel/:id", async (req, res) => {
 // ===== ОТЧЁТЫ =====
 
 // Получить отчёт по коду проекта
+// Хронология: все записи (свежие сверху)
+app.get("/api/chrono", async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: "Не авторизован" });
+  }
+  try {
+    const entries = await Chrono.find().sort({ date: -1, created: -1 });
+    res.json(entries);
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+// Хронология: изменить запись (автор или админ)
+app.put("/api/chrono/:id", async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: "Не авторизован" });
+  }
+  try {
+    const entry = await Chrono.findById(req.params.id);
+    if (!entry) return res.status(404).json({ message: "Запись не найдена" });
+    const user = await User.findById(req.session.userId);
+    const userName = (user && (user.name || user.username)) || "";
+    if (req.session.role !== "admin" && entry.author !== userName) {
+      return res.status(403).json({ message: "Можно менять только свои записи" });
+    }
+    const { project, org, text, date } = req.body;
+    if (project !== undefined) entry.project = String(project).trim();
+    if (!entry.project) entry.project = entry.code || "Без проекта";
+    if (org !== undefined) entry.org = String(org).trim();
+    if (text !== undefined) entry.text = String(text).trim();
+    if (date !== undefined) entry.date = new Date(date);
+    entry.history = entry.history || [];
+    entry.history.push({ user: userName, action: "изменил", at: new Date() });
+    await entry.save();
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+// Хронология: удалить запись (автор или админ)
+app.delete("/api/chrono/:id", async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: "Не авторизован" });
+  }
+  try {
+    const entry = await Chrono.findById(req.params.id);
+    if (!entry) return res.status(404).json({ message: "Запись не найдена" });
+    const user = await User.findById(req.session.userId);
+    const userName = (user && (user.name || user.username)) || "";
+    if (req.session.role !== "admin" && entry.author !== userName) {
+      return res.status(403).json({ message: "Можно удалять только свои записи" });
+    }
+    await entry.deleteOne();
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+// Хронология: добавить запись (любой залогиненный)
+app.post("/api/chrono", async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: "Не авторизован" });
+  }
+  try {
+    const { code, project, org, text, date } = req.body;
+    if (!project || !text || !date) {
+      return res.status(400).json({ message: "Нужны проект, текст и дата" });
+    }
+    const user = await User.findById(req.session.userId);
+    const author = (user && (user.name || user.username)) || "";
+    const entry = await Chrono.create({
+      code: code || "",
+      project: String(project).trim(),
+      org: (org ? String(org).trim() : ""),
+      text: String(text).trim(),
+      date: new Date(date),
+      author
+    });
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
 app.get("/api/reports/:code", async (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ message: "Не авторизован" });

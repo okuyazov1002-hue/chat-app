@@ -92,6 +92,39 @@
     .nav-drop.open .nav-drop-list { display: block; }
     .nav-drop-list .nav-btn { display: block; width: 100%; text-align: left; }
     /* Персонал */
+    .chrono-table { width: 100%; table-layout: fixed; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; font-size: 13px; color: #1c2a3d; }
+    .chrono-table thead th:nth-child(1) { width: 14%; }
+    .chrono-table thead th:nth-child(2) { width: 8%; }
+    .chrono-table thead th:nth-child(3) { width: 12%; }
+    .chrono-table thead th:nth-child(4) { width: 51%; }
+    .chrono-table thead th:nth-child(5) { width: 12%; }
+    .chrono-table thead th:nth-child(6) { width: 3%; }
+    .ct-menu-cell { text-align: center; }
+    .ct-dots { background: #0a1e3d; color: #fff; border: none; border-radius: 6px; width: 26px; height: 26px; font-size: 16px; font-weight: 900; cursor: pointer; line-height: 1; }
+    .ct-dots:hover { background: #2e3d54; }
+    .ct-edited { color: #b8860b; font-size: 11px; }
+    .ct-ctx { position: fixed; z-index: 999; background: #fff; border: 1px solid #d5dbe5; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.18); overflow: hidden; }
+    .ct-ctx button { display: block; width: 100%; text-align: left; background: none; border: none; padding: 9px 16px; font-size: 13px; cursor: pointer; color: #1c2a3d; }
+    .ct-ctx button:hover { background: #eef2f8; }
+    .chrono-table td { word-wrap: break-word; }
+    .chrono-table th, .chrono-table td { border: 1px solid #e3e8f0; padding: 7px 10px; text-align: left; vertical-align: top; }
+    .chrono-table thead tr:first-child th { background: #0a1e3d; color: #fff; font-size: 12.5px; }
+    .ct-filters th { background: #eef2f8; padding: 4px 6px; }
+    .ct-filters input, .ct-filters select { width: 100%; box-sizing: border-box; border: 1px solid #d5dbe5; border-radius: 6px; padding: 5px 8px; font-size: 12.5px; background: #fff; }
+    .ct-proj { font-weight: 700; color: #0a1e3d; background: #f6f8fb; }
+    .ct-date { font-weight: 700; color: #0a1e3d; }
+    .chrono-table th:nth-child(3), .chrono-table td:nth-child(3) { width: 180px; }
+    .ct-user { color: #5a6a84; }
+    .ct-org {}
+    .chrono-form { display: flex; gap: 8px; margin: 0 0 18px; flex-wrap: wrap; align-items: center; }
+    .chrono-form select, .chrono-form input { background: #fff; border: 1px solid #d5dbe5; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+    .chrono-form input[type="text"] { flex: 1; min-width: 240px; }
+    .chrono-sec { font-weight: 800; font-size: 14px; margin: 18px 0 6px; color: #0a1e3d; }
+    .chrono-proj { font-size: 14px; font-weight: 700; margin: 14px 0 4px; color: #fff; background: #2e3d54; border-radius: 8px; padding: 7px 12px; }
+    .chrono-entry { display: flex; gap: 10px; background: #fff; color: #1c2a3d; border: 1px solid #e3e8f0; border-radius: 8px; padding: 8px 12px; margin: 4px 0; font-size: 13px; align-items: baseline; }
+    .chrono-date { color: #0a1e3d; font-weight: 700; white-space: nowrap; }
+    .chrono-text { flex: 1; }
+    .chrono-author { color: #8a97ab; font-size: 12px; white-space: nowrap; }
     .pers-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
     .pers-card {
       background: #f3f4f6; border-radius: 14px; padding: 16px;
@@ -604,7 +637,15 @@
     <div id="tab-aux" class="tab"></div>
     <div id="tab-chrono" class="tab">
       <h2 class="tab-title">Хронология</h2>
-      <p class="tab-empty">Раздел в разработке.</p>
+      <div class="chrono-form">
+        <select id="chronoCode"></select>
+        <input type="text" id="chronoProject" placeholder="Название проекта..." style="display:none;min-width:220px;">
+        <input type="text" id="chronoOrg" placeholder="Организация" style="max-width:150px;">
+        <input type="date" id="chronoDate">
+        <input type="text" id="chronoText" placeholder="Что сделано...">
+        <button class="panel-btn" id="chronoAddBtn">Добавить</button>
+      </div>
+      <div id="chrono-body"><div class="prep-loading">Загрузка...</div></div>
     </div>
     <div id="tab-personnel" class="tab">
       <h2 class="tab-title">Персонал</h2>
@@ -1572,6 +1613,171 @@
       });
     }
     renderPersonnel();
+    // ===== Хронология =====
+    let chronoEntries = [];
+    function chronoDraw() {
+      const body = document.getElementById("chrono-body");
+      const esc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const fv = id => (document.getElementById(id) ? document.getElementById(id).value.trim().toLowerCase() : "");
+      const fProj = fv("cfProj"), fDate = fv("cfDate"), fOrg = fv("cfOrg"), fText = fv("cfText"), fUser = fv("cfUser");
+      const list = chronoEntries.filter(e => {
+        const proj = (e.project || e.code || "").toLowerCase();
+        const d = new Date(e.date).toLocaleDateString("ru-RU");
+        const fDateFmt = fDate ? new Date(fDate).toLocaleDateString("ru-RU") : "";
+        return (!fProj || proj === fProj) &&
+               (!fDateFmt || d === fDateFmt) &&
+               (!fOrg || (e.org || "").toLowerCase().includes(fOrg)) &&
+               (!fText || (e.text || "").toLowerCase().includes(fText)) &&
+               (!fUser || (e.author || "").toLowerCase().includes(fUser));
+      });
+      // Группировка по проекту, проект — одной ячейкой сбоку (rowspan)
+      const byProj = {};
+      list.forEach(e => {
+        const k = e.project || e.code || "Без проекта";
+        (byProj[k] = byProj[k] || []).push(e);
+      });
+      let rows = "";
+      Object.keys(byProj).sort().forEach(k => {
+        const arr = byProj[k];
+        arr.sort((a, b) => new Date(b.date) - new Date(a.date));
+        arr.forEach((e, i) => {
+          const d = new Date(e.date).toLocaleDateString("ru-RU");
+          const hist = [`${esc(e.author || "?")} добавил`].concat((e.history || []).map(h => `${esc(h.user)} ${esc(h.action)} ${new Date(h.at).toLocaleDateString("ru-RU")}`)).join("&#10;");
+          rows += `<tr data-id="${e._id}">`;
+          if (i === 0) rows += `<td class="ct-proj" rowspan="${arr.length}">${esc(k)}</td>`;
+          const edited = (e.history || []).length ? ` <span class="ct-edited">✎</span>` : "";
+          rows += `<td class="ct-date">${d}</td><td class="ct-org">${esc(e.org || "")}</td><td class="ct-text">${esc(e.text)}</td><td class="ct-user" title="${hist}">${esc(e.author || "")}${edited}</td><td class="ct-menu-cell"><button class="ct-dots" data-id="${e._id}">⋮</button></td></tr>`;
+        });
+      });
+      const table = `<table class="chrono-table">
+        <thead>
+          <tr><th>Проект</th><th>Дата</th><th>Исполнитель</th><th>Работа</th><th>Пользователь</th><th class="ct-menu-cell"></th></tr>
+          <tr class="ct-filters">
+            <th><select id="cfProj"><option value="">Все</option>${[...new Set(chronoEntries.map(e => e.project || e.code || "Без проекта"))].sort().map(p => `<option value="${p.toLowerCase()}">${p}</option>`).join("")}</select></th>
+            <th><input type="date" id="cfDate"></th>
+            <th><input id="cfOrg" placeholder="Фильтр..."></th>
+            <th><input id="cfText" placeholder="Фильтр..."></th>
+            <th><input id="cfUser" placeholder="Фильтр..."></th>
+            <th class="ct-menu-cell"></th>
+          </tr>
+        </thead>
+        <tbody>${rows || '<tr><td colspan="6" class="tab-empty">Ничего не найдено.</td></tr>'}</tbody>
+      </table>`;
+      // Сохраняем значения фильтров при перерисовке
+      const saved = { cfProj: fv("cfProj"), cfDate: fv("cfDate"), cfOrg: fv("cfOrg"), cfText: fv("cfText"), cfUser: fv("cfUser") };
+      const focusedId = document.activeElement && document.activeElement.id;
+      const caret = focusedId && document.activeElement.selectionStart;
+      body.innerHTML = table;
+      Object.keys(saved).forEach(id => { const el = document.getElementById(id); if (el) el.value = saved[id]; });
+      if (focusedId && document.getElementById(focusedId)) {
+        const el = document.getElementById(focusedId);
+        el.focus();
+        if (caret !== null && caret !== undefined) el.setSelectionRange(caret, caret);
+      }
+      body.querySelectorAll(".ct-filters input, .ct-filters select").forEach(inp => { inp.addEventListener("input", chronoDraw); inp.addEventListener("change", chronoDraw); });
+    }
+    async function renderChrono() {
+      const body = document.getElementById("chrono-body");
+      try {
+        const res = await fetch("/api/chrono");
+        chronoEntries = await res.json();
+        chronoDraw();
+      } catch (e) {
+        body.innerHTML = '<p class="tab-empty">Ошибка загрузки.</p>';
+      }
+    }
+    function chronoCloseCtx() { const m = document.querySelector(".ct-ctx"); if (m) m.remove(); }
+    function chronoOpenCtx(x, y, id) {
+      chronoCloseCtx();
+      const m = document.createElement("div");
+      m.className = "ct-ctx";
+      m.innerHTML = "<button data-act=" + String.fromCharCode(39) + "edit" + String.fromCharCode(39) + ">✏ Редактировать</button><button data-act=" + String.fromCharCode(39) + "del" + String.fromCharCode(39) + ">🗑 Удалить</button>";
+      m.style.left = Math.min(x, window.innerWidth - 180) + "px";
+      m.style.top = Math.min(y, window.innerHeight - 90) + "px";
+      document.body.appendChild(m);
+      m.addEventListener("click", async ev => {
+        const act = ev.target.dataset.act;
+        chronoCloseCtx();
+        const e = chronoEntries.find(en => en._id === id);
+        if (!e) return;
+        if (act === "del") {
+          if (!confirm("Удалить запись? " + e.text.slice(0, 80))) return;
+          const res = await fetch("/api/chrono/" + id, { method: "DELETE" });
+          if (res.ok) renderChrono();
+          else { const d = await res.json().catch(() => ({})); alert(d.message || "Ошибка"); }
+        }
+        if (act === "edit") {
+          const tr = document.querySelector(`.chrono-table tr[data-id="${id}"]`);
+          if (!tr) return;
+          const dOld = new Date(e.date).toISOString().slice(0, 10);
+          tr.querySelector(".ct-date").innerHTML = `<input type="date" class="ce-date" value="${dOld}" style="width:100%;box-sizing:border-box;">`;
+          tr.querySelector(".ct-org").innerHTML = `<input type="text" class="ce-org" style="width:100%;box-sizing:border-box;">`;
+          tr.querySelector(".ce-org").value = e.org || "";
+          tr.querySelector(".ct-text").innerHTML = `<textarea class="ce-text" rows="3" style="width:100%;box-sizing:border-box;"></textarea>`;
+          tr.querySelector(".ce-text").value = e.text;
+          tr.querySelector(".ct-menu-cell").innerHTML = `<button class="ct-dots ce-save" title="Сохранить">✓</button><br><button class="ct-dots ce-cancel" title="Отмена" style="margin-top:4px;background:#8a97ab;">✕</button>`;
+          tr.querySelector(".ce-cancel").addEventListener("click", ev2 => { ev2.stopPropagation(); chronoDraw(); });
+          tr.querySelector(".ce-save").addEventListener("click", async ev2 => {
+            ev2.stopPropagation();
+            const text = tr.querySelector(".ce-text").value.trim();
+            const org = tr.querySelector(".ce-org").value.trim();
+            const date = tr.querySelector(".ce-date").value;
+            if (!text) { alert("Текст не может быть пустым"); return; }
+            const res = await fetch("/api/chrono/" + id, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, org, date }) });
+            if (res.ok) renderChrono();
+            else { const d = await res.json().catch(() => ({})); alert(d.message || "Ошибка"); }
+          });
+        }
+      });
+    }
+    document.addEventListener("click", ev => {
+      const dots = ev.target.closest(".ct-dots");
+      if (dots) { ev.stopPropagation(); chronoOpenCtx(ev.clientX, ev.clientY, dots.dataset.id); return; }
+      if (!ev.target.closest(".ct-ctx")) chronoCloseCtx();
+    });
+    document.addEventListener("contextmenu", ev => {
+      const row = ev.target.closest(".chrono-table tbody tr[data-id]");
+      if (row) { ev.preventDefault(); chronoOpenCtx(ev.clientX, ev.clientY, row.dataset.id); }
+    });
+    // Календарь открывается кликом в любое место поля даты
+    document.addEventListener("click", ev => {
+      const d = ev.target.closest('input[type="date"]');
+      if (d && d.showPicker) { try { d.showPicker(); } catch (err) {} }
+    });
+    function initChrono() {
+      const sel = document.getElementById("chronoCode");
+      let opts = "";
+      ["prep", "main", "aux"].forEach(key => {
+        const sec = PROJECTS[key];
+        opts += `<optgroup label="${sec.title}">` + sec.items.map(p => `<option value="${p.code}">${p.code} — ${p.name}</option>`).join("") + `</optgroup>`;
+      });
+      sel.innerHTML = opts + '<option value="__other__">— Другое (ввести название) —</option>';
+      const projInput = document.getElementById("chronoProject");
+      sel.addEventListener("change", () => {
+        projInput.style.display = sel.value === "__other__" ? "" : "none";
+      });
+      document.getElementById("chronoDate").value = new Date().toISOString().slice(0, 10);
+      document.getElementById("chronoAddBtn").addEventListener("click", async () => {
+        let code = sel.value, project = "";
+        if (code === "__other__") {
+          code = "";
+          project = projInput.value.trim();
+          if (!project) { alert("Введите название проекта"); return; }
+        } else {
+          const opt = sel.options[sel.selectedIndex];
+          project = opt.text.split("—").slice(1).join("—").trim() || opt.text;
+        }
+        const org = document.getElementById("chronoOrg").value.trim();
+        const date = document.getElementById("chronoDate").value;
+        const text = document.getElementById("chronoText").value.trim();
+        if (!text) { alert("Введите текст записи"); return; }
+        const res = await fetch("/api/chrono", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, project, org, date, text }) });
+        if (res.ok) { document.getElementById("chronoText").value = ""; renderChrono(); }
+        else { const d = await res.json().catch(() => ({})); alert(d.message || "Ошибка"); }
+      });
+    }
+    initChrono();
+    renderChrono();
 
     // Выпадающее меню "Проекты"
     const projDrop = document.querySelector(".nav-drop");
