@@ -578,6 +578,7 @@
           <button class="nav-btn" data-tab="aux">Вспомогательные объекты</button>
         </div>
       </div>
+      <button class="nav-btn" data-tab="chrono">Хронология</button>
       <button class="nav-btn" data-tab="personnel">Персонал</button>
     </nav>
 
@@ -602,6 +603,10 @@
     <div id="tab-prep" class="tab"></div>
     <div id="tab-main" class="tab"></div>
     <div id="tab-aux" class="tab"></div>
+    <div id="tab-chrono" class="tab">
+      <h2 class="tab-title">Хронология</h2>
+      <p class="tab-empty">Раздел в разработке.</p>
+    </div>
     <div id="tab-personnel" class="tab">
       <h2 class="tab-title">Персонал</h2>
       <div class="pers-grid" id="pers-grid"><div class="prep-loading">Загрузка...</div></div>
@@ -1073,9 +1078,9 @@
           <div class="kpi-card">
             <table class="prep-cost-table">
               <tr><th></th><th>Стоимость с НДС</th><th>Освоено</th><th>Остаток</th></tr>
-              <tr class="pcm"><td></td><td>${money(totalCostVat).replace(" €", "")}</td><td>${money(doneCost).replace(" €", "")}</td><td>${money(totalCostVat - doneCost).replace(" €", "")}</td></tr>
-              <tr class="pcc"><td>Внутренний</td><td>${money(inC.cost).replace(" €", "")}</td><td>${money(inC.done).replace(" €", "")}</td><td>${money(inC.cost - inC.done).replace(" €", "")}</td></tr>
-              <tr class="pcc"><td>Внешний</td><td>${money(exC.cost).replace(" €", "")}</td><td>${money(exC.done).replace(" €", "")}</td><td>${money(exC.cost - exC.done).replace(" €", "")}</td></tr>
+              <tr class="pcm"><td></td><td>${money(totalCostVat).replace(" €", "")}</td><td>${money(doneCost).replace(" €", "")}</td><td>${money(totalFact - doneCost).replace(" €", "")}</td></tr>
+              <tr class="pcc"><td>Внутренний</td><td>${money(inC.cost).replace(" €", "")}</td><td>${money(inC.done).replace(" €", "")}</td><td>${money(inC.fact - inC.done).replace(" €", "")}</td></tr>
+              <tr class="pcc"><td>Внешний</td><td>${money(exC.cost).replace(" €", "")}</td><td>${money(exC.done).replace(" €", "")}</td><td>${money(exC.fact - exC.done).replace(" €", "")}</td></tr>
             </table>
           </div>
           <div class="kpi-card prep-red">
@@ -1117,7 +1122,7 @@
           if (pct >= 100 && rows.length) gDone++;
           else if (pct > 0) gWork++;
         });
-        const gPct = gCost ? Math.min(100, Math.round(gDoneCost / gCost * 100)) : 0;
+        const gPct = gFact ? Math.min(100, Math.round(gDoneCost / gFact * 100)) : 0;
         const parName = parents[par] || "Общеплощадочные объекты";
 
         // Вердикт: худший прогноз объектов группы vs старт СМР родителя
