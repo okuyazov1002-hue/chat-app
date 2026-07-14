@@ -147,6 +147,7 @@
     @media (max-width: 1100px) { .pers-grid { grid-template-columns: repeat(2, 1fr); } }
     #tab-main .tab-title, #tab-aux .tab-title { display: none; }
     #tab-aux.active { margin-top: 10px; }
+    .prep-sec-title { color: #fff; font-size: 17px; margin: 22px 0 10px; }
     .nav-btn.active {
       color: #fff;
       background: rgba(255, 255, 255, 0.14);
@@ -1154,12 +1155,17 @@
       [...PROJECTS.main.items, ...PROJECTS.aux.items].forEach(p => { parents[p.code] = p.name; });
       const groups = {};
       prepItems.forEach(p => {
-        const par = p.code.split("-")[0];
+        let wI = 0, wE = 0;
+        reports[p.code].forEach(r => {
+          if (/внутр/i.test(r.contractor || "")) wI += r.costVat || 0;
+          else if (/внеш/i.test(r.contractor || "")) wE += r.costVat || 0;
+        });
+        const par = wE > wI ? "ex" : "in";
         (groups[par] = groups[par] || []).push(p);
       });
 
       let ghtml = "";
-      Object.keys(groups).forEach(par => {
+      ["in", "ex"].filter(k => groups[k]).forEach(par => {
         const items = groups[par];
         let gDone = 0, gWork = 0, gCost = 0, gDoneCost = 0, gFact = 0;
         items.forEach(p => {
@@ -1172,7 +1178,8 @@
           else if (pct > 0) gWork++;
         });
         const gPct = gFact ? Math.min(100, Math.round(gDoneCost / gFact * 100)) : 0;
-        const parName = parents[par] || "Общеплощадочные объекты";
+
+        const parName = par === "in" ? "Внутренний ТОМК" : "Внешний подрядчик";
 
         // Вердикт: худший прогноз объектов группы vs старт СМР родителя
         let verdict = "";
@@ -1190,9 +1197,9 @@
           else if (worstDays > -14) verdict = `<span class="prep-verdict bad">ЕСТЬ РИСКИ — запас ${-worstDays} дн</span>`;
           else verdict = `<span class="prep-verdict good">УСПЕВАЕМ</span>`;
         }
-        ghtml += `<div class="prep-group" data-par="${par}">
+        const gcard = `<div class="prep-group" data-par="${par}">
           <div class="prep-group-head">
-            <div class="prep-group-title">▶ ${par} — ${parName} <small>· ${items.length} объектов</small> ${verdict}</div>
+            <div class="prep-group-title">▶ ${parName} <small>· ${items.length} объектов</small> ${verdict}</div>
             <div class="prep-group-stats">
               <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
                 <span>Факт стоимость <b>${money(gFact).replace(" €", "")}</b></span>
@@ -1212,6 +1219,7 @@
             ${prepObjRows(items)}
           </div>
         </div>`;
+        ghtml += gcard;
       });
       document.getElementById("prep-groups").innerHTML = ghtml;
 
