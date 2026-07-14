@@ -148,6 +148,23 @@
     #tab-main .tab-title, #tab-aux .tab-title { display: none; }
     #tab-aux.active { margin-top: 10px; }
     .prep-sec-title { color: #fff; font-size: 17px; margin: 22px 0 10px; }
+    .prep-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .pk-card { background: #fff; border: 1px solid #e3e8f0; border-radius: 10px; padding: 12px 14px; color: #1c2a3d; }
+    .pk-label { font-size: 12px; color: #5c6b82; margin-bottom: 6px; }
+    .pk-big { font-size: 22px; font-weight: 700; }
+    .pk-big small, .pk-mid small { font-size: 12px; color: #5c6b82; font-weight: 400; }
+    .pk-mid { font-size: 19px; font-weight: 700; }
+    .pk-row { display: flex; justify-content: space-between; font-size: 12.5px; margin-top: 3px; }
+    .pk-bar { height: 7px; background: #e3e8f0; border-radius: 4px; overflow: hidden; margin-top: 2px; }
+    .pk-bar div { height: 100%; }
+    .pk-two { display: flex; gap: 18px; }
+    .pk-two small { font-size: 11px; color: #5c6b82; }
+    .pk-bad { color: #c0392b; }
+    .pk-good { color: #1d9e75; }
+    .pk-note { font-size: 11.5px; color: #5c6b82; margin-top: 4px; }
+    .pg-money { width: 60px; text-align: right; font-size: 10.5px; font-variant-numeric: tabular-nums; }
+    .pg-click { cursor: pointer; }
+    .pg-click:hover .pg-name { color: #7da7d9; }
     .nav-btn.active {
       color: #fff;
       background: rgba(255, 255, 255, 0.14);
@@ -998,15 +1015,19 @@
         let rowsHtml = "";
         items.forEach(p => {
           const rows = reports[p.code];
+          const cCost = rows.reduce((q, r) => q + (r.costFact || r.cost || 0), 0);
+          const cDone = rows.reduce((q, r) => q + (r.done || 0), 0);
+          const mB = v => (Math.round(v / 1e9 * 100) / 100).toLocaleString("ru");
           const starts = rows.map(r => r.planStart).filter(Boolean).sort();
           const ends = rows.map(r => r.forecastEnd || r.planEnd).filter(Boolean).sort();
           if (!starts.length) {
-            rowsHtml += `<div class="pg-row">
+            rowsHtml += `<div class="pg-row pg-click" data-obj="${p.code}">
             <span class="pg-name">${p.name}</span>
             <span class="pg-cell">—</span><span class="pg-cell">—</span>
             <span class="pg-cell">—</span><span class="pg-cell">—</span>
             <span class="pg-pct">—</span><span class="pg-pct">—</span>
             <span class="pg-pct">—</span>
+            <span class="pg-money">—</span><span class="pg-money">—</span>
             <div class="pg-track"></div></div>`;
             return;
           }
@@ -1035,18 +1056,19 @@
           });
           const planPct = costAll ? Math.min(100, Math.round(planNow / costAll * 100)) : 0;
           const diff = pct - planPct;
-          rowsHtml += `<div class="pg-row">
+          rowsHtml += `<div class="pg-row pg-click" data-obj="${p.code}">
             <span class="pg-name${late ? " late" : ""}">${p.name}</span>
             <span class="pg-cell">${fmtD(s)}</span><span class="pg-cell">${fmtD(ends.length ? e : null)}</span>
             <span class="pg-cell">${fmtD(fStarts[0])}</span><span class="pg-cell">${fmtD(fEnds[fEnds.length - 1])}</span>
             <span class="pg-pct">${planPct}%</span><span class="pg-pct">${pct}%</span>
             <span class="pg-pct${diff < 0 ? " neg" : ""}">${diff > 0 ? "+" : ""}${diff}%</span>
+            <span class="pg-money">${mB(cCost)}</span><span class="pg-money">${mB(cDone)}</span>
             <div class="pg-track">${bar}</div></div>`;
         });
         if (!rowsHtml) return `<div class="prep-loading">Нет данных для графика</div>`;
 
         return `<div class="prep-gantt">
-          <div class="pg-head"><span style="width:380px"></span><span style="width:124px;text-align:center">план нач. / оконч.</span><span style="width:124px;text-align:center">факт нач. / оконч.</span><span style="width:144px;text-align:center">прогресс: план / факт / δ</span></div>
+          <div class="pg-head"><span style="width:380px"></span><span style="width:124px;text-align:center">план нач. / оконч.</span><span style="width:124px;text-align:center">факт нач. / оконч.</span><span style="width:144px;text-align:center">прогресс: план / факт / δ</span><span style="width:120px;text-align:center">стоим. / освоено, млрд</span></div>
           <div class="pg-scale-year">${yearRow}</div>
           <div class="pg-scale-month">${monthRow}</div>
           <div class="pg-body">
@@ -1211,12 +1233,13 @@
             </div>
           </div>
           <div class="prep-group-body">
-            ${prepGantt(items)}
+            <div class="prep-kpi" id="pkpi-${par}"></div>
+
             <div class="prep-charts">
               <div class="chart-card"><div class="chart-title">Освоение за период — план / факт по месяцам</div><div class="chart-wrap" style="height:200px;"><canvas id="cash-${par}"></canvas></div></div>
               <div class="chart-card"><div class="chart-title">Мобилизация — рабочая сила, чел (план / факт)</div><div class="chart-wrap" style="height:200px;" id="wfwrap-${par}"><canvas id="wf-${par}"></canvas></div></div>
             </div>
-            ${prepObjRows(items)}
+
           </div>
         </div>`;
         ghtml += gcard;
@@ -1468,6 +1491,57 @@
           const cumPlan = {}, cumFact = {};
           let _cp = 0, _cf = 0;
           cashKeys.forEach(k => { _cp += cashByMonth[k].plan; _cf += cashByMonth[k].fact; cumPlan[k] = _cp; cumFact[k] = _cf; });
+          (function renderPrepKpi() {
+            const box = document.getElementById("pkpi-" + par);
+            if (!box) return;
+            const B = v => (Math.round(v / 1e9 * 100) / 100).toLocaleString("ru");
+            const now = new Date();
+            const totalPlan = _cp;
+            let planNow = 0;
+            cashKeys.forEach(k => {
+              const [y, m] = k.split("-").map(Number);
+              const mEnd = new Date(y, m, 0);
+              if (mEnd <= now) planNow = cumPlan[k];
+              else if (new Date(y, m - 1, 1) <= now) {
+                const frac = now.getDate() / mEnd.getDate();
+                planNow = (cumPlan[k] - cashByMonth[k].plan) + cashByMonth[k].plan * frac;
+              }
+            });
+            const factNow = cumFact[nowKey] !== undefined ? cumFact[nowKey] : _cf;
+            const gap = planNow - factNow;
+            const pPct = totalPlan ? Math.min(100, Math.round(planNow / totalPlan * 100)) : 0;
+            const fPct = totalPlan ? Math.min(100, Math.round(factNow / totalPlan * 100)) : 0;
+            const prevKey = cashKeys.filter(k => k < nowKey).pop();
+            const mFact = prevKey ? cashByMonth[prevKey].fact : 0;
+            const mPlan = cashByMonth[nowKey] ? cashByMonth[nowKey].plan : 0;
+            box.innerHTML = `
+              <div class="pk-card">
+                <div class="pk-label">Стоимость работ</div>
+                <div class="pk-big">${B(totalPlan)} <small>млрд</small></div>
+                <div class="pk-row"><span>План на сегодня</span><b>${B(planNow)}</b></div>
+                <div class="pk-row"><span>Выполнено</span><b>${B(factNow)}</b></div>
+                <div class="pk-row"><span>Разрыв</span><b class="${gap > 0 ? "pk-bad" : "pk-good"}">${gap > 0 ? "−" : "+"}${B(Math.abs(gap))}</b></div>
+              </div>
+              <div class="pk-card">
+                <div class="pk-label">Прогресс</div>
+                <div class="pk-row"><span>План</span><b>${pPct}%</b></div>
+                <div class="pk-bar"><div style="width:${pPct}%;background:#2a78d6"></div></div>
+                <div class="pk-row"><span>Факт</span><b>${fPct}%</b></div>
+                <div class="pk-bar"><div style="width:${fPct}%;background:#1baf7a"></div></div>
+              </div>
+              <div class="pk-card">
+                <div class="pk-label">Месячные показатели, млрд</div>
+                <div class="pk-two">
+                  <div><small>Факт пред. месяца</small><div class="pk-mid">${B(mFact)}</div></div>
+                  <div><small>План текущего</small><div class="pk-mid">${B(mPlan)}</div></div>
+                </div>
+              </div>
+              <div class="pk-card">
+                <div class="pk-label">Отставание от плана</div>
+                <div class="pk-big ${gap > 0 ? "pk-bad" : "pk-good"}">${B(Math.abs(gap))} <small>млрд</small></div>
+                <div class="pk-note">${gap > 0 ? "факт отстаёт от плана" : "идём с опережением"}</div>
+              </div>`;
+          })();
           const mkData = from => {
             const keys = cashKeys.slice(from, from + WIN);
             return {
@@ -1543,7 +1617,7 @@
         }
       }
       Object.keys(groups).forEach(par => drawGroupCharts(par, groups[par]));
-      document.querySelectorAll(".prep-obj").forEach(el => {
+      document.querySelectorAll(".pg-row[data-obj]").forEach(el => {
         el.addEventListener("click", () => {
           const code = el.dataset.obj;
           const exist = document.getElementById("det-" + code);
