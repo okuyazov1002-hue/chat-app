@@ -145,6 +145,7 @@
     .pers-line { font-size: 11.5px; color: #374151; margin-top: 2px; }
     .pers-line span { color: #6b7280; }
     @media (max-width: 1100px) { .pers-grid { grid-template-columns: repeat(2, 1fr); } }
+    #tab-main .tab-title, #tab-aux .tab-title { display: none; }
     .nav-btn.active {
       color: #fff;
       background: rgba(255, 255, 255, 0.14);
@@ -605,17 +606,12 @@
     </div>
 
     <nav class="nav">
-      <div class="nav-drop">
-        <button class="nav-drop-btn" id="projectsMenuBtn">Проекты ▾</button>
-        <div class="nav-drop-list" id="projectsMenuList">
-          <button class="nav-btn active" data-tab="schedule">Общий график</button>
-          <button class="nav-btn" data-tab="prep">Подготовительные работы</button>
-          <button class="nav-btn" data-tab="main">Основные проекты</button>
-          <button class="nav-btn" data-tab="aux">Вспомогательные объекты</button>
-        </div>
-      </div>
+      <button class="nav-btn active" data-tab="schedule">График</button>
+      <button class="nav-btn" data-tab="prep">Подготовительные работы</button>
+      <button class="nav-btn" data-tab="main">Проекты</button>
       <button class="nav-btn" data-tab="chrono">Хронология</button>
       <button class="nav-btn" data-tab="personnel">Персонал</button>
+      <button class="nav-btn" data-tab="risk">Риск</button>
     </nav>
 
     <div class="user-menu">
@@ -654,6 +650,10 @@
         <button class="panel-btn" id="chronoAddBtn">Добавить</button>
       </div>
       <div id="chrono-body"><div class="prep-loading">Загрузка...</div></div>
+    </div>
+    <div id="tab-risk" class="tab">
+      <h2 class="tab-title">Риск</h2>
+      <p class="tab-empty">Раздел в разработке.</p>
     </div>
     <div id="tab-personnel" class="tab">
       <h2 class="tab-title">Персонал</h2>
@@ -1878,13 +1878,7 @@
     initChrono();
     renderChrono();
 
-    // Выпадающее меню "Проекты"
-    const projDrop = document.querySelector(".nav-drop");
-    document.getElementById("projectsMenuBtn").addEventListener("click", (e) => {
-      e.stopPropagation();
-      projDrop.classList.toggle("open");
-    });
-    document.addEventListener("click", () => projDrop.classList.remove("open"));
+
 
     // Переключение вкладок
     document.querySelectorAll(".nav-btn").forEach(btn => {
@@ -1893,6 +1887,7 @@
         document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
         btn.classList.add("active");
         document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+        if (btn.dataset.tab === "main") document.getElementById("tab-aux").classList.add("active");
       });
     });
 
