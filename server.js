@@ -39,7 +39,6 @@ app.use(
 );
 
 // Раздача файлов из папки public
-app.get("/", (req, res) => res.redirect("/login.html"));
 app.use(express.static("public"));
 
 // Регистрация (создание пользователя)
