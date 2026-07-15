@@ -1239,7 +1239,6 @@
               <div class="chart-card"><div class="chart-title">Освоение за период — план / факт по месяцам</div><div class="chart-wrap" style="height:200px;"><canvas id="cash-${par}"></canvas></div></div>
               <div class="chart-card"><div class="chart-title">Мобилизация — рабочая сила, чел (план / факт)</div><div class="chart-wrap" style="height:200px;" id="wfwrap-${par}"><canvas id="wf-${par}"></canvas></div></div>
             </div>
-            ${prepGantt(items)}
           </div>
         </div>`;
         ghtml += gcard;
@@ -1514,13 +1513,14 @@
             const prevKey = cashKeys.filter(k => k < nowKey).pop();
             const mFact = prevKey ? cashByMonth[prevKey].fact : 0;
             const mPlan = cashByMonth[nowKey] ? cashByMonth[nowKey].plan : 0;
+            const F = v => Math.round(v).toLocaleString("ru-RU");
             box.innerHTML = `
               <div class="pk-card">
                 <div class="pk-label">Стоимость работ</div>
-                <div class="pk-big">${B(totalPlan)} <small>млрд</small></div>
-                <div class="pk-row"><span>План на сегодня</span><b>${B(planNow)}</b></div>
-                <div class="pk-row"><span>Выполнено</span><b>${B(factNow)}</b></div>
-                <div class="pk-row"><span>Разрыв</span><b class="${gap > 0 ? "pk-bad" : "pk-good"}">${gap > 0 ? "−" : "+"}${B(Math.abs(gap))}</b></div>
+                <div class="pk-big" style="font-size:19px">${F(totalPlan)}</div>
+                <div class="pk-row"><span>План на сегодня</span><b>${F(planNow)}</b></div>
+                <div class="pk-row"><span>Выполнено</span><b>${F(factNow)}</b></div>
+                <div class="pk-row"><span>Разрыв</span><b class="${gap > 0 ? "pk-bad" : "pk-good"}">${gap > 0 ? "−" : "+"}${F(Math.abs(gap))}</b></div>
               </div>
               <div class="pk-card">
                 <div class="pk-label">Прогресс</div>
@@ -1530,15 +1530,15 @@
                 <div class="pk-bar"><div style="width:${fPct}%;background:#1baf7a"></div></div>
               </div>
               <div class="pk-card">
-                <div class="pk-label">Месячные показатели, млрд</div>
+                <div class="pk-label">Месячные показатели</div>
                 <div class="pk-two">
-                  <div><small>Факт пред. месяца</small><div class="pk-mid">${B(mFact)}</div></div>
-                  <div><small>План текущего</small><div class="pk-mid">${B(mPlan)}</div></div>
+                  <div><small>Факт пред. месяца</small><div class="pk-mid" style="font-size:15px">${F(mFact)}</div></div>
+                  <div><small>План текущего</small><div class="pk-mid" style="font-size:15px">${F(mPlan)}</div></div>
                 </div>
               </div>
               <div class="pk-card">
                 <div class="pk-label">Отставание от плана</div>
-                <div class="pk-big ${gap > 0 ? "pk-bad" : "pk-good"}">${B(Math.abs(gap))} <small>млрд</small></div>
+                <div class="pk-big ${gap > 0 ? "pk-bad" : "pk-good"}" style="font-size:19px">${F(Math.abs(gap))}</div>
                 <div class="pk-note">${gap > 0 ? "факт отстаёт от плана" : "идём с опережением"}</div>
               </div>`;
           })();
