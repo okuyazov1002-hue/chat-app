@@ -155,6 +155,8 @@
     #persSearch { width: 260px; padding: 8px 12px; border: 1px solid #7da7d9; border-radius: 8px; font-size: 13px; }
     .pers-edit { display: none; position: absolute; top: 8px; right: 8px; border: 1px solid #7da7d9; background: #fff; color: #0a1e3d; border-radius: 6px; padding: 2px 8px; font-size: 12px; cursor: pointer; }
     body.is-admin .pers-edit { display: block; }
+    .pers-add { display: none; border: 1px solid #7da7d9; background: #0a1e3d; color: #fff; border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+    body.is-admin .pers-add { display: block; }
     .pers-card { position: relative; }
     @media (max-width: 1100px) { .pers-grid { grid-template-columns: repeat(2, 1fr); } }
     #tab-main .tab-title, #tab-aux .tab-title { display: none; }
@@ -689,7 +691,10 @@
     <div id="tab-personnel" class="tab">
       <div class="pers-head">
         <div class="bday-wrap" id="bdayCard" style="display:none"></div>
-        <input type="text" id="persSearch" placeholder="Поиск по ФИО...">
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="pers-add" id="persAdd">+ Добавить сотрудника</button>
+          <input type="text" id="persSearch" placeholder="Поиск по ФИО...">
+        </div>
       </div>
       <div class="pers-grid" id="pers-grid"><div class="prep-loading">Загрузка...</div></div>
     </div>
@@ -698,7 +703,15 @@
   <!-- Окно редактирования карточки (админ) -->
   <div class="modal-overlay" id="persEditModal">
     <div class="modal">
-      <h2>Редактирование карточки</h2>
+      <h2 id="peTitle">Редактирование карточки</h2>
+      <div id="peCreateFields" style="display:none">
+        <input type="text" id="peLogin" placeholder="Логин">
+        <input type="password" id="pePass" placeholder="Пароль (мин. 4 символа)">
+        <select id="peRole">
+          <option value="user">Пользователь</option>
+          <option value="admin">Администратор</option>
+        </select>
+      </div>
       <input type="text" id="peName" placeholder="ФИО">
       <input type="text" id="peDept" placeholder="Отдел">
       <input type="text" id="pePos" placeholder="Должность">
@@ -1779,6 +1792,17 @@
         c.style.display = !q || name.includes(q) ? "" : "none";
       });
     });
+    // Добавление сотрудника (админ)
+    let peMode = "edit";
+    document.getElementById("persAdd").addEventListener("click", () => {
+      peMode = "create"; peId = null;
+      peTitle.textContent = "Новый сотрудник";
+      peCreateFields.style.display = "";
+      peLogin.value = ""; pePass.value = ""; peRole.value = "user";
+      peName.value = ""; peDept.value = ""; pePos.value = ""; peBirth.value = "";
+      peInt.value = ""; peMob.value = ""; peEmail.value = ""; peMsg.textContent = "";
+      persEditModal.classList.add("open");
+    });
     // Редактирование карточки (админ)
     let peId = null;
     document.getElementById("pers-grid").addEventListener("click", async (e) => {
@@ -1789,6 +1813,9 @@
       const u = (await res.json()).find(x => x._id === btn.dataset.id);
       if (!u) return;
       peId = u._id;
+      peMode = "edit";
+      peTitle.textContent = "Редактирование карточки";
+      peCreateFields.style.display = "none";
       peName.value = u.name || ""; peDept.value = u.department || "";
       pePos.value = u.position || ""; peBirth.value = u.birthday || "";
       peInt.value = u.internalPhone || ""; peMob.value = u.mobilePhone || "";
@@ -1799,9 +1826,13 @@
     peSave.addEventListener("click", async () => {
       const body = { name: peName.value, department: peDept.value, position: pePos.value,
         birthday: peBirth.value, internalPhone: peInt.value, mobilePhone: peMob.value, email: peEmail.value };
-      const res = await fetch("/api/personnel/" + peId, { method: "PATCH",
+      if (peMode === "create") {
+        body.username = peLogin.value.trim(); body.password = pePass.value; body.role = peRole.value;
+      }
+      const url = peMode === "create" ? "/api/personnel" : "/api/personnel/" + peId;
+      const res = await fetch(url, { method: peMode === "create" ? "POST" : "PATCH",
         headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      if (!res.ok) { peMsg.textContent = "Ошибка сохранения"; return; }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); peMsg.textContent = d.message || "Ошибка сохранения"; return; }
       persEditModal.classList.remove("open");
       const grid = document.getElementById("pers-grid");
       delete grid.dataset.rendered;
