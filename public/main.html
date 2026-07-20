@@ -144,6 +144,18 @@
     .pers-name { font-size: 14px; font-weight: 700; color: #0a1628; margin-bottom: 4px; }
     .pers-line { font-size: 11.5px; color: #374151; margin-top: 2px; }
     .pers-line span { color: #6b7280; }
+    .pers-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .bday-wrap { display: flex; gap: 10px; flex-wrap: wrap; }
+    .bday-card { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #7da7d9; border-radius: 10px; padding: 6px 12px; }
+    .bday-photo { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: #0a1e3d; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex: none; }
+    .bday-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .bday-name { font-size: 13px; font-weight: 700; color: #0a1628; }
+    .bday-info { font-size: 11.5px; color: #374151; }
+    .bday-info b { color: #b91c1c; }
+    #persSearch { width: 260px; padding: 8px 12px; border: 1px solid #7da7d9; border-radius: 8px; font-size: 13px; }
+    .pers-edit { display: none; position: absolute; top: 8px; right: 8px; border: 1px solid #7da7d9; background: #fff; color: #0a1e3d; border-radius: 6px; padding: 2px 8px; font-size: 12px; cursor: pointer; }
+    body.is-admin .pers-edit { display: block; }
+    .pers-card { position: relative; }
     @media (max-width: 1100px) { .pers-grid { grid-template-columns: repeat(2, 1fr); } }
     #tab-main .tab-title, #tab-aux .tab-title { display: none; }
     #tab-aux.active { margin-top: 10px; }
@@ -675,10 +687,32 @@
       <p class="tab-empty">Раздел в разработке.</p>
     </div>
     <div id="tab-personnel" class="tab">
-      <h2 class="tab-title">Персонал</h2>
+      <div class="pers-head">
+        <div class="bday-wrap" id="bdayCard" style="display:none"></div>
+        <input type="text" id="persSearch" placeholder="Поиск по ФИО...">
+      </div>
       <div class="pers-grid" id="pers-grid"><div class="prep-loading">Загрузка...</div></div>
     </div>
   </main>
+
+  <!-- Окно редактирования карточки (админ) -->
+  <div class="modal-overlay" id="persEditModal">
+    <div class="modal">
+      <h2>Редактирование карточки</h2>
+      <input type="text" id="peName" placeholder="ФИО">
+      <input type="text" id="peDept" placeholder="Отдел">
+      <input type="text" id="pePos" placeholder="Должность">
+      <input type="text" id="peBirth" placeholder="Дата рождения (ДД.ММ.ГГГГ)">
+      <input type="text" id="peInt" placeholder="Внутренний номер">
+      <input type="text" id="peMob" placeholder="Мобильный номер">
+      <input type="text" id="peEmail" placeholder="Почта">
+      <div class="msg" id="peMsg"></div>
+      <div class="row">
+        <button class="btn-cancel" id="peClose">Закрыть</button>
+        <button class="btn-save" id="peSave">Сохранить</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Окно смены пароля -->
   <div class="modal-overlay" id="passModal">
@@ -1660,17 +1694,45 @@
       const res = await fetch("/api/personnel");
       if (!res.ok) { grid.innerHTML = "Ошибка загрузки"; return; }
       const users = await res.json();
+      // Ближайший день рождения
+      (function () {
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const list = [];
+        users.forEach(u => {
+          const m = (u.birthday || "").match(/^(\d{1,2})\.(\d{1,2})/);
+          if (!m) return;
+          let d = new Date(today.getFullYear(), +m[2] - 1, +m[1]);
+          if (d < today) d = new Date(today.getFullYear() + 1, +m[2] - 1, +m[1]);
+          const days = Math.round((d - today) / 86400000);
+          list.push({ u, days });
+        });
+        const wrap = document.getElementById("bdayCard");
+        list.sort((a, b) => a.days - b.days);
+        const top = list.slice(0, 4);
+        if (!top.length) { wrap.style.display = "none"; return; }
+        wrap.innerHTML = top.map(({ u, days }) => {
+          const ini = (u.name || u.username || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+          const ph = u.avatar ? `<img src="${u.avatar}" alt="">` : ini;
+          const when = days === 0 ? "<b>Сегодня! 🎉</b>" : days === 1 ? "<b>завтра</b>" : `через <b>${days} дн.</b>`;
+          return `<div class="bday-card"><div class="bday-photo">${ph}</div>
+            <div><div class="bday-name">🎂 ${u.name || u.username}</div>
+            <div class="bday-info">${u.birthday} · ${when}</div></div></div>`;
+        }).join("");
+        wrap.style.display = "flex";
+      })();
       grid.innerHTML = users.map(u => {
         const initials = (u.name || u.username || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
         const photo = u.avatar
           ? `<img src="${u.avatar}" alt="">`
           : initials;
         return `<div class="pers-card" data-id="${u._id}">
+          <button class="pers-edit" data-id="${u._id}">\u270e Редактировать</button>
           <div class="pers-photo" data-id="${u._id}" title="Нажмите, чтобы загрузить фото">${photo}</div>
           <div>
             <div class="pers-name">${u.name || u.username}</div>
             <div class="pers-line"><span>Отдел:</span> ${u.department || "—"}</div>
             <div class="pers-line"><span>Должность:</span> ${u.position || "—"}</div>
+            <div class="pers-line"><span>Дата рождения:</span> ${u.birthday || "—"}</div>
             <div class="pers-line"><span>Внутренний номер:</span> ${u.internalPhone || "—"}</div>
             <div class="pers-line"><span>Мобильный номер:</span> ${u.mobilePhone || "—"}</div>
             <div class="pers-line"><span>Почта:</span> ${u.email || "—"}</div>
@@ -1709,6 +1771,42 @@
       });
     }
     renderPersonnel();
+    // Поиск по ФИО
+    document.getElementById("persSearch").addEventListener("input", (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      document.querySelectorAll("#pers-grid .pers-card").forEach(c => {
+        const name = (c.querySelector(".pers-name")?.textContent || "").toLowerCase();
+        c.style.display = !q || name.includes(q) ? "" : "none";
+      });
+    });
+    // Редактирование карточки (админ)
+    let peId = null;
+    document.getElementById("pers-grid").addEventListener("click", async (e) => {
+      const btn = e.target.closest(".pers-edit");
+      if (!btn) return;
+      const res = await fetch("/api/personnel");
+      if (!res.ok) return;
+      const u = (await res.json()).find(x => x._id === btn.dataset.id);
+      if (!u) return;
+      peId = u._id;
+      peName.value = u.name || ""; peDept.value = u.department || "";
+      pePos.value = u.position || ""; peBirth.value = u.birthday || "";
+      peInt.value = u.internalPhone || ""; peMob.value = u.mobilePhone || "";
+      peEmail.value = u.email || ""; peMsg.textContent = "";
+      persEditModal.classList.add("open");
+    });
+    peClose.addEventListener("click", () => persEditModal.classList.remove("open"));
+    peSave.addEventListener("click", async () => {
+      const body = { name: peName.value, department: peDept.value, position: pePos.value,
+        birthday: peBirth.value, internalPhone: peInt.value, mobilePhone: peMob.value, email: peEmail.value };
+      const res = await fetch("/api/personnel/" + peId, { method: "PATCH",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (!res.ok) { peMsg.textContent = "Ошибка сохранения"; return; }
+      persEditModal.classList.remove("open");
+      const grid = document.getElementById("pers-grid");
+      delete grid.dataset.rendered;
+      renderPersonnel();
+    });
     // ===== Хронология =====
     let chronoEntries = [];
     function chronoDraw() {
@@ -2036,6 +2134,7 @@
     }
 
     function applyRole() {
+      document.body.classList.toggle("is-admin", window.userRole === "admin");
       if (window.userRole === "admin") {
         document.getElementById("usersBtn").style.display = "";
         return;

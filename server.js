@@ -179,6 +179,25 @@ app.delete("/api/users/:id", adminOnly, async (req, res) => {
 });
 
 // ===== ПЕРСОНАЛ =====
+// Создать сотрудника (только админ)
+app.post("/api/personnel", adminOnly, async (req, res) => {
+  try {
+    const { username, password, role, name, department, position,
+      birthday, internalPhone, mobilePhone, email } = req.body;
+    if (!username || !password || password.length < 4)
+      return res.status(400).json({ message: "Логин и пароль (мин. 4 символа) обязательны" });
+    const exists = await User.findOne({ username });
+    if (exists) return res.status(400).json({ message: "Такой логин уже есть" });
+    const hash = await bcrypt.hash(password, 10);
+    const user = await User.create({ username, password: hash,
+      role: role === "admin" ? "admin" : "user", name: name || "",
+      department: department || "", position: position || "", birthday: birthday || "",
+      internalPhone: internalPhone || "", mobilePhone: mobilePhone || "", email: email || "" });
+    res.json({ _id: user._id });
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
 // Список сотрудников (все залогиненные, без паролей)
 app.get("/api/personnel", async (req, res) => {
   if (!req.session.userId) return res.status(401).json({ message: "Не авторизован" });
@@ -196,7 +215,7 @@ app.patch("/api/personnel/:id", async (req, res) => {
   if (req.session.role !== "admin" && !isSelf)
     return res.status(403).json({ message: "Можно редактировать только свою карточку" });
   try {
-    const allowed = ["department", "position", "internalPhone", "mobilePhone", "email", "avatar"];
+    const allowed = ["department", "position", "internalPhone", "mobilePhone", "email", "avatar", "birthday"];
     const update = {};
     allowed.forEach(f => { if (req.body[f] !== undefined) update[f] = req.body[f]; });
     if (req.session.role === "admin" && req.body.name !== undefined) update.name = req.body.name;

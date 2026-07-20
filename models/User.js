@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
   mobilePhone: { type: String, default: "" },
   email: { type: String, default: "" },
   avatar: { type: String, default: "" },
+  birthday: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },
 });
 
