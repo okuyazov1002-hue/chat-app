@@ -129,25 +129,44 @@
     .chrono-date { color: #0a1e3d; font-weight: 700; white-space: nowrap; }
     .chrono-text { flex: 1; }
     .chrono-author { color: #8a97ab; font-size: 12px; white-space: nowrap; }
-    .pers-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .pers-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
     .pers-card {
-      background: #f3f4f6; border-radius: 14px; padding: 16px;
+      background: #f3f4f6; border-radius: 0; padding: 16px;
       display: flex; gap: 14px; align-items: flex-start;
     }
     .pers-photo {
-      width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0;
+      width: 116px; height: auto; border-radius: 0; flex-shrink: 0;
       background: #e5e7eb; color: #6b7280; font-size: 26px; font-weight: 700;
       display: flex; align-items: center; justify-content: center;
       overflow: hidden; cursor: pointer;
+      margin: -16px 0 -16px -16px;
+      align-self: stretch;
     }
     .pers-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-edit-modal { width: 340px; }
+    .photo-crop-viewport {
+      width: 260px; height: 260px; margin: 14px auto;
+      overflow: hidden; background: #111; position: relative;
+      cursor: grab; touch-action: none;
+    }
+    .photo-crop-viewport.dragging { cursor: grabbing; }
+    .photo-crop-viewport img {
+      position: absolute; left: 0; top: 0;
+      max-width: none; user-select: none; pointer-events: none;
+    }
+    .photo-zoom-row { display: flex; align-items: center; gap: 10px; padding: 0 8px; color: #374151; font-size: 16px; }
+    .photo-zoom-row input[type="range"] { flex: 1; }
     .pers-name { font-size: 14px; font-weight: 700; color: #0a1628; margin-bottom: 4px; }
     .pers-line { font-size: 11.5px; color: #374151; margin-top: 2px; }
     .pers-line span { color: #6b7280; }
     .pers-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
     .bday-wrap { display: flex; gap: 10px; flex-wrap: wrap; }
-    .bday-card { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #7da7d9; border-radius: 10px; padding: 6px 12px; }
-    .bday-photo { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: #0a1e3d; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex: none; }
+    .bday-card { display: flex; align-items: center; gap: 0; background: #fff; border: 1px solid #7da7d9; border-radius: 0; padding: 0; width: 190px; }
+    .bday-card.bday-nearest { width: 280px; border-width: 2px; }
+    .bday-card.bday-nearest .bday-photo { width: 56px; }
+    .bday-card.bday-nearest .bday-name { font-size: 15px; }
+    .bday-card > div:last-child { padding: 6px 12px 6px 0; min-width: 0; }
+    .bday-photo { width: 40px; height: auto; border-radius: 0; overflow: hidden; background: #0a1e3d; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex: none; align-self: stretch; }
     .bday-photo img { width: 100%; height: 100%; object-fit: cover; }
     .bday-name { font-size: 13px; font-weight: 700; color: #0a1628; }
     .bday-info { font-size: 11.5px; color: #374151; }
@@ -158,7 +177,8 @@
     .pers-add { display: none; border: 1px solid #7da7d9; background: #0a1e3d; color: #fff; border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
     body.is-admin .pers-add { display: block; }
     .pers-card { position: relative; }
-    @media (max-width: 1100px) { .pers-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 1300px) { .pers-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 900px) { .pers-grid { grid-template-columns: repeat(2, 1fr); } }
     #tab-main .tab-title, #tab-aux .tab-title { display: none; }
     #tab-aux.active { margin-top: 10px; }
     .prep-sec-title { color: #fff; font-size: 17px; margin: 22px 0 10px; }
@@ -879,6 +899,24 @@
   </main>
 
   <!-- Окно редактирования карточки (админ) -->
+  <!-- Окно редактирования фото (масштаб/позиция) -->
+  <div class="modal-overlay" id="photoEditModal">
+    <div class="modal photo-edit-modal">
+      <h2>Редактирование фото</h2>
+      <div class="photo-crop-viewport" id="photoCropViewport">
+        <img id="photoCropImg" draggable="false">
+      </div>
+      <div class="photo-zoom-row">
+        <span>−</span>
+        <input type="range" id="photoZoomRange" min="100" max="300" value="100">
+        <span>+</span>
+      </div>
+      <div class="row">
+        <button class="btn-cancel" id="photoEditCancel">Отмена</button>
+        <button class="btn-save" id="photoEditSave">Сохранить</button>
+      </div>
+    </div>
+  </div>
   <div class="modal-overlay" id="persEditModal">
     <div class="modal">
       <h2 id="peTitle">Редактирование карточки</h2>
@@ -1866,12 +1904,12 @@
         list.sort((a, b) => a.days - b.days);
         const top = list.slice(0, 4);
         if (!top.length) { wrap.style.display = "none"; return; }
-        wrap.innerHTML = top.map(({ u, days }) => {
+        wrap.innerHTML = top.map(({ u, days }, idx) => {
           const ini = (u.name || u.username || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
           const ph = u.avatar ? `<img src="${u.avatar}" alt="">` : ini;
           const when = days === 0 ? "<b>Сегодня! 🎉</b>" : days === 1 ? "<b>завтра</b>" : `через <b>${days} дн.</b>`;
-          return `<div class="bday-card"><div class="bday-photo">${ph}</div>
-            <div><div class="bday-name">🎂 ${u.name || u.username}</div>
+          return `<div class="bday-card${idx === 0 ? " bday-nearest" : ""}"><div class="bday-photo">${ph}</div>
+            <div><div class="bday-name">${u.name || u.username}</div>
             <div class="bday-info">${u.birthday} · ${when}</div></div></div>`;
         }).join("");
         wrap.style.display = "flex";
@@ -1904,28 +1942,104 @@
           input.onchange = () => {
             const file = input.files[0];
             if (!file) return;
-            const img = new Image();
-            img.onload = async () => {
-              const canvas = document.createElement("canvas");
-              canvas.width = 200; canvas.height = 200;
-              const s = Math.min(img.width, img.height);
-              canvas.getContext("2d").drawImage(img,
-                (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 200, 200);
-              const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-              const res = await fetch("/api/personnel/" + ph.dataset.id, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ avatar: dataUrl }),
-              });
-              if (res.ok) ph.innerHTML = `<img src="${dataUrl}" alt="">`;
-              else alert("Нет прав: можно менять только своё фото");
-            };
-            img.src = URL.createObjectURL(file);
+            openPhotoCropModal(URL.createObjectURL(file), ph);
           };
           input.click();
         });
       });
     }
+    // ===== Редактор фото (масштаб/позиция) =====
+    const VP = 260;
+    const cropState = { scale: 1, offX: 0, offY: 0, baseScale: 1, natW: 0, natH: 0, targetPh: null, dragging: false, sx: 0, sy: 0, ox: 0, oy: 0 };
+    function clampOffsets() {
+      const dispW = cropState.natW * cropState.baseScale * cropState.scale;
+      const dispH = cropState.natH * cropState.baseScale * cropState.scale;
+      const minX = VP - dispW, minY = VP - dispH;
+      cropState.offX = Math.min(0, Math.max(minX, cropState.offX));
+      cropState.offY = Math.min(0, Math.max(minY, cropState.offY));
+    }
+    function applyCropTransform() {
+      const img = document.getElementById("photoCropImg");
+      const dispW = cropState.natW * cropState.baseScale * cropState.scale;
+      const dispH = cropState.natH * cropState.baseScale * cropState.scale;
+      img.style.width = dispW + "px";
+      img.style.height = dispH + "px";
+      img.style.left = cropState.offX + "px";
+      img.style.top = cropState.offY + "px";
+    }
+    function openPhotoCropModal(src, ph) {
+      cropState.targetPh = ph;
+      const img = document.getElementById("photoCropImg");
+      img.onload = () => {
+        cropState.natW = img.naturalWidth;
+        cropState.natH = img.naturalHeight;
+        cropState.baseScale = VP / Math.min(cropState.natW, cropState.natH);
+        cropState.scale = 1;
+        cropState.offX = (VP - cropState.natW * cropState.baseScale) / 2;
+        cropState.offY = (VP - cropState.natH * cropState.baseScale) / 2;
+        document.getElementById("photoZoomRange").value = 100;
+        clampOffsets();
+        applyCropTransform();
+      };
+      img.src = src;
+      document.getElementById("photoEditModal").classList.add("open");
+    }
+    const cropViewport = document.getElementById("photoCropViewport");
+    cropViewport.addEventListener("mousedown", (e) => {
+      cropState.dragging = true;
+      cropViewport.classList.add("dragging");
+      cropState.sx = e.clientX; cropState.sy = e.clientY;
+      cropState.ox = cropState.offX; cropState.oy = cropState.offY;
+    });
+    window.addEventListener("mousemove", (e) => {
+      if (!cropState.dragging) return;
+      cropState.offX = cropState.ox + (e.clientX - cropState.sx);
+      cropState.offY = cropState.oy + (e.clientY - cropState.sy);
+      clampOffsets();
+      applyCropTransform();
+    });
+    window.addEventListener("mouseup", () => {
+      cropState.dragging = false;
+      cropViewport.classList.remove("dragging");
+    });
+    document.getElementById("photoZoomRange").addEventListener("input", (e) => {
+      const cx = VP / 2, cy = VP / 2;
+      const oldScale = cropState.scale;
+      const relX = (cx - cropState.offX) / oldScale;
+      const relY = (cy - cropState.offY) / oldScale;
+      cropState.scale = Number(e.target.value) / 100;
+      cropState.offX = cx - relX * cropState.scale;
+      cropState.offY = cy - relY * cropState.scale;
+      clampOffsets();
+      applyCropTransform();
+    });
+    document.getElementById("photoEditCancel").addEventListener("click", () => {
+      document.getElementById("photoEditModal").classList.remove("open");
+    });
+    document.getElementById("photoEditSave").addEventListener("click", async () => {
+      const img = document.getElementById("photoCropImg");
+      const OUT = 400;
+      const canvas = document.createElement("canvas");
+      canvas.width = OUT; canvas.height = OUT;
+      const ctx = canvas.getContext("2d");
+      const k = OUT / VP;
+      const dispW = cropState.natW * cropState.baseScale * cropState.scale;
+      const dispH = cropState.natH * cropState.baseScale * cropState.scale;
+      ctx.drawImage(img, cropState.offX * k, cropState.offY * k, dispW * k, dispH * k);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+      const ph = cropState.targetPh;
+      const res = await fetch("/api/personnel/" + ph.dataset.id, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar: dataUrl }),
+      });
+      if (res.ok) {
+        ph.innerHTML = `<img src="${dataUrl}" alt="">`;
+        document.getElementById("photoEditModal").classList.remove("open");
+      } else {
+        alert("Нет прав: можно менять только своё фото");
+      }
+    });
     renderPersonnel();
     // Поиск по ФИО
     document.getElementById("persSearch").addEventListener("input", (e) => {
