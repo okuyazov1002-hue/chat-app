@@ -361,7 +361,9 @@ app.post("/api/reports/:code", adminOnly, async (req, res) => {
   }
   try {
     const { rows, comment, workforce, equipment } = req.body;
-    const update = { updatedAt: new Date() };
+    const u = await User.findById(req.session.userId);
+    const uName = (u && (u.name || u.username)) || "";
+    const update = { updatedAt: new Date(), updatedBy: uName };
     if (rows !== undefined) update.rows = rows;
     if (comment !== undefined) update.comment = comment;
     if (workforce !== undefined) update.workforce = workforce;

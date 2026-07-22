@@ -252,7 +252,164 @@
     .tab-title { color: #fff; font-size: 22px; margin-bottom: 20px; }
     .tab-empty { color: rgba(255,255,255,0.6); }
 
-    .project-list { display: flex; flex-direction: column; gap: 10px; }
+    .project-list { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+    .project-dashboard-full {
+      position: fixed; left: 66px; top: var(--header-h, 73px); right: 0; bottom: 0;
+      overflow-y: auto;
+      margin: 0; padding: 0;
+    }
+    .pdf-header {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 18px;
+    }
+    .pdf-code {
+      padding: 6px 12px; border-radius: 8px;
+      background: #fff; color: #0a1628;
+      font-size: 13px; font-weight: 700;
+      font-family: "Consolas", monospace;
+    }
+    .pdf-name { color: #fff; font-size: 20px; font-weight: 600; }
+    .panel-dashboard {
+      transition: transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.32s ease;
+    }
+    .pdash-off-down { opacity: 0; transform: translateY(30px); }
+    .pdash-off-up { opacity: 0; transform: translateY(-30px); }
+    .panel-dashboard { transition: transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.32s ease; }
+    .pdash { display: flex; flex-direction: column; gap: 0; }
+    .pdash-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0 8px 16px; margin-top: 4px;
+      color: rgba(255,255,255,0.6); font-size: 12px;
+    }
+    .pdash-footer-actions { display: flex; gap: 8px; }
+    .pdash-sq-btn { border-radius: 0 !important; background: #a5c2e4 !important; border-color: #a5c2e4 !important; color: #0a1628 !important; }
+    .pdash-stage-cards { display: grid; gap: 0; }
+    .pdash-stage-card {
+      padding: 14px 16px; color: #fff;
+      transition: transform 0.2s ease;
+      position: relative; z-index: 1;
+    }
+    .pdash-stage-card:hover { transform: scale(1.02); z-index: 2; }
+    .pdash-stage-card-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+    .pdash-stage-card-dates { font-size: 10.5px; opacity: .6; margin-bottom: 8px; }
+    .pdash-stage-card-cost { font-size: 18px; font-weight: 800; }
+    .pdash-stage-card-sub { font-size: 10.5px; opacity: .8; margin-top: 2px; }
+    .pdash-stage-card-pct { font-size: 11px; margin-top: 8px; opacity: .9; }
+    .pdash-project-title {
+      color: #fff; font-size: 14px; font-weight: 700; padding: 10px 18px;
+      line-height: 1.3;
+      background: rgba(10, 22, 40, 0.45);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      grid-column: 1 / span 3; grid-row: 1;
+      display: flex; align-items: center;
+    }
+    .pdash-progress-split { display: flex; gap: 24px; margin-top: 2px; }
+    .pdash-progress-col-label { font-size: 12px; opacity: .85; margin-bottom: 4px; }
+    .pdash-mosaic { display: flex; flex-direction: column; gap: 0; }
+    .pdash-top {
+      display: grid; grid-template-columns: 220px 220px 220px 1fr;
+      grid-template-rows: auto 1fr; gap: 0;
+    }
+    .pdash-top .pdash-stat-a { grid-column: 1; grid-row: 2; }
+    .pdash-top .pdash-stat-b { grid-column: 2; grid-row: 2; }
+    .pdash-top .pdash-risk-card { grid-column: 3; grid-row: 2; }
+    .pdash-top .pdash-chart-big { grid-column: 4; grid-row: 1 / span 2; }
+    .pdash-stat { padding: 18px; color: #fff; }
+    .pdash-stat, .pdash-chart-big, .pdash-project-title, .pdash-risk-card, .pdash .chart-card {
+      transition: transform 0.2s ease;
+      position: relative;
+      z-index: 1;
+    }
+    .pdash-stat:hover, .pdash-chart-big:hover, .pdash-project-title:hover, .pdash-risk-card:hover, .pdash .chart-card:hover {
+      transform: scale(1.015);
+      z-index: 2;
+    }
+    .pdash-stat-a { background: linear-gradient(135deg, #0a1e3d, #16345c); }
+    .pdash-risk-card {
+      padding: 18px; color: #fff;
+      background: linear-gradient(135deg, #b91c1c, #7a1414);
+      display: flex; flex-direction: column;
+    }
+    .pdash-risk-body { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+    .pdash-risk-donut { width: 64px; height: 64px; flex-shrink: 0; }
+    .pdash-risk-text { font-size: 11.5px; line-height: 1.5; }
+    .pdash-risk-text b { font-size: 14px; }
+    .pdash-stat-b { background: linear-gradient(135deg, #7da7d9, #4d7fb5); }
+    .pdash-stat-label { font-size: 13px; opacity: .85; margin-bottom: 10px; }
+    .pdash-stat-value { font-size: 30px; font-weight: 800; }
+    .pdash-stat-sub { font-size: 12px; margin-top: 6px; opacity: .9; }
+    .pdash-stat-rows { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .pdash-stat-row-item { padding-top: 2px; }
+    .pdash-stat-row-label { font-size: 11.5px; font-weight: 600; }
+    .pdash-stat-row-sub { font-size: 10.5px; opacity: .8; margin-top: 2px; }
+    .pdash-chart-big {
+      background: linear-gradient(135deg, #a9c5e6, #94b6dc);
+      padding: 0 18px 16px; overflow: hidden;
+    }
+    .pdash-card-title { color: #fff; font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+    .pdash-progress-wide {
+      background: rgba(255,255,255,0.06);
+      padding: 18px; overflow: hidden;
+    }
+    .pdash-bar-row {
+      display: grid; grid-template-columns: 160px 110px 1fr 1fr 110px;
+      gap: 14px; align-items: center; padding: 9px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .pdash-bar-row:last-child { border-bottom: none; }
+    .pdash-bar-label { color: #fff; font-size: 13px; }
+    .pdash-bar-dates { color: rgba(255,255,255,0.6); font-size: 11.5px; white-space: nowrap; }
+    .pdash-bar-track {
+      height: 8px; border-radius: 4px;
+      background: rgba(255,255,255,0.12); overflow: hidden;
+    }
+    .pdash-bar-fill-plan { height: 100%; background: #7da7d9; border-radius: 4px; }
+    .pdash-bar-fill-fact { height: 100%; background: #0a1e3d; border-radius: 4px; }
+    .pdash-bar-pct { color: #fff; font-size: 12px; text-align: right; white-space: nowrap; }
+    .pdash-bottom {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+    }
+    .pdash-card {
+      background: rgba(255,255,255,0.06);
+      padding: 16px; min-width: 0; overflow-x: auto;
+    }
+    .pdash-card .stage-table { font-size: 10.5px; white-space: nowrap; }
+    .pdash-card .stage-table th, .pdash-card .stage-table td { padding: 4px 6px; }
+    .projects-layout { position: relative; padding-left: 68px; }
+    .project-sidebar {
+      display: flex; flex-direction: column; gap: 0;
+      width: 66px; overflow: hidden;
+      transition: width 0.25s ease;
+      position: fixed; left: 0; top: var(--header-h, 73px); bottom: 0;
+      z-index: 50;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 0;
+      background: rgba(10, 22, 40, 0.45);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+    .project-sidebar:hover { width: 560px; }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px; cursor: pointer;
+      background: rgba(255,255,255,0.07);
+      white-space: nowrap; overflow: hidden;
+      width: 100%;
+      transition: background 0.2s ease;
+    }
+    .sidebar-item:hover { background: rgba(255,255,255,0.16); }
+    .sidebar-item.active { background: #7da7d9; border-color: #7da7d9; }
+    .sidebar-code {
+      flex-shrink: 0; padding: 5px 9px; border-radius: 7px;
+      background: #fff; color: #0a1628; font-size: 12px;
+      font-weight: 700; font-family: "Consolas", monospace;
+    }
+    .sidebar-name {
+      color: #fff; font-size: 13px; opacity: 0;
+      white-space: nowrap;
+      transition: opacity 0.2s ease 0.05s;
+    }
+    .project-sidebar:hover .sidebar-name { opacity: 1; }
     .project-item {
       display: flex;
       align-items: center;
@@ -308,6 +465,9 @@
     .project-panel.open { display: block; }
     .project-item.open {
       border-radius: 14px 14px 0 0;
+    }
+    .project-item.open .project-stats {
+      display: none;
     }
 
     .panel-toolbar {
@@ -442,6 +602,11 @@
     }
     .chart-title { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; }
     .chart-wrap { position: relative; width: 100%; height: 280px; }
+    .pdash .chart-card {
+      background: rgba(255,255,255,0.06);
+      border-radius: 0; margin-top: 0; padding: 16px 18px;
+    }
+    .pdash .chart-title { color: #fff; }
     .stage-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -453,12 +618,12 @@
       border-radius: 10px;
       padding: 12px 14px;
     }
-    .stage-card-head { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-    .stage-card-body { display: none; margin-top: 8px; }
+    .stage-card-head { display: flex; justify-content: space-between; align-items: center; }
+    .stage-card-body { display: block; margin-top: 8px; }
     .stage-card.open .stage-card-body { display: block; }
     .stage-summary { display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin: 4px 0 8px; padding-bottom: 6px; border-bottom: 1px dashed #d1d5db; }
     .stage-summary b { color: #0a1e3d; }
-    .stage-arrow { display: inline-block; transition: transform .2s; font-size: 10px; }
+    .stage-arrow { display: none; }
     .stage-card:not(.open) .stage-arrow { transform: rotate(-90deg); }
     .stage-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .stage-table th {
@@ -565,7 +730,15 @@
     .pg-head span { font-weight: 400; color: #6b7280; }
     .pg-name.late { color: #b91c1c; font-weight: 600; }
     .proj-gantt .pg-name { width: 180px; }
-    .proj-gantt .pg-scale-year span:first-child, .proj-gantt .pg-scale-month span:first-child { width: 572px; }
+    .proj-gantt { background: transparent; border-radius: 0; padding: 0; }
+    .proj-gantt .pg-scale-year, .proj-gantt .pg-scale-month { color: #0a1628; }
+    .proj-gantt .pg-scale-year { padding-top: 10px; }
+    .proj-gantt .pg-scale-year span:not(:first-child) { border-left-color: rgba(10,22,40,0.25); }
+    .proj-gantt .pg-name { color: #0a1628; }
+    .proj-gantt .pg-cell { color: rgba(10,22,40,0.7); }
+    .proj-gantt .pg-scale-year > span:nth-child(-n+2), .proj-gantt .pg-scale-month > span:nth-child(-n+3) { flex-shrink: 0; white-space: nowrap; }
+    .proj-gantt .pg-head, .proj-gantt .pg-head span { color: rgba(10,22,40,0.55); }
+    .proj-gantt .pg-scale-year span:first-child, .proj-gantt .pg-scale-month span:first-child { width: 428px; }
     .sch-gantt .pg-name { width: 420px; }
     .sch-gantt .pg-scale-year span:first-child, .sch-gantt .pg-scale-month span:first-child { width: 812px; }
     .sch-gantt .sch-body { display: none; }
@@ -602,6 +775,8 @@
     .pg-bar { position: absolute; height: 100%; border-radius: 3px; background: #7da7d9; overflow: hidden; }
     .pg-bar.plan-only { background: #e5e7eb; border: 1px dashed #9ca3af; }
     .pg-fill { height: 100%; background: #0a1e3d; }
+    .proj-gantt .pg-bar { background: rgba(10,22,40,0.28); }
+    .proj-gantt .pg-bar.plan-only { background: rgba(255,255,255,0.35); border: 1px dashed rgba(10,22,40,0.4); }
     .pg-fill.late { background: #b91c1c; }
     .pg-legend { display: flex; gap: 14px; font-size: 9.5px; color: #6b7280; margin-top: 6px; }
     .pg-sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: -1px; }
@@ -667,6 +842,8 @@
       <p class="tab-empty">Раздел в разработке — здесь будет общий график работ.</p>
     </div>
     <div id="tab-prep" class="tab"></div>
+    <div class="project-sidebar" id="projects-sidebar"></div>
+    <div class="project-dashboard-full" id="projects-dashboard-full"></div>
     <div id="tab-main" class="tab"></div>
     <div id="tab-aux" class="tab"></div>
     <div id="tab-chrono" class="tab">
@@ -919,67 +1096,28 @@
       if (res.ok) setTimeout(() => passModal.classList.remove("open"), 1200);
     });
 
-    // Отрисовка списков проектов
+    // Отрисовка единой левой панели проектов (коды + названия по наведению)
     async function renderTab(key) {
       const container = document.getElementById("tab-" + key);
       if (!container || container.dataset.rendered) return;
       container.dataset.rendered = "1";
       const section = PROJECTS[key];
-      container.innerHTML = `<h2 class="tab-title">${section.title}</h2><div class="project-list" id="list-${key}"><div class="tab-empty">Загрузка данных...</div></div>`;
-      const rowsByCode = {};
-      await Promise.all(section.items.map(async p => {
-        const res = await fetch("/api/reports/" + p.code);
-        const data = await res.json();
-        rowsByCode[p.code] = data.rows || [];
-      }));
       let html = "";
       section.items.forEach(p => {
-        const s = projectSummary(rowsByCode[p.code]);
-        html += `<div class="project-item" data-code="${p.code}">
-                   <div class="project-left">
-                     <span class="project-code">${p.code}</span>
-                     <span class="project-name">${p.name}</span>
-                   </div>
-                   <div class="project-stats">
-                     <div class="project-stat-box">
-                       <span>Факт стоимость <b>${money(s.totalCost).replace(" €", "")}</b></span>
-                       <span>Освоено <b>${money(s.doneCost).replace(" €", "")}</b></span>
-                     </div>
-                     <div class="project-stat-box">
-                       <span>План <b>${s.planPct}%</b></span>
-                       <span>Факт <b>${s.donePct}%</b></span>
-                       <span style="color:${s.donePct - s.planPct < 0 ? "#f87171" : "#4ade80"};font-weight:600;">${s.donePct - s.planPct < 0 ? "Отставание " : "Опережение +"}${s.donePct - s.planPct}%</span>
-                     </div>
-                     <div class="project-stat-box">
-                       <span>Начало <b>${s.startFmt}</b></span>
-                       <span>Окончание <b>${s.endFmt}</b></span>
-                     </div>
-                   </div>
-                 </div>
-                 <div class="project-panel" id="panel-${p.code}">
-                  <div class="panel-dashboard" id="dash-${p.code}"></div>
-                  <div class="panel-toolbar">
-                     <button class="panel-btn btn-import" data-code="${p.code}">📥 импорт</button>
-                     <button class="panel-btn btn-export" data-code="${p.code}" data-name="${p.name}">📤 экспорт</button>
-                     <input type="file" class="file-import" data-code="${p.code}" accept=".xlsx" style="display:none">
-                   </div>
-                   
+        html += `<div class="sidebar-item" data-code="${p.code}">
+                   <span class="sidebar-code">${p.code}</span>
+                   <span class="sidebar-name">${p.name}</span>
                  </div>`;
       });
-      document.getElementById("list-" + key).outerHTML = `<div class="project-list" id="list-${key}">${html}</div>`;
-      document.querySelectorAll("#list-" + key + " .project-item").forEach(item => {
-        item.addEventListener("click", () => {
-          const code = item.dataset.code;
-          const panel = document.getElementById("panel-" + code);
-          const isOpen = panel.classList.contains("open");
-          item.classList.toggle("open", !isOpen);
-          panel.classList.toggle("open", !isOpen);
-          if (!isOpen) renderDashboard(code);
-        });
-      });
+      const sidebar = document.getElementById("projects-sidebar");
+      sidebar.insertAdjacentHTML("beforeend", html);
       applyRole();
     }
     ["main", "aux"].forEach(renderTab);
+    Promise.resolve().then(() => {
+      if (!currentProjectCode && ALL_PROJECTS.length) openProject(ALL_PROJECTS[0].code);
+      preloadAllReports();
+    });
     renderPrepTab();
 
     async function renderPrepTab() {
@@ -2103,6 +2241,17 @@
 
 
     // Переключение вкладок
+    function updateHeaderHeight() {
+      const h = document.querySelector(".topbar").offsetHeight;
+      document.documentElement.style.setProperty("--header-h", h + "px");
+    }
+    updateHeaderHeight();
+    window.addEventListener("resize", updateHeaderHeight);
+    window.addEventListener("load", updateHeaderHeight);
+    if (window.ResizeObserver) {
+      new ResizeObserver(updateHeaderHeight).observe(document.querySelector(".topbar"));
+    }
+
     document.querySelectorAll(".nav-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -2110,8 +2259,12 @@
         btn.classList.add("active");
         document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
         if (btn.dataset.tab === "main") document.getElementById("tab-aux").classList.add("active");
+        document.getElementById("projects-sidebar").style.display = btn.dataset.tab === "main" ? "flex" : "none";
+        document.getElementById("projects-dashboard-full").style.display = btn.dataset.tab === "main" ? "block" : "none";
       });
     });
+    document.getElementById("projects-sidebar").style.display = document.querySelector('.nav-btn[data-tab="main"]').classList.contains("active") ? "flex" : "none";
+    document.getElementById("projects-dashboard-full").style.display = document.querySelector('.nav-btn[data-tab="main"]').classList.contains("active") ? "block" : "none";
 
     // Экспорт таблицы в Excel
     const REPORT_COLUMNS = [
@@ -2173,6 +2326,8 @@
       document.body.classList.toggle("is-admin", window.userRole === "admin");
       if (window.userRole === "admin") {
         document.getElementById("usersBtn").style.display = "";
+        document.querySelectorAll(".btn-import, .btn-export").forEach(b => b.style.display = "");
+        document.querySelectorAll(".kpi-comment-edit").forEach(t => t.removeAttribute("readonly"));
         return;
       }
       document.querySelectorAll(".btn-import, .btn-export").forEach(b => b.style.display = "none");
@@ -2187,6 +2342,18 @@
     });
 
     // ===== ИМПОРТ =====
+    function printDashboard() {
+      const content = document.getElementById("projects-dashboard-full").innerHTML;
+      const w = window.open("", "_blank");
+      w.document.write(`<!DOCTYPE html><html><head><title>Печать отчёта</title>
+        <style>
+          body { font-family: sans-serif; background:#fff; margin:0; }
+          ${document.querySelector("style") ? document.querySelector("style").innerHTML : ""}
+        </style>
+        </head><body>${content}</body></html>`);
+      w.document.close();
+      setTimeout(() => { w.print(); }, 500);
+    }
     async function importFile(code, file) {
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.load(await file.arrayBuffer());
@@ -2286,10 +2453,77 @@
       return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " €";
     }
 
+    const ALL_PROJECTS = [...PROJECTS.main.items, ...PROJECTS.aux.items];
+    const reportsCache = {};
+    function preloadAllReports() {
+      ALL_PROJECTS.forEach(p => {
+        if (reportsCache[p.code]) return;
+        fetch("/api/reports/" + p.code)
+          .then(r => r.json())
+          .then(data => { reportsCache[p.code] = data; })
+          .catch(() => {});
+      });
+    }
+    let currentProjectCode = null;
+
+    function openProject(code, direction) {
+      const p = ALL_PROJECTS.find(x => x.code === code);
+      if (!p) return;
+      const full = document.getElementById("projects-dashboard-full");
+      const oldWrap = full.firstElementChild;
+      const build = () => {
+        currentProjectCode = code;
+        document.querySelectorAll("#projects-sidebar .sidebar-item").forEach(si => {
+          si.classList.toggle("active", si.dataset.code === code);
+        });
+        const offClass = direction === "up" ? "pdash-off-up" : "pdash-off-down";
+        full.innerHTML = `
+          <div class="panel-dashboard${direction ? " " + offClass : ""}" id="dash-${p.code}"></div>`;
+        renderDashboard(p.code);
+        applyRole();
+        if (direction) {
+          const wrap = full.firstElementChild;
+          void wrap.offsetHeight;
+          wrap.classList.remove(offClass);
+        }
+      };
+      if (direction && oldWrap) {
+        oldWrap.classList.remove("pdash-off-up", "pdash-off-down");
+        oldWrap.classList.add(direction === "down" ? "pdash-off-up" : "pdash-off-down");
+        setTimeout(build, 220);
+      } else {
+        build();
+      }
+    }
+    document.getElementById("projects-sidebar").addEventListener("click", (e) => {
+      const item = e.target.closest(".sidebar-item");
+      if (item) openProject(item.dataset.code);
+    });
+    let wheelLocked = false;
+    document.getElementById("projects-dashboard-full").addEventListener("wheel", (e) => {
+      e.preventDefault();
+      if (wheelLocked) return;
+      const idx = ALL_PROJECTS.findIndex(p => p.code === currentProjectCode);
+      if (idx === -1) return;
+      let nextIdx = idx;
+      let dir = null;
+      if (e.deltaY > 0 && idx < ALL_PROJECTS.length - 1) { nextIdx = idx + 1; dir = "down"; }
+      else if (e.deltaY < 0 && idx > 0) { nextIdx = idx - 1; dir = "up"; }
+      if (nextIdx === idx) return;
+      wheelLocked = true;
+      openProject(ALL_PROJECTS[nextIdx].code, dir);
+      setTimeout(() => { wheelLocked = false; }, 550);
+    }, { passive: false });
+
+
     async function renderDashboard(code) {
       const dash = document.getElementById("dash-" + code);
-      const res = await fetch("/api/reports/" + code);
-      const data = await res.json();
+      let data = reportsCache[code];
+      if (!data) {
+        const res = await fetch("/api/reports/" + code);
+        data = await res.json();
+        reportsCache[code] = data;
+      }
       const rows = data.rows || [];
       
       const totalCost = rows.reduce((s, r) => s + (r.cost || 0), 0);
@@ -2341,94 +2575,160 @@
       const fcArr = rows.filter(r => r.forecastEnd).map(r => +new Date(r.forecastEnd));
       const forecastEnd = fcArr.length ? dte(fcArr) : planEnd;
       const late = forecastEnd && planEnd && forecastEnd > planEnd;
-      dash.innerHTML = `
-        <div class="kpi-row">
-          <div class="kpi-card">
-            <div class="kpi-title">Стоимость проекта (стоимость / освоено)</div>
-            <div class="kpi-stages">
-              <div class="kpi-stage-row kpi-grid kpi-grid-head"><span></span><span>Стоимость</span><span>Выполнено</span></div>
-              <div class="kpi-stage-row kpi-grid"><span>Проектирование</span><span>${money(stDesign.cost).replace(" €", "")}</span><span>${money(stDesign.done).replace(" €", "")}</span></div>
-              <div class="kpi-stage-row kpi-grid"><span>Изготовление</span><span>${money(stManuf.cost).replace(" €", "")}</span><span>${money(stManuf.done).replace(" €", "")}</span></div>
-              <div class="kpi-stage-row kpi-grid"><span>Логистика</span><span>${money(stLogistics.cost).replace(" €", "")}</span><span>${money(stLogistics.done).replace(" €", "")}</span></div>
-              <div class="kpi-stage-row kpi-grid"><span>Строительно-монтажные работы</span><span>${money(stSmr.cost).replace(" €", "")}</span><span>${money(stSmr.done).replace(" €", "")}</span></div>
-              <div class="kpi-stage-row kpi-grid"><span>ПНР</span><span>${money(stPnr.cost).replace(" €", "")}</span><span>${money(stPnr.done).replace(" €", "")}</span></div>
-            </div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-title">Общий прогресс</div>
-            
-            <div class="kpi-stages">
-              <div class="kpi-stage-row kpi-grid kpi-grid-head"><span></span><span>План</span><span>Факт</span></div>
-              <div class="kpi-stage-row kpi-grid"><span>Проектирование</span><span>${pctP(stDesign)}%</span><span>${pct(stDesign)}%</span></div>
-              <div class="kpi-stage-row kpi-grid"><span>Изготовление</span><span>${pctP(stManuf)}%</span><span>${pct(stManuf)}%</span></div>
-              <div class="kpi-stage-row kpi-grid"><span>Логистика</span><span>${pctP(stLogistics)}%</span><span>${pct(stLogistics)}%</span></div>
-              <div class="kpi-stage-row kpi-grid"><span>Строительно-монтажные работы</span><span>${pctP(stSmr)}%</span><span>${pct(stSmr)}%</span></div>
-              <div class="kpi-stage-row kpi-grid"><span>ПНР</span><span>${pctP(stPnr)}%</span><span>${pct(stPnr)}%</span></div>
-            </div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-title">Сроки (план начало → окончание)</div>
-            <div class="kpi-stages">
-              <div class="kpi-stage-row"><span>Проектирование</span><span>${dtDesign}</span></div>
-              <div class="kpi-stage-row"><span>Изготовление</span><span>${dtManuf}</span></div>
-              <div class="kpi-stage-row"><span>Логистика</span><span>${dtLogistics}</span></div>
-              <div class="kpi-stage-row"><span>Строительно-монтажные работы</span><span>${dtSmr}</span></div>
-              <div class="kpi-stage-row"><span>ПНР</span><span>${dtPnr}</span></div>
-            </div>
-          </div>
-          <div class="kpi-card kpi-wide">
-            <div class="kpi-title">Примечание / комментарий</div>
-            <textarea class="kpi-comment-edit" id="comment-${code}" placeholder="Место для текстового комментария по проекту — риски, причины отставания, ключевые события за период." onblur="saveComment('${code}')" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${data.comment || ""}</textarea>
-          </div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-title">s-кривая — план / факт (накопительно и за период)</div>
-          <div class="chart-wrap"><canvas id="chart-${code}"></canvas></div>
-        </div>
-        <div class="stage-row">
-          <div class="stage-card open">
-            <div class="chart-title stage-card-head"><span>Проектирование <span class="stage-arrow">▼</span></span></div>
-            ${stageSummary(rows, r => ["базовое", "детальн", "проектирован"].some(x => (r.stage || "").toLowerCase().includes(x)))}
-            <div class="stage-card-body">
-              <table class="stage-table">
-                <thead><tr><th>Дисциплина</th><th>План</th><th>Факт</th><th>Δ</th><th>План. даты</th></tr></thead>
-                <tbody>${stageTable(rows, ["базовое", "детальн", "проектирован"])}</tbody>
-              </table>
-            </div>
-          </div>
-          <div class="stage-card open">
-            <div class="chart-title stage-card-head"><span>Поставка <span class="stage-arrow">▼</span></span></div>
-            ${supplySummary(rows)}
-            <div class="stage-card-body">
-              <table class="stage-table">
-                <thead><tr><th>Этап</th><th>Кол-во</th><th>Статус</th></tr></thead>
-                <tbody>${supplyTable(rows)}</tbody>
-              </table>
-            </div>
-          </div>
-          <div class="stage-card open">
-            <div class="chart-title stage-card-head"><span>СМР и ПНР <span class="stage-arrow">▼</span></span></div>
-            ${stageSummary(rows, r => ["смр", "Строительн", "пнр"].some(x => (r.stage || "").toLowerCase().includes(x)))}
-            <div class="stage-card-body">
-              <table class="stage-table">
-                <thead><tr><th>Дисциплина</th><th>План</th><th>Факт</th><th>Δ</th><th>План. даты</th></tr></thead>
-                <tbody>${stageTable(rows, ["смр", "Строительн", "пнр"])}</tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-title">Диаграмма Ганта — этапы проекта</div>
-          ${ganttHtml(rows)}
-        </div>`;
-        buildChart(code, rows);
-        applyRole();
-        document.querySelectorAll(".stage-card-head").forEach(h => {
-          h.addEventListener("click", () => h.parentElement.classList.toggle("open"));
+      const stBase = sumBy(["базовое"]);
+      const stDetail = sumBy(["детальн"]);
+      const dtBase = stageDates(rowsBy(["базовое"]));
+      const dtDetail = stageDates(rowsBy(["детальн"]));
+      const dtSupply = stageDates(rowsBy(["поставка"]));
+      const DETAILED_CODES = ["PSP01", "CSM01"];
+      const isDetailed = DETAILED_CODES.includes(code);
+      const stages = isDetailed ? [
+        { label: "Базовое проектирование", data: stBase, dates: dtBase },
+        { label: "Детальное проектирование", data: stDetail, dates: dtDetail },
+        { label: "Изготовление", data: stManuf, dates: dtManuf },
+        { label: "Логистика", data: stLogistics, dates: dtLogistics },
+        { label: "Строительство", data: stSmr, dates: dtSmr },
+        { label: "ПНР", data: stPnr, dates: dtPnr }
+      ] : [
+        { label: "Проектирование", data: stDesign, dates: dtDesign },
+        { label: "Поставка", data: supplyAll, dates: dtSupply },
+        { label: "Строительство", data: stSmr, dates: dtSmr },
+        { label: "ПНР", data: stPnr, dates: dtPnr }
+      ];
+      const costRowsHtml = stages.map(st => `
+        <div class="pdash-stat-row-item">
+          <div class="pdash-stat-row-label">${st.label}</div>
+          <div class="pdash-stat-row-sub">${money(st.data.cost).replace(" €","")} / Освоено: ${money(st.data.done).replace(" €","")}</div>
+        </div>`).join("");
+      const pctRowsHtml = stages.map(st => `
+        <div class="pdash-stat-row-item">
+          <div class="pdash-stat-row-label">${st.label}</div>
+          <div class="pdash-stat-row-sub">План ${pctP(st.data)}% / Факт ${pct(st.data)}%</div>
+        </div>`).join("");
+      const today = new Date().toISOString().slice(0, 10);
+      const D = v => v ? String(v).slice(0, 10) : null;
+      const stageItem = (label, sr) => {
+        const ps = sr.map(r => D(r.planStart)).filter(Boolean).sort();
+        const pe = sr.map(r => D(r.forecastEnd || r.planEnd)).filter(Boolean).sort();
+        const fsArr = sr.map(r => D(r.factStart)).filter(Boolean).sort();
+        const feArr = sr.map(r => D(r.factEnd)).filter(Boolean).sort();
+        const cost = sr.reduce((s, r) => s + (r.cost || 0), 0);
+        const doneSum = sr.reduce((s, r) => s + (r.done || 0), 0);
+        const p = cost ? Math.round(doneSum / cost * 100) : 0;
+        let planNow = 0;
+        sr.forEach(r => {
+          const rs = D(r.planStart);
+          if (!rs) return;
+          const end = D(r.forecastEnd || r.planEnd) || today;
+          if (today >= end) planNow += r.cost || 0;
+          else if (today > rs) planNow += (r.cost || 0) * (new Date(today) - new Date(rs)) / (new Date(end) - new Date(rs));
         });
+        const planP = cost ? Math.min(100, Math.round(planNow / cost * 100)) : 0;
+        return { name: label, s: ps[0] || null, e: pe.length ? pe[pe.length - 1] : null,
+                 fs: fsArr[0] || null, fe: feArr.length ? feArr[feArr.length - 1] : null,
+                 pct: p, planPct: planP, started: sr.some(r => r.factStart) };
+      };
+      const srManuf = rows.filter(r => (r.stage || "").toLowerCase().includes("изготовлен") || ((r.stage || "").toLowerCase().includes("поставка") && (r.item || "").toLowerCase().includes("изготовление")));
+      const srLogistics = rows.filter(r => (r.stage || "").toLowerCase().includes("логистик") || ((r.stage || "").toLowerCase().includes("поставка") && !(r.item || "").toLowerCase().includes("изготовление")));
+      const ganttItems = isDetailed ? [
+        stageItem("Базовое проектирование", rowsBy(["базовое"])),
+        stageItem("Детальное проектирование", rowsBy(["детальн"])),
+        stageItem("Изготовление", srManuf),
+        stageItem("Логистика", srLogistics),
+        stageItem("Строительство", rowsBy(["смр", "строительн"])),
+        stageItem("ПНР", rowsBy(["пнр"]))
+      ] : [
+        stageItem("Проектирование", rowsBy(["проектирован"])),
+        stageItem("Поставка", rowsBy(["поставка", "изготовлен", "логистик"])),
+        stageItem("Строительство", rowsBy(["смр", "строительн"])),
+        stageItem("ПНР", rowsBy(["пнр"]))
+      ];
+      const fmtDate = d => d ? `${d.slice(8,10)}.${d.slice(5,7)}.${d.slice(2,4)}` : "—";
+      const overdueCount = ganttItems.filter(i => i.e && i.pct < 100 && i.e < today).length;
+      const upcoming = ganttItems.filter(i => i.e && i.pct < 100 && i.e >= today).sort((a, b) => a.e.localeCompare(b.e))[0];
+      const nearestLabel = upcoming ? `${upcoming.name}: ${fmtDate(upcoming.e)}` : "Нет предстоящих сроков";
+      const onTimeCount = ganttItems.length - overdueCount;
+      const barsHtml = stages.map(st => `
+        <div class="pdash-bar-row"><span class="pdash-bar-label">${st.label}</span><span class="pdash-bar-dates">${st.dates}</span><div class="pdash-bar-track"><div class="pdash-bar-fill-plan" style="width:${pctP(st.data)}%"></div></div><div class="pdash-bar-track"><div class="pdash-bar-fill-fact" style="width:${pct(st.data)}%"></div></div><span class="pdash-bar-pct">${pctP(st.data)}% / ${pct(st.data)}%</span></div>`).join("");
+      dash.innerHTML = `
+        <div class="pdash">
+          <div class="pdash-mosaic">
+          <div class="pdash-top">
+            <div class="pdash-project-title">${ALL_PROJECTS.find(x => x.code === code).name}</div>
+            <div class="pdash-stat pdash-stat-a">
+              <div class="pdash-stat-label">Стоимость проекта</div>
+              <div class="pdash-stat-value">${money(totalCost).replace(" €","")}</div>
+              <div class="pdash-stat-sub">Освоено: ${money(doneCost).replace(" €","")}</div><div class="pdash-stat-sub">Остаток: ${money(totalCost - doneCost).replace(" €","")}</div>
+            </div>
+            <div class="pdash-stat pdash-stat-b">
+              <div class="pdash-stat-label">Общий прогресс</div>
+              <div class="pdash-progress-split">
+                <div class="pdash-progress-col"><div class="pdash-progress-col-label">План</div><div class="pdash-stat-value">${planPct}%</div></div>
+                <div class="pdash-progress-col"><div class="pdash-progress-col-label">Факт</div><div class="pdash-stat-value">${donePct}%</div></div>
+              </div>
+              <div class="pdash-stat-sub">${delta < 0 ? "Отставание " + delta + "%" : "Опережение +" + delta + "%"}</div>
+            </div>
+            <div class="pdash-risk-card">
+              <div class="pdash-stat-label">Внимание</div>
+              <div class="pdash-risk-text">
+                <div><b>${overdueCount}</b> из ${ganttItems.length} этапов с отставанием</div>
+                <div style="margin-top:10px;">Ближайший срок:<br><b>${nearestLabel}</b></div>
+              </div>
+            </div>
+            <div class="pdash-chart-big">
+              ${ganttHtml(ganttItems)}
+            </div>
+          </div>
+          </div>
+          <div class="pdash-stage-cards" style="grid-template-columns: repeat(${stages.length}, 1fr);">
+            ${(() => {
+              const stagePalette = ["#0a1e3d", "#16345c", "#204a7a", "#2e5f96", "#4d7fb5", "#7da7d9"];
+              return stages.map((st, idx) => `
+              <div class="pdash-stage-card" style="background:${stagePalette[idx % stagePalette.length]};">
+                <div class="pdash-stage-card-title">${st.label}</div>
+                <div class="pdash-stage-card-dates">${st.dates}</div>
+                <div class="pdash-stage-card-cost">${money(st.data.cost).replace(" €","")}</div>
+                <div class="pdash-stage-card-sub">Освоено: ${money(st.data.done).replace(" €","")}</div>
+                <div class="pdash-stage-card-sub">Остаток: ${money(st.data.cost - st.data.done).replace(" €","")}</div>
+                <div class="pdash-stage-card-pct">План ${pctP(st.data)}% · Факт ${pct(st.data)}% · ${pct(st.data) - pctP(st.data) < 0 ? (pct(st.data) - pctP(st.data)) : "+" + (pct(st.data) - pctP(st.data))}%</div>
+              </div>`).join("");
+            })()}
+          </div>
+          <div class="chart-card" style="background:#c5d9f0;border-radius:0;">
+            <div class="chart-wrap"><canvas id="chart-${code}"></canvas></div>
+          </div>
+          <div class="pdash-footer">
+            <div class="pdash-footer-actions">
+              <button class="panel-btn pdash-sq-btn" onclick="printDashboard()">Печать</button>
+              <button class="panel-btn pdash-sq-btn btn-import" data-code="${code}">Импорт</button>
+              <button class="panel-btn pdash-sq-btn btn-export" data-code="${code}" data-name="${ALL_PROJECTS.find(x => x.code === code).name}">Экспорт</button>
+              <input type="file" class="file-import" data-code="${code}" accept=".xlsx" style="display:none">
+            </div>
+            <div class="pdash-footer-meta">${data.updatedBy ? "Последнее обновление: " + data.updatedBy + (data.updatedAt ? " · " + new Date(data.updatedAt).toLocaleString("ru-RU") : "") : ""}</div>
+          </div>
+        </div>`;
+      applyRole();
+      buildChart(code, rows);
     }
 
     const charts = {};
+    const riskCharts = {};
+    function buildRiskChart(code, onTime, overdue) {
+      const ctx = document.getElementById("risk-chart-" + code);
+      if (!ctx) return;
+      if (riskCharts[code]) riskCharts[code].destroy();
+      riskCharts[code] = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["В срок", "Просрочено"],
+          datasets: [{ data: [onTime, overdue], backgroundColor: ["#7da7d9", "#0a1628"], borderWidth: 0 }]
+        },
+        options: {
+          cutout: "70%",
+          plugins: { legend: { display: false }, tooltip: { enabled: false } }
+        }
+      });
+    }
 
     const SUPPLY_STAGES = [
       "Техническая характеристика",
@@ -2565,15 +2865,28 @@
       const now = new Date();
       const nowKey = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
       let cp = 0, cf = 0;
-      const labels = [], planCum = [], factCum = [], planPer = [], factPer = [];
+      const monthLabels = [], planCum = [], factCum = [], planPer = [], factPer = [];
+      const yearOf = [];
       keys.forEach(k => {
         cp += byMonth[k].plan; cf += byMonth[k].fact;
-        labels.push(k.slice(5) + "." + k.slice(2, 4));
+        monthLabels.push(k.slice(5, 7));
+        yearOf.push(k.slice(0, 4));
         planCum.push(Math.round(cp / total * 100));
         factCum.push(k <= nowKey ? Math.round(cf / total * 100) : null);
         planPer.push(Math.round(byMonth[k].plan / total * 100 * 10) / 10);
         factPer.push(k <= nowKey ? Math.round(byMonth[k].fact / total * 100 * 10) / 10 : null);
       });
+      const yearGroups = [];
+      yearOf.forEach((y, idx) => {
+        if (!yearGroups.length || yearGroups[yearGroups.length - 1].year !== y) yearGroups.push({ year: y, start: idx, end: idx });
+        else yearGroups[yearGroups.length - 1].end = idx;
+      });
+      const labels = monthLabels.map((mm, idx) => {
+        const grp = yearGroups.find(g => idx >= g.start && idx <= g.end);
+        const centerIdx = grp ? Math.floor((grp.start + grp.end) / 2) : -1;
+        return [mm, idx === centerIdx ? grp.year : ""];
+      });
+      const yearBoundaries = yearGroups.slice(1).map(g => g.start);
       if (charts[code]) charts[code].destroy();
       charts[code] = new Chart(document.getElementById("chart-" + code), {
         data: {
@@ -2581,8 +2894,8 @@
           datasets: [
             { type: "line", label: "План накопительно", data: planCum, borderColor: "#0a1e3d", borderWidth: 2.5, pointRadius: 0, tension: 0.3 },
             { type: "line", label: "Факт накопительно", data: factCum, borderColor: "#7da7d9", borderWidth: 2.5, pointRadius: 0, tension: 0.3 },
-            { type: "bar", label: "План за месяц", data: planPer, backgroundColor: "#0a1e3d" },
-            { type: "bar", label: "Факт за месяц", data: factPer, backgroundColor: "#7da7d9" }
+            { type: "bar", label: "План за месяц", data: planPer, backgroundColor: "#0a1e3d", yAxisID: "y1" },
+            { type: "bar", label: "Факт за месяц", data: factPer, backgroundColor: "#7da7d9", yAxisID: "y1" }
           ]
         },
         options: {
@@ -2590,67 +2903,50 @@
           plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } },
           scales: {
             y: { min: 0, max: 100, ticks: { callback: v => v + "%" } },
-            x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } }
+            y1: { display: false, min: 0, max: Math.max(1, ...planPer, ...factPer.filter(v => v !== null)) * 3 },
+            x: {
+              grid: {
+                display: true,
+                color: (ctx) => yearBoundaries.includes(ctx.index) ? "rgba(10,22,40,0.35)" : "transparent",
+                lineWidth: (ctx) => yearBoundaries.includes(ctx.index) ? 1.5 : 0
+              },
+              ticks: { font: { size: 10 }, maxRotation: 45 }
+            }
           }
         }
       });
     }
 
-    function ganttHtml(rows) {
+    function ganttHtml(items) {
       const today = new Date().toISOString().slice(0, 10);
-      const D = v => v ? String(v).slice(0, 10) : null;
-      const stages = [
-        { name: "Проектирование", f: ["проектирован"] },
-        { name: "Поставка", f: ["поставка", "изготовлен", "логистик"] },
-        { name: "СМР", f: ["смр", "строительн"] },
-        { name: "ПНР", f: ["пнр"] }
-      ];
-      const items = stages.map(st => {
-        const sr = rows.filter(r => st.f.some(x => (r.stage || "").toLowerCase().includes(x)));
-        const ps = sr.map(r => D(r.planStart)).filter(Boolean).sort();
-        const pe = sr.map(r => D(r.forecastEnd || r.planEnd)).filter(Boolean).sort();
-        const fs = sr.map(r => D(r.factStart)).filter(Boolean).sort();
-        const fe = sr.map(r => D(r.factEnd)).filter(Boolean).sort();
-        const cost = sr.reduce((s, r) => s + (r.cost || 0), 0);
-        const doneSum = sr.reduce((s, r) => s + (r.done || 0), 0);
-        const pct = cost ? Math.round(doneSum / cost * 100) : 0;
-        let planNow = 0;
-        sr.forEach(r => {
-          const rs = D(r.planStart);
-          if (!rs) return;
-          const end = D(r.forecastEnd || r.planEnd) || today;
-          if (today >= end) planNow += r.cost || 0;
-          else if (today > rs) {
-            const t = (new Date(today) - new Date(rs)) / (new Date(end) - new Date(rs));
-            planNow += (r.cost || 0) * t;
-          }
-        });
-        const planPct = cost ? Math.min(100, Math.round(planNow / cost * 100)) : 0;
-        return { name: st.name, s: ps[0] || null, e: pe.length ? pe[pe.length - 1] : null,
-                 fs: fs[0] || null, fe: fe.length ? fe[fe.length - 1] : null,
-                 pct, planPct, started: sr.some(r => r.factStart) };
-      });
       const has = items.filter(i => i.s);
       if (!has.length) return `<div class="st-empty">Нет данных для диаграммы</div>`;
       const min = has.map(i => i.s).sort()[0];
       let max = has.map(i => i.e || i.s).sort().slice(-1)[0];
       if (!max || max <= min) max = today > min ? today : min;
-      const t0 = new Date(min).getTime(), t1 = new Date(max).getTime();
+      const minD = new Date(min + "T00:00:00"), maxD = new Date(max + "T00:00:00");
+      const bufStart = new Date(minD.getFullYear(), minD.getMonth() - 1, 1);
+      const bufEnd = new Date(new Date(maxD.getFullYear(), maxD.getMonth() + 2, 1).getTime() - 1);
+      const t0 = bufStart.getTime(), t1 = bufEnd.getTime();
       const pos = d => Math.max(0, Math.min(100, (new Date(d).getTime() - t0) / (t1 - t0 || 1) * 100));
 
       const months = [];
-      const cur = new Date(min); cur.setDate(1);
+      const cur = new Date(bufStart);
       while (cur.getTime() <= t1) {
-        months.push({ y: cur.getFullYear(), m: cur.getMonth() + 1 });
+        const monthStart = new Date(cur.getFullYear(), cur.getMonth(), 1).getTime();
+        const monthEndEx = new Date(cur.getFullYear(), cur.getMonth() + 1, 1).getTime();
+        const segStart = Math.max(monthStart, t0);
+        const segEnd = Math.min(monthEndEx, t1);
+        const w = Math.max(0, (segEnd - segStart) / (t1 - t0 || 1) * 100);
+        months.push({ y: cur.getFullYear(), m: cur.getMonth() + 1, w });
         cur.setMonth(cur.getMonth() + 1);
       }
-      const mW = 100 / months.length;
       const years = {};
-      months.forEach(mo => years[mo.y] = (years[mo.y] || 0) + 1);
-      let yearRow = `<span></span>`;
-      Object.keys(years).sort().forEach(y => { yearRow += `<span style="width:${years[y] * mW}%">${y}</span>`; });
-      let monthRow = `<span></span>`;
-      months.forEach(mo => { monthRow += `<span style="width:${mW}%">${String(mo.m).padStart(2, "0")}</span>`; });
+      months.forEach(mo => years[mo.y] = (years[mo.y] || 0) + mo.w);
+      let yearRow = `<span style="width:180px;display:flex"><span style="width:180px"></span></span><span style="width:124px;text-align:center">Плановый</span>`;
+      Object.keys(years).sort().forEach(y => { yearRow += `<span style="width:${years[y]}%">${y}</span>`; });
+      let monthRow = `<span style="width:180px;display:flex"><span style="width:180px"></span></span><span style="width:62px;text-align:center">начало</span><span style="width:62px;text-align:center">окончание</span>`;
+      months.forEach(mo => { monthRow += `<span style="width:${mo.w}%">${String(mo.m).padStart(2, "0")}</span>`; });
       const nowPos = pos(today);
       const fmtD = d => d ? d.slice(8,10) + "." + d.slice(5,7) + "." + d.slice(2,4) : "—";
 
@@ -2659,8 +2955,6 @@
         if (!i.s) {
           rowsHtml += `<div class="pg-row"><span class="pg-name">${i.name}</span>
             <span class="pg-cell">—</span><span class="pg-cell">—</span>
-            <span class="pg-cell">—</span><span class="pg-cell">—</span>
-            <span class="pg-pct">—</span><span class="pg-pct">—</span><span class="pg-pct">—</span>
             <div class="pg-track"></div></div>`;
           return;
         }
@@ -2674,26 +2968,14 @@
         rowsHtml += `<div class="pg-row">
           <span class="pg-name${late ? " late" : ""}">${i.name}</span>
           <span class="pg-cell">${fmtD(i.s)}</span><span class="pg-cell">${fmtD(i.e)}</span>
-          <span class="pg-cell">${fmtD(i.fs)}</span><span class="pg-cell">${fmtD(i.fe)}</span>
-          <span class="pg-pct">${i.planPct}%</span><span class="pg-pct">${i.pct}%</span>
-          <span class="pg-pct${diff < 0 ? " neg" : ""}">${diff > 0 ? "+" : ""}${diff}%</span>
           <div class="pg-track">${bar}</div></div>`;
       });
-
       return `<div class="prep-gantt proj-gantt">
-        <div class="pg-head"><span style="width:180px"></span><span style="width:124px;text-align:center">план нач. / оконч.</span><span style="width:124px;text-align:center">факт нач. / оконч.</span><span style="width:144px;text-align:center">прогресс: план / факт / δ</span></div>
         <div class="pg-scale-year">${yearRow}</div>
         <div class="pg-scale-month">${monthRow}</div>
         <div class="pg-body">
-          <div class="pg-now" style="left:calc(572px + (100% - 572px) * ${(nowPos / 100).toFixed(3)})"></div>
+          <div class="pg-now" style="left:calc(304px + (100% - 304px) * ${(nowPos / 100).toFixed(3)})"></div>
           ${rowsHtml}
-        </div>
-        <div class="pg-legend">
-          <span><span class="pg-sw" style="background:#0a1e3d"></span> выполнено</span>
-          <span><span class="pg-sw" style="background:#7da7d9"></span> план</span>
-          <span><span class="pg-sw" style="background:#b91c1c"></span> отставание</span>
-          <span><span class="pg-sw" style="background:#e5e7eb;border:1px dashed #9ca3af"></span> не начато</span>
-          <span style="color:#b91c1c">│ сегодня</span>
         </div>
       </div>`;
     }
