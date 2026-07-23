@@ -62,24 +62,41 @@
     .logo-text .subtitle { font-size: 11.5px; color: rgba(255,255,255,0.65); margin-top: 2px; }
 
     /* Навигация по разделам */
-    .nav { display: flex; gap: 6px; flex-wrap: wrap; margin-left: 28px; margin-right: auto; align-items: center; }
+    .nav { display: flex; gap: 0px; flex-wrap: wrap; margin-left: 28px; margin-right: auto; align-items: stretch; align-self: stretch; margin-top: -10px; margin-bottom: -10px; }
     .nav-btn {
-      padding: 9px 16px;
+      display: flex; align-items: center;
+      padding: 0 16px;
       font-size: 14px;
       font-weight: 600;
       color: rgba(255, 255, 255, 0.75);
       background: none;
       border: 1px solid transparent;
-      border-radius: 999px;
+      border-radius: 0px;
       cursor: pointer;
       transition: all 0.2s ease;
     }
     .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+    .subnav { display: flex; background: #0a1e3d; }
+    .subnav-btn {
+      flex: 1;
+      padding: 10px 16px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.7);
+      background: none;
+      border: none;
+      border-radius: 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .subnav-btn.active { color: #fff; background: rgba(255, 255, 255, 0.12); }
+    .subnav-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
     .nav-drop { position: relative; display: inline-block; }
     .nav-drop-btn {
       background: none; border: 1px solid transparent; cursor: pointer;
       color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 600;
-      padding: 9px 16px; border-radius: 999px;
+      padding: 0 16px; border-radius: 999px;
     }
     .nav-drop-btn:hover, .nav-drop.open .nav-drop-btn { color: #fff; background: rgba(255,255,255,0.08); }
     .nav-drop-list {
@@ -104,7 +121,7 @@
     .ct-dots:hover { background: #2e3d54; }
     .ct-edited { color: #b8860b; font-size: 11px; }
     .ct-ctx { position: fixed; z-index: 999; background: #fff; border: 1px solid #d5dbe5; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.18); overflow: hidden; }
-    .ct-ctx button { display: block; width: 100%; text-align: left; background: none; border: none; padding: 9px 16px; font-size: 13px; cursor: pointer; color: #1c2a3d; }
+    .ct-ctx button { display: block; width: 100%; text-align: left; background: none; border: none; padding: 0 16px; font-size: 13px; cursor: pointer; color: #1c2a3d; }
     .ct-ctx button:hover { background: #eef2f8; }
     .chrono-table td { word-wrap: break-word; }
     .chrono-table th, .chrono-table td { border: 1px solid #e3e8f0; padding: 7px 10px; text-align: left; vertical-align: top; }
@@ -796,12 +813,12 @@
     .kpi-grid-head > span { font-size: 11px; color: #2e3d54; font-weight: 700; }
     .sch-period { position: relative; display: flex; align-items: center; gap: 8px; }
     @media print { .bg { display: none !important; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } header.topbar, .sch-topbar, .sch-slider { display: none !important; } body { background: #fff !important; } .content { padding: 0 !important; margin: 0 !important; } .tab { display: none !important; } .tab.active { display: block !important; } .prep-gantt { box-shadow: none !important; border: none !important; } .pg-row { break-inside: avoid; } .sch-gantt .pg-scale-year { position: fixed; top: 0; left: 0; right: 0; background: #fff; z-index: 30; } .sch-gantt .pg-scale-month { position: fixed; top: 14px; left: 0; right: 0; background: #fff; z-index: 30; } .sch-gantt .pg-body { margin-top: 34px; } .sch-sec { break-inside: auto; } .sch-proj { break-inside: avoid; } }
-    .sch-period-btn { border: 1px solid #cbd5e1; background: #2e3d54; color: #fff; border-radius: 6px; padding: 5px 14px; font-size: 12px; cursor: pointer; font-weight: 600; }
+    .sch-period-btn { border: 1px solid #cbd5e1; background: #2e3d54; color: #fff; border-radius: 0px; padding: 5px 14px; font-size: 12px; cursor: pointer; font-weight: 600; }
     .sch-period-menu { display: none; position: absolute; right: 0; top: 110%; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px; z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,.12); }
     .sch-period-menu.open { display: flex; flex-direction: column; gap: 2px; }
     .sch-period-menu .sch-mode { border: none; text-align: left; }
     .sch-modes { display: flex; gap: 4px; }
-    .sch-mode { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 3px 12px; font-size: 11px; cursor: pointer; color: #374151; }
+    .sch-mode { border: 1px solid #cbd5e1; background: #fff; border-radius: 0px; padding: 3px 12px; font-size: 11px; cursor: pointer; color: #374151; }
     .sch-mode.active { background: #2e3d54; color: #fff; border-color: #2e3d54; }
     .sch-slider { position: sticky; top: 60px; z-index: 5; background: #fff; padding: 4px 0 4px 812px; }
     .sch-slider input { width: 100%; }
@@ -851,7 +868,7 @@
     </div>
 
     <nav class="nav">
-      <button class="nav-btn active" data-tab="schedule">График</button>
+      <button class="nav-btn active" data-tab="schedule">Общее</button>
       <button class="nav-btn" data-tab="prep">Подготовительные работы</button>
       <button class="nav-btn" data-tab="main">Проекты</button>
       <button class="nav-btn" data-tab="chrono">Хронология</button>
@@ -871,6 +888,11 @@
       </div>
     </div>
   </header>
+
+  <div class="subnav">
+    <button class="subnav-btn active" data-view="info">Общая информация</button>
+    <button class="subnav-btn" data-view="schedule">Общий график</button>
+  </div>
 
   <main class="content">
     <div id="tab-schedule" class="tab active">
@@ -1278,12 +1300,9 @@
           }
           const s = starts[0], e = ends.length ? ends[ends.length - 1] : today;
           const pct = objPct(rows);
-          const started = rows.some(r => r.factStart);
           const late = pct < 100 && e < today || (smrStart[p.code.split("-")[0]] && e > smrStart[p.code.split("-")[0]]);
           const left = pos(s), width = Math.max(1.5, pos(e) - pos(s));
-          let bar;
-          if (!started && pct === 0) bar = `<div class="pg-bar plan-only" style="left:${left}%;width:${width}%"></div>`;
-          else bar = `<div class="pg-bar" style="left:${left}%;width:${width}%"><div class="pg-fill${late ? " late" : ""}" style="width:${pct}%"></div></div>`;
+          const bar = `<div class="pg-bar" style="left:${left}%;width:${width}%"></div>`;
           const fmtD = d => d ? d.slice(8,10) + "." + d.slice(5,7) + "." + d.slice(2,4) : "—";
           const fEnds = rows.map(r => r.factEnd).filter(Boolean).sort();
           const fStarts = rows.map(r => r.factStart).filter(Boolean).sort();
@@ -1312,20 +1331,13 @@
         });
         if (!rowsHtml) return `<div class="prep-loading">Нет данных для графика</div>`;
 
-        return `<div class="prep-gantt">
+        return `<div class="prep-gantt proj-gantt">
           <div class="pg-head"><span style="width:380px"></span><span style="width:124px;text-align:center">план нач. / оконч.</span><span style="width:124px;text-align:center">факт нач. / оконч.</span><span style="width:144px;text-align:center">прогресс: план / факт / δ</span><span style="width:120px;text-align:center">стоим. / освоено, млрд</span></div>
           <div class="pg-scale-year">${yearRow}</div>
           <div class="pg-scale-month">${monthRow}</div>
           <div class="pg-body">
             <div class="pg-now" style="left:calc(772px + (100% - 772px) * ${(nowPos / 100).toFixed(3)})"></div>
             ${rowsHtml}
-          </div>
-          <div class="pg-legend">
-            <span><span class="pg-sw" style="background:#0a1e3d"></span> выполнено</span>
-            <span><span class="pg-sw" style="background:#7da7d9"></span> план</span>
-            <span><span class="pg-sw" style="background:#b91c1c"></span> отставание</span>
-            <span><span class="pg-sw" style="background:#e5e7eb;border:1px dashed #9ca3af"></span> не начато</span>
-            <span style="color:#b91c1c">│ сегодня</span>
           </div>
         </div>`;
       }
