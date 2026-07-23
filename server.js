@@ -94,7 +94,7 @@ app.get("/api/me", async (req, res) => {
     return res.status(401).json({ message: "Не авторизован" });
   }
   const user = await User.findById(req.session.userId);
-  res.json({ username: user.username, name: user.name || user.username, role: user.role || "user" });
+  res.json({ username: user.username, name: user.name || user.username, role: user.role || "user", avatar: user.avatar || "" });
 });
 
 // Выход
