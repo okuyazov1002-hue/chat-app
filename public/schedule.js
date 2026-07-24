@@ -105,7 +105,6 @@ async function renderSchedule() {
     if (!d.s) {
       return `<div class="pg-row ${cls}"><span class="pg-name">${arr}${name}</span>
         <span class="pg-cell">—</span><span class="pg-cell">—</span>
-        <span class="pg-cell">—</span><span class="pg-cell">—</span>
         <span class="pg-pct">—</span><span class="pg-pct">—</span><span class="pg-pct">—</span>
         <div class="pg-track"><div class="pg-zoom"></div></div></div>`;
     }
@@ -119,7 +118,6 @@ async function renderSchedule() {
     return `<div class="pg-row ${cls}">
       <span class="pg-name${late ? " late" : ""}">${arr}${name}</span>
       <span class="pg-cell">${fmtD(d.s)}</span><span class="pg-cell">${fmtD(d.e)}</span>
-      <span class="pg-cell">${fmtD(d.fs)}</span><span class="pg-cell">${fmtD(d.fe)}</span>
       <span class="pg-pct">${d.planPct}%</span><span class="pg-pct">${d.pct}%</span>
       <span class="pg-pct${diff < 0 ? " neg" : ""}">${diff > 0 ? "+" : ""}${diff}%</span>
       <div class="pg-track"><div class="pg-zoom">${bar}</div></div></div>`;
@@ -195,10 +193,11 @@ async function renderSchedule() {
       </div>
     </div>
     <div class="prep-gantt sch-gantt" id="schGantt" style="--gw:100%;--gx:0%">
-      <div class="pg-head"><span style="width:420px"></span><span style="width:124px;text-align:center">план нач. / оконч.</span><span style="width:124px;text-align:center">факт нач. / оконч.</span><span style="width:144px;text-align:center">прогресс: план / факт / δ</span></div>
       <div class="sch-slider" id="schSliderWrap" style="display:none"><input type="range" id="schSlider" min="0" max="0" step="0.1" value="0"></div>
-      <div class="pg-scale-year"><span></span><div class="pg-zoomer"><div class="pg-zoom" id="schYearRow"></div></div></div>
-      <div class="pg-scale-month"><span></span><div class="pg-zoomer"><div class="pg-zoom" id="schRow2"></div></div></div>
+      <div class="sch-scale-sticky">
+        <div class="pg-scale-year"><span class="pg-head-row1"><span style="width:420px"></span><span style="width:124px;text-align:center">Плановый</span><span style="width:144px;text-align:center">Прогресс</span></span><div class="pg-zoomer"><div class="pg-zoom" id="schYearRow"></div></div></div>
+        <div class="pg-scale-month"><span class="pg-head-row2"><span style="width:420px"></span><span class="pg-head-group" style="width:124px"><span>начало</span><span>окончание</span></span><span class="pg-head-group" style="width:144px"><span>план</span><span>факт</span><span>δ</span></span></span><div class="pg-zoomer"><div class="pg-zoom" id="schRow2"></div></div></div>
+      </div>
       <div class="pg-body">
         <div class="pg-now" id="schNow"></div>
         ${rowsHtml}
@@ -232,17 +231,37 @@ async function renderSchedule() {
     const p = nowPos / 100 * K - gx;
     if (p < 0 || p > 100) { el.style.display = "none"; return; }
     el.style.display = "";
-    el.style.left = `calc(812px + (100% - 812px) * ${(p / 100).toFixed(4)})`;
+    el.style.left = `calc(688px + (100% - 688px) * ${(p / 100).toFixed(4)})`;
   }
   function setGx(v) { gEl.style.setProperty("--gx", v + "%"); updateNow(v); }
   slider.addEventListener("input", e => setGx(parseFloat(e.target.value)));
+  let dragging = false, dragStartX = 0, dragStartGx = 0;
+  gEl.addEventListener("pointerdown", e => {
+    if (K <= 100) return;
+    dragging = true;
+    dragStartX = e.clientX;
+    dragStartGx = parseFloat(slider.value) || 0;
+    gEl.style.cursor = "grabbing";
+    e.preventDefault();
+  });
+  window.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    const w = gEl.querySelector(".pg-zoomer").getBoundingClientRect().width;
+    const pctDelta = -(e.clientX - dragStartX) / w * 100;
+    let newGx = dragStartGx + pctDelta;
+    const max = parseFloat(slider.max) || 0;
+    newGx = Math.max(0, Math.min(max, newGx));
+    slider.value = newGx;
+    setGx(newGx);
+  });
+  window.addEventListener("pointerup", () => { dragging = false; gEl.style.cursor = ""; });
 
   function applyMode(mode) {
     const sc = buildScale(mode);
     K = sc.K;
     document.getElementById("schYearRow").innerHTML = sc.yearSpans;
     document.getElementById("schRow2").innerHTML = sc.row2;
-    document.querySelector(".pg-scale-month").style.display = sc.row2 ? "" : "none";
+    document.querySelector(".pg-scale-month .pg-zoomer").style.visibility = sc.row2 ? "visible" : "hidden";
     gEl.style.setProperty("--gw", K + "%");
     if (K > 100) {
       sliderWrap.style.display = "";
