@@ -40,14 +40,21 @@
       top: 0;
       z-index: 2;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 28px;
+      flex-direction: row;
+      padding: 0;
       background: rgba(10, 22, 40, 0.45);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.14);
     }
+    .topbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 28px;
+      background: #2e3d54;
+    }
+    .topbar-left { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 
     /* Логотип */
     .logo { display: flex; align-items: center; gap: 14px; color: #fff; }
@@ -59,14 +66,14 @@
       font-weight: 800; font-size: 15px; letter-spacing: 0.5px;
     }
     .logo-text .title { font-size: 15px; font-weight: 700; letter-spacing: 0.4px; }
-    .logo-text .subtitle { font-size: 11.5px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+    .logo-text .subtitle { font-size: 16px; font-weight: 600; color: #fff; margin-top: 0; }
 
     /* Навигация по разделам */
-    .nav { display: flex; gap: 0px; flex-wrap: wrap; margin-left: 28px; margin-right: auto; align-items: stretch; align-self: stretch; margin-top: -10px; margin-bottom: -10px; }
+    .nav { display: flex; gap: 0px; flex-wrap: wrap; }
     .nav-btn {
       display: flex; align-items: center;
-      padding: 0 16px;
-      font-size: 14px;
+      padding: 14px 26px;
+      font-size: 16px;
       font-weight: 600;
       color: rgba(255, 255, 255, 0.75);
       background: none;
@@ -76,11 +83,12 @@
       transition: all 0.2s ease;
     }
     .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
-    .subnav { display: flex; background: #0a1e3d; }
+    .subnav { display: flex; background: rgba(10, 22, 40, 0.45); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); position: relative; z-index: 2; }
     .subnav-btn {
-      flex: 1;
+      
       padding: 10px 16px;
       text-align: center;
+      min-width: 230px;
       font-size: 14px;
       font-weight: 600;
       color: rgba(255, 255, 255, 0.7);
@@ -96,7 +104,7 @@
     .nav-drop-btn {
       background: none; border: 1px solid transparent; cursor: pointer;
       color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 600;
-      padding: 0 16px; border-radius: 999px;
+      padding: 14px 26px; border-radius: 999px;
     }
     .nav-drop-btn:hover, .nav-drop.open .nav-drop-btn { color: #fff; background: rgba(255,255,255,0.08); }
     .nav-drop-list {
@@ -121,7 +129,7 @@
     .ct-dots:hover { background: #2e3d54; }
     .ct-edited { color: #b8860b; font-size: 11px; }
     .ct-ctx { position: fixed; z-index: 999; background: #fff; border: 1px solid #d5dbe5; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.18); overflow: hidden; }
-    .ct-ctx button { display: block; width: 100%; text-align: left; background: none; border: none; padding: 0 16px; font-size: 13px; cursor: pointer; color: #1c2a3d; }
+    .ct-ctx button { display: block; width: 100%; text-align: left; background: none; border: none; padding: 14px 26px; font-size: 13px; cursor: pointer; color: #1c2a3d; }
     .ct-ctx button:hover { background: #eef2f8; }
     .chrono-table td { word-wrap: break-word; }
     .chrono-table th, .chrono-table td { border: 1px solid #e3e8f0; padding: 7px 10px; text-align: left; vertical-align: top; }
@@ -223,13 +231,13 @@
     }
 
     /* Кнопка пользователя */
-    .user-menu { position: relative; align-self: stretch; margin: -10px -28px -10px 0; display: flex; }
+    .user-menu { position: relative; align-self: stretch; margin: 0; display: flex; }
     .user-btn {
-      height: 100%;
+      padding: 12px 21px;
       display: flex; align-items: center; gap: 10px;
-      padding: 0 24px;
+      
 
-      font-size: 15px; font-weight: 600; color: #fff;
+      font-size: 13.5px; font-weight: 600; color: #fff;
       background: rgba(255, 255, 255, 0.12);
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 0px;
@@ -238,7 +246,7 @@
     }
     .user-btn:hover { background: rgba(255, 255, 255, 0.2); }
     .user-btn .avatar {
-      width: 34px; height: 34px; border-radius: 50%; overflow: hidden;
+      width: 30px; height: 30px; border-radius: 50%; overflow: hidden;
       background: #fff; color: #0a1628;
       display: flex; align-items: center; justify-content: center;
       font-size: 13px; font-weight: 700;
@@ -859,23 +867,24 @@
   <div class="bg"></div>
 
   <header class="topbar">
-    <div class="logo">
-      <img class="logo-mark" src="logo.png" alt="ДСОМК" style="object-fit:contain;">
-      <div class="logo-text">
-        <div class="title">ДСОМК</div>
-        <div class="subtitle">Дирекция Строительства Объектов Металлургического Комплекса</div>
+    <div class="topbar-left">
+      <div class="topbar-row">
+        <div class="logo">
+          <div class="logo-text">
+            <div class="subtitle">Дирекция Строительства Объектов Металлургического Комплекса</div>
+          </div>
+        </div>
+      </div>
+      <div class="subnav" id="subnav">
+        <button class="subnav-btn active" data-tab="info">Общая информация</button>
+        <button class="subnav-btn" data-tab="schedule">Общий график</button>
+        <button class="subnav-btn" data-tab="prep">Подготовительные работы</button>
+        <button class="subnav-btn" data-tab="main">Проекты</button>
+        <button class="subnav-btn" data-tab="chrono">Хронология</button>
+        <button class="subnav-btn" data-tab="personnel">Персонал</button>
+        <button class="subnav-btn" data-tab="risk">Риск</button>
       </div>
     </div>
-
-    <nav class="nav">
-      <button class="nav-btn active" data-tab="schedule">Общее</button>
-      <button class="nav-btn" data-tab="prep">Подготовительные работы</button>
-      <button class="nav-btn" data-tab="main">Проекты</button>
-      <button class="nav-btn" data-tab="chrono">Хронология</button>
-      <button class="nav-btn" data-tab="personnel">Персонал</button>
-      <button class="nav-btn" data-tab="risk">Риск</button>
-    </nav>
-
     <div class="user-menu">
       <button class="user-btn" id="userBtn">
         <span class="avatar" id="avatar">?</span>
@@ -889,13 +898,13 @@
     </div>
   </header>
 
-  <div class="subnav">
-    <button class="subnav-btn active" data-view="info">Общая информация</button>
-    <button class="subnav-btn" data-view="schedule">Общий график</button>
-  </div>
 
   <main class="content">
-    <div id="tab-schedule" class="tab active">
+    <div id="tab-info" class="tab active">
+      <h2 class="tab-title">Общая информация</h2>
+      <p class="tab-empty">Раздел в разработке — здесь будет общая информация.</p>
+    </div>
+    <div id="tab-schedule" class="tab">
       <h2 class="tab-title">Общий график</h2>
       <p class="tab-empty">Раздел в разработке — здесь будет общий график работ.</p>
     </div>
@@ -2399,9 +2408,9 @@
       new ResizeObserver(updateHeaderHeight).observe(document.querySelector(".topbar"));
     }
 
-    document.querySelectorAll(".nav-btn").forEach(btn => {
+    document.querySelectorAll(".subnav-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".subnav-btn").forEach(b => b.classList.remove("active"));
         document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
         btn.classList.add("active");
         document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
@@ -2410,8 +2419,8 @@
         document.getElementById("projects-dashboard-full").style.display = btn.dataset.tab === "main" ? "block" : "none";
       });
     });
-    document.getElementById("projects-sidebar").style.display = document.querySelector('.nav-btn[data-tab="main"]').classList.contains("active") ? "flex" : "none";
-    document.getElementById("projects-dashboard-full").style.display = document.querySelector('.nav-btn[data-tab="main"]').classList.contains("active") ? "block" : "none";
+    document.getElementById("projects-sidebar").style.display = document.querySelector('.subnav-btn[data-tab="main"]').classList.contains("active") ? "flex" : "none";
+    document.getElementById("projects-dashboard-full").style.display = document.querySelector('.subnav-btn[data-tab="main"]').classList.contains("active") ? "block" : "none";
 
     // Экспорт таблицы в Excel
     const REPORT_COLUMNS = [
