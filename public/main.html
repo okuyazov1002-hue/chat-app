@@ -8,6 +8,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root { --dim: 0.75; }
 
+    html, body { overflow-x: hidden; }
     body {
       font-family: -apple-system, "SF Pro Display", "Segoe UI", Arial, sans-serif;
       min-height: 100vh;
@@ -97,7 +98,9 @@
       border-radius: 0;
       cursor: pointer;
       transition: all 0.2s ease;
+      position: relative; z-index: 1;
     }
+    .subnav-btn:hover { transform: scale(1.05); z-index: 2; }
     .subnav-btn.active { color: #fff; background: rgba(255, 255, 255, 0.12); }
     .subnav-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
     .nav-drop { position: relative; display: inline-block; }
@@ -207,9 +210,15 @@
     #tab-main .tab-title, #tab-aux .tab-title { display: none; }
     #tab-aux.active { margin-top: 10px; }
     .prep-sec-title { color: #fff; font-size: 17px; margin: 22px 0 10px; }
-    .prep-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 12px; }
-    .pk-card { background: #fff; border: 1px solid #e3e8f0; border-radius: 10px; padding: 12px 14px; color: #1c2a3d; }
-    .pk-label { font-size: 12px; color: #5c6b82; margin-bottom: 6px; }
+    .prep-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0; }
+    #prepStickyWrap { position: sticky; top: 0; z-index: 4; margin: 0 -28px; }
+    .prep-board { display: flow-root; }
+    .pk-card { background: linear-gradient(135deg, #0a1e3d, #16345c); border: none; border-radius: 0; padding: 6px 16px; color: #fff; }
+    
+    #tab-prep .tab-title { display: none; }
+    #tab-prep { position: fixed; left: 0; right: 0; top: var(--header-h, 73px); bottom: 0; overflow: hidden; padding: 0 28px; box-sizing: border-box; }
+    .kpi-row.prep-kpi { gap: 0; }
+    .pk-label { font-size: 12px; color: rgba(255,255,255,0.65); margin-bottom: 6px; }
     .pk-big { font-size: 22px; font-weight: 700; }
     .pk-big small, .pk-mid small { font-size: 12px; color: #5c6b82; font-weight: 400; }
     .pk-mid { font-size: 19px; font-weight: 700; }
@@ -220,7 +229,7 @@
     .pk-two small { font-size: 11px; color: #5c6b82; }
     .pk-bad { color: #c0392b; }
     .pk-good { color: #1d9e75; }
-    .pk-note { font-size: 11.5px; color: #5c6b82; margin-top: 4px; }
+    .pk-note { font-size: 11.5px; color: rgba(255,255,255,0.75); margin-top: 4px; }
     .pg-money { width: 60px; text-align: right; font-size: 10.5px; font-variant-numeric: tabular-nums; }
     .pg-click { cursor: pointer; }
     .pg-click:hover .pg-name { color: #7da7d9; }
@@ -346,7 +355,7 @@
     .pdash-sq-btn { border-radius: 0 !important; background: #a5c2e4 !important; border-color: #a5c2e4 !important; color: #0a1628 !important; }
     .pdash-stage-cards { display: grid; gap: 0; }
     .pdash-stage-card {
-      padding: 14px 16px; color: #fff;
+      padding: 6px 16px; color: #fff;
       transition: transform 0.2s ease;
       position: relative; z-index: 1;
     }
@@ -627,17 +636,72 @@
       gap: 10px;
     }
     .kpi-card {
-      background: #f3f4f6;
-      border-radius: 10px;
-      padding: 12px 14px;
+      background: linear-gradient(135deg, #0a1e3d, #16345c);
+      border-radius: 0;
+      padding: 6px 16px;
+      color: #fff;
+      position: relative; z-index: 1;
+      transition: transform 0.2s ease;
     }
-    .kpi-label { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
-    .kpi-title { font-size: 12.5px; font-weight: 700; color: #2e3d54; margin-bottom: 8px; }
-    .kpi-big { font-size: 20px; font-weight: 700; color: #0a1628; white-space: nowrap; margin-bottom: 8px; }
-    .kpi-mid { font-size: 14px; font-weight: 600; color: #0a1628; }
+    .kpi-card:hover { transform: scale(1.02); z-index: 2; }
+    .kpi-inout-wrap { display: flex; flex-direction: column; gap: 0; height: 100%; }
+    .prep-kpi-footer { height: 44px; background: #0a1e3d; margin: 0; display: flex; justify-content: flex-start; align-items: stretch; position: relative; }
+    .prep-data-btn { height: 100%; width: 130px; padding: 0; background: rgba(255,255,255,0.08); border: none; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s ease; }
+    .prep-data-btn:hover { background: rgba(255,255,255,0.16); }
+    .prep-footer-label { display: flex; align-items: center; padding-left: 16px; color: #fff; font-size: 20px; font-weight: 700; }
+    .prep-toolbar-collapse {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 130px;
+      padding: 0;
+      border-radius: 0;
+      background: rgba(10, 22, 40, 0.92);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-12px);
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+      overflow: hidden;
+    }
+    .prep-toolbar-collapse.open { opacity: 1; visibility: visible; transform: translateY(0); }
+    .prep-toolbar-collapse button {
+      appearance: none; -webkit-appearance: none;
+      font-family: inherit;
+      outline: none;
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 11px 14px;
+      font-size: 14.5px;
+      color: #fff;
+      background: none;
+      border: none;
+      border-radius: 0;
+      text-align: left;
+      cursor: pointer;
+    }
+    .prep-toolbar-collapse button:hover { background: rgba(255, 255, 255, 0.12); }
+    .kpi-inout { flex: 1; display: flex; justify-content: center; align-items: center; font-size: 15px; font-weight: 700; padding: 0; cursor: pointer; }
+    .kpi-inout.active { background: linear-gradient(135deg, #16345c, #2c5c8f); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.5); }
+    
+    .kpi-readiness-row { display: flex; gap: 10px; margin-bottom: 6px; }
+    .kpi-readiness-item { text-align: center; flex: 1; }
+    .kpi-readiness-val { font-size: 16px; font-weight: 700; color: #fff; }
+    .kpi-readiness-lbl { font-size: 10px; color: rgba(255,255,255,0.65); }
+    .prep-kpi .kpi-card:nth-child(2) { background: linear-gradient(135deg, #123456, #1e4a73); }
+    .prep-kpi .kpi-card:nth-child(3) { background: linear-gradient(135deg, #16345c, #2c5c8f); }
+    .kpi-label { font-size: 11px; color: rgba(255,255,255,0.65); margin-bottom: 4px; }
+    .kpi-title { font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,0.85); margin-bottom: 8px; }
+    .kpi-big { font-size: 20px; font-weight: 700; color: #fff; white-space: nowrap; margin-bottom: 8px; }
+    .kpi-mid { font-size: 14px; font-weight: 600; color: #fff; }
     .kpi-stages { margin-top: 8px; border-top: 1px solid #e5e7eb; padding-top: 6px; }
-    .kpi-stage-row { display: flex; justify-content: space-between; gap: 8px; font-size: 10.5px; color: #374151; padding: 2px 0; white-space: nowrap; }
-    .kpi-stage-row span:first-child { color: #6b7280; }
+    .kpi-stage-row { display: flex; justify-content: space-between; gap: 8px; font-size: 10.5px; color: #fff; padding: 2px 0; white-space: nowrap; }
+    .kpi-stage-row span:first-child { color: rgba(255,255,255,0.65); }
     .kpi-flex { display: flex; gap: 18px; }
     .kpi-dates { font-size: 15px; font-weight: 700; color: #0a1628; white-space: nowrap; margin-bottom: 8px; }
     .kpi-wide { grid-column: span 2; }
@@ -713,13 +777,13 @@
     .gantt-scale { display: flex; flex: 1; }
     .gantt-year { text-align: center; font-size: 11px; font-weight: 600; color: #374151; border-left: 1px solid #d1d5db; }
     .gantt-month { text-align: center; font-size: 9px; color: #6b7280; overflow: hidden; }
-    .prep-kpi { grid-template-columns: repeat(4, 1fr); }
+    .prep-kpi { grid-template-columns: 130px 0.8fr 0.8fr 1.1fr 1.1fr; }
     .prep-red { background: #fde8e8; }
     .prep-red .kpi-label, .prep-red .kpi-big { color: #b91c1c; }
-    .prep-bar { height: 6px; background: #e5e7eb; border-radius: 3px; margin-top: 6px; overflow: hidden; }
-    .prep-bar > div { height: 100%; background: #0a1e3d; }
+    .prep-bar { height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+    .prep-bar > div { height: 100%; background: #7da7d9; }
     .prep-loading { color: #9ca3af; font-size: 13px; padding: 20px; }
-    #prep-groups { margin-top: 16px; }
+    #prep-groups { margin-top: 0; }
     .prep-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
     @media (max-width: 1100px) { .prep-charts { grid-template-columns: 1fr; } }
     .prep-objs { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 10px; }
@@ -746,9 +810,9 @@
     .pd-nums { font-size: 10.5px; color: #6b7280; }
     .pd-comment { width: 100%; min-height: 48px; font-size: 11px; color: #374151; border: 1px solid #e5e7eb; border-radius: 6px; padding: 6px 8px; font-family: inherit; resize: vertical; }
     .prep-cost-table { width: 100%; border-collapse: collapse; }
-    .prep-cost-table th { font-size: 10.5px; color: #6b7280; font-weight: 400; text-align: right; padding: 2px 0; }
-    .prep-cost-table td { text-align: right; padding: 2px 0 2px 10px; color: #0a1628; white-space: nowrap; }
-    .prep-cost-table th:first-child, .prep-cost-table td:first-child { text-align: left; color: #6b7280; font-size: 11px; }
+    .prep-cost-table th { font-size: 10.5px; color: rgba(255,255,255,0.65); font-weight: 400; text-align: right; padding: 2px 0; }
+    .prep-cost-table td { text-align: right; padding: 2px 0 2px 10px; color: #fff; white-space: nowrap; }
+    .prep-cost-table th:first-child, .prep-cost-table td:first-child { text-align: left; color: rgba(255,255,255,0.65); font-size: 11px; }
     .prep-cost-table tr.pcm td { font-weight: 700; }
     .prep-cost-table tr.pcm td:nth-child(2) { font-size: 15px; }
     .prep-cost-table tr.pcm td:nth-child(3), .prep-cost-table tr.pcm td:nth-child(4) { font-size: 13px; }
@@ -757,12 +821,12 @@
     .prep-crit-title { font-size: 13px; font-weight: 700; color: #b91c1c; margin-bottom: 8px; }
     .prep-crit-row { font-size: 12px; color: #374151; padding: 3px 0; }
     .prep-crit-days { color: #b91c1c; font-weight: 700; margin-left: 8px; }
-    .prep-group { margin-bottom: 10px; }
-    .prep-group-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; cursor: pointer; background: rgba(255,255,255,0.07); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 14px 18px; }
-    .prep-group.open .prep-group-head { border-radius: 14px 14px 0 0; }
-    .prep-group-title { font-size: 14px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .prep-group { margin-bottom: 10px; display: none; }
+    .prep-group.shown { display: block; }
+    .prep-group-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; background: linear-gradient(to right, #0a1e3d, #16345c); border: none; border-radius: 0; padding: 14px 18px; }
+        .prep-group-title { font-size: 14px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
     .prep-group-title small { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 400; }
-    .prep-verdict { font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 6px; }
+    .prep-verdict { font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 0; }
     .prep-verdict.bad { background: #fde8e8; color: #b91c1c; }
     .pg-head-group { display: flex; }
     .pg-head-group span { flex: 1; text-align: center; }
@@ -770,10 +834,39 @@
     .prep-group-stats { display: flex; gap: 14px; font-size: 11.5px; color: rgba(255,255,255,0.65); align-items: center; }
     .prep-group-stats b { color: #fff; }
     .prep-group-stats .red { color: #b91c1c; }
-    .prep-minibar { width: 90px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; }
+    .prep-minibar { width: 90px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 0; overflow: hidden; display: inline-block; vertical-align: middle; }
     .prep-minibar > div { height: 100%; background: #7da7d9; }
-    .prep-group-body { display: none; background: #fff; border-radius: 0 0 14px 14px; padding: 12px 14px; }
-    .prep-group.open .prep-group-body { display: block; }
+    .prep-group-body { display: block; background: transparent; border-radius: 0; padding: 0; margin: 0 -28px; }
+    .prep-group-kpi { display: grid; grid-template-columns: minmax(100px, 210px) minmax(100px, 210px) minmax(100px, 210px) minmax(250px, 840px) minmax(80px, 1fr); grid-template-rows: minmax(220px, auto); gap: 0; width: 100%; max-width: 100%; overflow: hidden; }
+    .prep-group-kpi .pk-card:nth-child(1) { grid-column: 1; grid-row: 1; }
+    .prep-group-kpi .pk-card:nth-child(2) { grid-column: 3; grid-row: 1; }
+    .prep-group-kpi .pk-card:nth-child(3) { grid-column: 2; grid-row: 1; }
+    .prep-group-kpi .pk-card:nth-child(4) { grid-column: 4; grid-row: 1; padding: 0; }
+    .prep-group-kpi .pk-card:nth-child(5) { grid-column: 5; grid-row: 1; background: linear-gradient(135deg, #1e4a73, #2c5c8f); }
+    .prep-note-area { width: 100%; height: 100%; min-height: 100%; background: transparent; border: none; color: #fff; font-size: 12.5px; font-family: inherit; resize: none; outline: none; }
+    .prep-note-area::placeholder { color: rgba(255,255,255,0.4); }
+    .pk-chart-wrap { width: 100%; height: 100%; overflow: hidden; }
+    .prep-obj-list { background: #0f2b52; margin-top: 0; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
+    .prep-obj-list::-webkit-scrollbar { display: none; }
+    .prep-obj-head, .prep-obj-row { display: grid; grid-template-columns: 340px 80px 80px 110px 100px 100px 60px 60px 60px 90px minmax(200px, 1fr); font-size: 11px; padding: 7px 10px; align-items: center; }
+    .prep-obj-gantt-track { position: relative; overflow: hidden; height: 100%; cursor: grab; }
+    .prep-obj-gantt-track.dragging { cursor: grabbing; }
+    .prep-obj-gantt-inner { position: relative; height: 100%; transform: translateX(var(--gantt-offset, 0px)); }
+    .prep-obj-head .prep-obj-gantt-inner { height: 26px; }
+    .prep-obj-gantt-year { position: absolute; top: 0; font-size: 9.5px; font-weight: 700; color: rgba(255,255,255,0.65); white-space: nowrap; transform: translateX(-50%); }
+    .prep-obj-gantt-yeardiv { position: absolute; top: 0; bottom: 0; border-left: 1px solid rgba(255,255,255,0.15); }
+    .prep-obj-gantt-month { position: absolute; bottom: 0; font-size: 8.5px; color: rgba(255,255,255,0.4); white-space: nowrap; }
+    .prep-obj-gantt-bar { position: absolute; top: 4px; bottom: 4px; background: #7da7d9; border-radius: 2px; }
+    .prep-obj-gantt-bar.done { background: #5dcaa5; }
+    .prep-obj-gantt-bar.late { background: #e24b4a; }
+    .prep-obj-row > div:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .prep-obj-head { color: rgba(255,255,255,0.55); font-size: 10.5px; border-bottom: 1px solid rgba(255,255,255,0.12); position: sticky; top: 0; background: #0f2b52; z-index: 6; }
+    .prep-obj-row { border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .prep-obj-status { font-size: 9.5px; padding: 2px 6px; display: inline-block; width: fit-content; }
+    .prep-group-kpi .pk-card:nth-child(1) { background: linear-gradient(135deg, #0a1e3d, #16345c); }
+    .prep-group-kpi .pk-card:nth-child(2) { background: linear-gradient(135deg, #123456, #1e4a73); }
+    .prep-group-kpi .pk-card:nth-child(3) { background: linear-gradient(135deg, #16345c, #2c5c8f); }
+    .prep-group-kpi .pk-card:nth-child(4) { background: linear-gradient(135deg, #1a4066, #3568a0); }
     .prep-gantt { background: #fff; border-radius: 8px; padding: 10px 12px; }
     .sch-gantt { border-radius: 0; margin: 0; padding-top: 0; padding-left: 0; cursor: default; background: linear-gradient(135deg, #eef2f7, #dbe4ee); }
     #tab-schedule { margin: -40px -28px 0 -28px; }
@@ -1387,22 +1480,37 @@
         </div>`;
       }
 
-      let done = 0, inWork = 0, notStarted = 0, totalCost = 0, doneCost = 0, totalCostVat = 0, totalFact = 0, inC = { cost: 0, done: 0, fact: 0 }, exC = { cost: 0, done: 0, fact: 0 };
+      let done = 0, inWork = 0, notStarted = 0, totalCost = 0, doneCost = 0, totalCostVat = 0, totalFact = 0, planNowAll = 0, planCostAll = 0, inC = { cost: 0, done: 0, fact: 0 }, exC = { cost: 0, done: 0, fact: 0 };
       const effCost = r => /заверш/i.test(r.status || "") ? Math.min(r.cost || 0, r.done || 0) || (r.done || r.cost || 0) : (r.cost || 0);
+      const effCostRule = r => {
+        if (/заверш/i.test(r.status || "")) return r.costFact || 0;
+        return /внутр/i.test(r.contractor || "") ? (r.cost || 0) : (r.costVat || 0);
+      };
+      const today = new Date().toISOString().slice(0, 10);
       prepItems.forEach(p => {
         const rows = reports[p.code];
         totalCost += rows.reduce((s, r) => s + effCost(r), 0);
         doneCost += rows.reduce((s, r) => s + (r.done || 0), 0);
-        totalCostVat += rows.reduce((s, r) => s + (r.costVat || 0), 0);
+        totalCostVat += rows.reduce((s, r) => s + effCostRule(r), 0);
         totalFact += rows.reduce((s, r) => s + (r.costFact || 0), 0);
         let wIn = 0, wEx = 0;
         rows.forEach(r => {
           const c = /внутр/i.test(r.contractor || "") ? inC : (/внеш/i.test(r.contractor || "") ? exC : null);
           if (!c) return;
-          c.cost += r.costVat || 0;
+          c.cost += effCostRule(r);
           c.fact += r.costFact || 0;
           c.done += r.done || 0;
           if (c === inC) wIn += r.costVat || 0; else wEx += r.costVat || 0;
+        });
+        rows.forEach(r => {
+          if (!r.planStart) return;
+          planCostAll += r.cost || 0;
+          const pe = r.forecastEnd || r.planEnd || today;
+          if (today >= pe) planNowAll += r.cost || 0;
+          else if (today > r.planStart) {
+            const t = (new Date(today) - new Date(r.planStart)) / (new Date(pe) - new Date(r.planStart));
+            planNowAll += (r.cost || 0) * t;
+          }
         });
         const oc = wIn >= wEx && wIn > 0 ? inC : (wEx > 0 ? exC : null);
         if (oc) {
@@ -1418,6 +1526,8 @@
         else inWork++;
       });
       const readiness = totalFact ? Math.min(100, Math.round(doneCost / totalFact * 100)) : 0;
+      const readinessPlan = planCostAll ? Math.min(100, Math.round(planNowAll / planCostAll * 100)) : 0;
+      const readinessDelta = readiness - readinessPlan;
 
       // Объекты, блокирующие старт СМР основных проектов
       const blockers = [];
@@ -1433,7 +1543,12 @@
       blockers.sort((a, b) => b.days - a.days);
 
       document.getElementById("prep-board").innerHTML = `
+        <div id="prepStickyWrap">
         <div class="kpi-row prep-kpi">
+          <div class="kpi-inout-wrap">
+            <div class="kpi-card kpi-inout" id="prepFilterIn" data-par="in">Внутренний</div>
+            <div class="kpi-card kpi-inout" id="prepFilterEx" data-par="ex">Внешний</div>
+          </div>
           <div class="kpi-card">
             <table class="prep-cost-table">
               <tr><th></th><th>Всего</th><th>Заверш.</th><th>Выполн.</th><th>Не нач.</th></tr>
@@ -1443,18 +1558,21 @@
             </table>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">Готовность подготовки</div>
-            <div class="kpi-big">${readiness}%</div>
+            <div class="kpi-readiness-row">
+              <div class="kpi-readiness-item"><div class="kpi-readiness-val">${readinessPlan}%</div><div class="kpi-readiness-lbl">План</div></div>
+              <div class="kpi-readiness-item"><div class="kpi-readiness-val">${readiness}%</div><div class="kpi-readiness-lbl">Факт</div></div>
+              <div class="kpi-readiness-item"><div class="kpi-readiness-val">${readinessDelta > 0 ? "+" : ""}${readinessDelta}%</div><div class="kpi-readiness-lbl">δ</div></div>
+            </div>
             <div class="prep-bar"><div style="width:${readiness}%"></div></div>
             <div class="kpi-stage-row" style="margin-top:8px;"><span>Внутренний</span><span>${inC.fact ? Math.min(100, Math.round(inC.done / inC.fact * 100)) : 0}%</span></div>
             <div class="kpi-stage-row"><span>Внешний</span><span>${exC.fact ? Math.min(100, Math.round(exC.done / exC.fact * 100)) : 0}%</span></div>
           </div>
           <div class="kpi-card">
             <table class="prep-cost-table">
-              <tr><th></th><th>Стоимость с НДС</th><th>Освоено</th><th>Остаток</th></tr>
-              <tr class="pcm"><td></td><td>${money(totalCostVat).replace(" €", "")}</td><td>${money(doneCost).replace(" €", "")}</td><td>${money(totalFact - doneCost).replace(" €", "")}</td></tr>
-              <tr class="pcc"><td>Внутренний</td><td>${money(inC.cost).replace(" €", "")}</td><td>${money(inC.done).replace(" €", "")}</td><td>${money(inC.fact - inC.done).replace(" €", "")}</td></tr>
-              <tr class="pcc"><td>Внешний</td><td>${money(exC.cost).replace(" €", "")}</td><td>${money(exC.done).replace(" €", "")}</td><td>${money(exC.fact - exC.done).replace(" €", "")}</td></tr>
+              <tr><th></th><th>Стоимость</th><th>Выполнено</th><th>Остаток</th></tr>
+              <tr class="pcm"><td></td><td>${money(totalCostVat).replace(" €", "")}</td><td>${money(doneCost).replace(" €", "")}</td><td>${money(totalCostVat - doneCost).replace(" €", "")}</td></tr>
+              <tr class="pcc"><td>Внутренний</td><td>${money(inC.cost).replace(" €", "")}</td><td>${money(inC.done).replace(" €", "")}</td><td>${money(inC.cost - inC.done).replace(" €", "")}</td></tr>
+              <tr class="pcc"><td>Внешний</td><td>${money(exC.cost).replace(" €", "")}</td><td>${money(exC.done).replace(" €", "")}</td><td>${money(exC.cost - exC.done).replace(" €", "")}</td></tr>
             </table>
           </div>
           <div class="kpi-card prep-red">
@@ -1463,10 +1581,16 @@
             <div class="kpi-label">${blockers.length ? "объектов срывают старт смр" : "срывов старта смр нет"}</div>
           </div>
         </div>
-        <div class="panel-toolbar" style="margin-top:12px;">
-          <button class="panel-btn btn-import" id="prepImportBtn">📥 импорт</button>
-          <button class="panel-btn btn-export" id="prepExportBtn">📤 экспорт</button>
-          <input type="file" id="prepImportFile" accept=".xlsx" style="display:none">
+        <div class="prep-kpi-footer">
+          <button class="prep-data-btn" id="prepDataBtn">Данные</button>
+          <div class="prep-footer-label" id="prepFooterLabel"></div>
+          <div class="prep-toolbar-collapse" id="prepToolbarCollapse">
+            <button id="prepImportBtn">↓ импорт</button>
+            <button id="prepExportBtn">↑ экспорт</button>
+            <input type="file" id="prepImportFile" accept=".xlsx" style="display:none">
+          </div>
+        </div>
+        <div id="prepGroupKpiSlot"></div>
         </div>
         ${blockers.length ? `<div class="prep-crit">
           <div class="prep-crit-title">⚠ критично — блокируют старт смр</div>
@@ -1522,25 +1646,9 @@
           else verdict = `<span class="prep-verdict good">УСПЕВАЕМ</span>`;
         }
         const gcard = `<div class="prep-group" data-par="${par}">
-          <div class="prep-group-head">
-            <div class="prep-group-title">▶ ${parName} <small>· ${items.length} объектов</small> ${verdict}</div>
-            <div class="prep-group-stats">
-              <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
-                <span>Факт стоимость <b>${money(gFact).replace(" €", "")}</b></span>
-                <span>Освоено <b>${money(gDoneCost).replace(" €", "")}</b></span>
-              </span>
-              <span>готово <b>${gDone}</b></span>
-              <span>в работе <b>${gWork}</b></span>
-              <span>площадка <span class="prep-minibar"><div style="width:${gPct}%"></div></span> <b>${gPct}%</b></span>
-            </div>
-          </div>
           <div class="prep-group-body">
-            <div class="prep-kpi" id="pkpi-${par}"></div>
-
-            <div class="prep-charts">
-              <div class="chart-card"><div class="chart-title">Освоение за период — план / факт по месяцам</div><div class="chart-wrap" style="height:200px;"><canvas id="cash-${par}"></canvas></div></div>
-              <div class="chart-card"><div class="chart-title">Мобилизация — рабочая сила, чел (план / факт)</div><div class="chart-wrap" style="height:200px;" id="wfwrap-${par}"><canvas id="wf-${par}"></canvas></div></div>
-            </div>
+            <div class="prep-group-kpi" id="pkpi-${par}" data-par="${par}"></div>
+            <div class="prep-obj-list" id="objlist-${par}"></div>
           </div>
         </div>`;
         ghtml += gcard;
@@ -1635,6 +1743,49 @@
         alert(`Обновлено объектов: ${ok} из ${codes.length}` + (skipped ? `, строк пропущено (нет в списке): ${skipped}` : ""));
         location.reload();
       }
+      document.getElementById("prepDataBtn").addEventListener("click", () => {
+        document.getElementById("prepToolbarCollapse").classList.toggle("open");
+      });
+      function showGroupKpi(par) {
+        const slot = document.getElementById("prepGroupKpiSlot");
+        if (!slot) return;
+        slot.querySelectorAll(".prep-group-kpi").forEach(el => {
+          const home = document.querySelector(`.prep-group[data-par="${el.dataset.par}"] .prep-group-body`);
+          if (home) home.insertBefore(el, home.firstChild);
+        });
+        const kpiEl = document.querySelector(`.prep-group[data-par="${par}"] .prep-group-kpi`);
+        if (kpiEl) slot.appendChild(kpiEl);
+      }
+      document.querySelectorAll(".kpi-inout").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".kpi-inout").forEach(b => b.classList.remove("active"));
+          document.querySelectorAll(".prep-group").forEach(g => g.classList.remove("shown"));
+          btn.classList.add("active");
+          const label = document.getElementById("prepFooterLabel");
+          label.textContent = btn.dataset.par === "in" ? "Внутренний подрядчик ТОМК" : "Внешний подрядчики";
+          const group = document.querySelector(`.prep-group[data-par="${btn.dataset.par}"]`);
+          if (group) group.classList.add("shown");
+          showGroupKpi(btn.dataset.par);
+          requestAnimationFrame(() => {
+            if (window.prepChartResize && window.prepChartResize[btn.dataset.par]) window.prepChartResize[btn.dataset.par]();
+            if (window.prepGanttResize && window.prepGanttResize[btn.dataset.par]) window.prepGanttResize[btn.dataset.par]();
+          });
+        });
+      });
+      const defaultPrepBtn = document.getElementById("prepFilterIn");
+      if (defaultPrepBtn) defaultPrepBtn.click();
+      function updatePrepKpiHeight() {
+        const row = document.querySelector(".kpi-row.prep-kpi");
+        if (row) document.documentElement.style.setProperty("--prep-kpi-h", row.offsetHeight + "px");
+      }
+      updatePrepKpiHeight();
+      window.addEventListener("resize", updatePrepKpiHeight);
+      window.addEventListener("resize", () => {
+        const activeBtn = document.querySelector(".kpi-inout.active");
+        const activePar = activeBtn ? activeBtn.dataset.par : "in";
+        if (window.prepChartResize && window.prepChartResize[activePar]) window.prepChartResize[activePar]();
+        if (window.prepGanttResize && window.prepGanttResize[activePar]) window.prepGanttResize[activePar]();
+      });
       document.getElementById("prepImportBtn").addEventListener("click", () =>
         document.getElementById("prepImportFile").click());
       document.getElementById("prepImportFile").addEventListener("change", e => {
@@ -1645,7 +1796,7 @@
         const wb = new ExcelJS.Workbook();
         const ws = wb.addWorksheet("Подготовительные работы");
         const cols = ["Код","Объект","Исполнитель","Этап","Работа","План начало","План окончание",
-          "Факт начало","Факт окончание","Стоимость без НДС","Стоимость с НДС","Факт","Освоено",
+          "Факт начало","Факт окончание","Стоимость без НДС","Стоимость с НДС","Факт","Выполнено",
           "Статус","Прогноз","чч план","чч факт","мч план","мч факт"];
         ws.addRow(cols);
         ws.getRow(1).eachCell(cell => {
@@ -1758,12 +1909,16 @@
       // Графики группы: освоение по месяцам + мобилизация
       function drawGroupCharts(par, items) {
         const cashByMonth = {};
+        let noPlanCost = 0;
         items.forEach(p => {
           reports[p.code].forEach(r => {
+            if (!(r.planStart && (r.planEnd || r.forecastEnd))) {
+              noPlanCost += effCostRule(r);
+            }
             if (r.planStart && (r.planEnd || r.forecastEnd)) {
               const ps = new Date(r.planStart), pe = new Date(r.forecastEnd || r.planEnd);
               const months = Math.max(1, (pe.getFullYear() - ps.getFullYear()) * 12 + (pe.getMonth() - ps.getMonth()) + 1);
-              const per = (r.costFact || r.cost || 0) / months;
+              const per = effCostRule(r) / months;
               const d = new Date(ps.getFullYear(), ps.getMonth(), 1);
               for (let i = 0; i < months; i++) {
                 const k = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
@@ -1786,136 +1941,248 @@
         });
         const nowKey = new Date().toISOString().slice(0, 7);
         const cashKeys = Object.keys(cashByMonth).sort();
-        if (cashKeys.length) {
-          const WIN = 48;
-          const cnv = document.getElementById("cash-" + par);
-          const cumPlan = {}, cumFact = {};
-          let _cp = 0, _cf = 0;
-          cashKeys.forEach(k => { _cp += cashByMonth[k].plan; _cf += cashByMonth[k].fact; cumPlan[k] = _cp; cumFact[k] = _cf; });
-          (function renderPrepKpi() {
-            const box = document.getElementById("pkpi-" + par);
-            if (!box) return;
-            const B = v => (Math.round(v / 1e9 * 100) / 100).toLocaleString("ru");
-            const now = new Date();
-            const totalPlan = _cp;
-            let planNow = 0;
-            cashKeys.forEach(k => {
-              const [y, m] = k.split("-").map(Number);
-              const mEnd = new Date(y, m, 0);
-              if (mEnd <= now) planNow = cumPlan[k];
-              else if (new Date(y, m - 1, 1) <= now) {
-                const frac = now.getDate() / mEnd.getDate();
-                planNow = (cumPlan[k] - cashByMonth[k].plan) + cashByMonth[k].plan * frac;
+        const box = document.getElementById("pkpi-" + par);
+        if (!box) return;
+        if (!cashKeys.length) { box.innerHTML = `<div class="prep-loading">Нет данных</div>`; return; }
+        const cumPlan = {}, cumFact = {};
+        let _cp = 0, _cf = 0;
+        cashKeys.forEach(k => { _cp += cashByMonth[k].plan; _cf += cashByMonth[k].fact; cumPlan[k] = _cp; cumFact[k] = _cf; });
+        const now = new Date();
+        const totalPlan = _cp + noPlanCost;
+        let planNow = 0;
+        cashKeys.forEach(k => {
+          const [y, m] = k.split("-").map(Number);
+          const mEnd = new Date(y, m, 0);
+          if (mEnd <= now) planNow = cumPlan[k];
+          else if (new Date(y, m - 1, 1) <= now) {
+            const frac = now.getDate() / mEnd.getDate();
+            planNow = (cumPlan[k] - cashByMonth[k].plan) + cashByMonth[k].plan * frac;
+          }
+        });
+        const factNow = cumFact[nowKey] !== undefined ? cumFact[nowKey] : _cf;
+        const gap = planNow - factNow;
+        const pPct = totalPlan ? Math.min(100, Math.round(planNow / totalPlan * 100)) : 0;
+        const fPct = totalPlan ? Math.min(100, Math.round(factNow / totalPlan * 100)) : 0;
+        const prevKey = cashKeys.filter(k => k < nowKey).pop();
+        const mFact = prevKey ? cashByMonth[prevKey].fact : 0;
+        const mPlan = cashByMonth[nowKey] ? cashByMonth[nowKey].plan : 0;
+        const F = v => Math.round(v).toLocaleString("ru-RU");
+        box.innerHTML = `
+          <div class="pk-card">
+            <div class="pk-label">Стоимость работ</div>
+            <div class="pk-big" style="font-size:19px">${F(totalPlan)}</div>
+            <div class="pk-row"><span>План</span><b>${F(planNow)}</b></div>
+            <div class="pk-row"><span>Выполнено</span><b>${F(factNow)}</b></div>
+            <div class="pk-row"><span>Разрыв</span><b class="${gap > 0 ? "pk-bad" : "pk-good"}">${gap > 0 ? "−" : "+"}${F(Math.abs(gap))}</b></div>
+          </div>
+          <div class="pk-card">
+            <div class="pk-label">Прогресс</div>
+            <div class="pk-row"><span>План</span><b>${pPct}%</b></div>
+            <div class="pk-bar"><div style="width:${pPct}%;background:#2a78d6"></div></div>
+            <div class="pk-row"><span>Факт</span><b>${fPct}%</b></div>
+            <div class="pk-bar"><div style="width:${fPct}%;background:#1baf7a"></div></div>
+          </div>
+          <div class="pk-card">
+            <div class="pk-label">Месячные показатели</div>
+            <div class="pk-row"><span>План</span></div>
+            <div class="pk-big" style="font-size:19px">${F(mPlan)}</div>
+            <div class="pk-row"><span>Факт</span><b>${F(mFact)}</b></div>
+            <div class="pk-row"><span>Разница</span><b class="${(mFact - mPlan) < 0 ? "pk-bad" : "pk-good"}">${(mFact - mPlan) > 0 ? "+" : ""}${F(mFact - mPlan)}</b></div>
+          </div>
+          <div class="pk-card">
+            <div class="pk-chart-wrap"><canvas id="scurve-${par}"></canvas></div>
+          </div>
+          <div class="pk-card">
+            <div class="pk-label">Примечания</div>
+            <textarea class="prep-note-area" placeholder="Заметки..."></textarea>
+          </div>`;
+        const objListBox = document.getElementById("objlist-" + par);
+        if (objListBox) {
+          const fmtD2 = d => d ? new Date(d).toLocaleDateString("ru-RU") : "—";
+          const today2 = new Date();
+          let ganttMin = null, ganttMax = null;
+          const objRows = items.map(p => {
+            const rows = reports[p.code];
+            const starts = rows.map(r => r.planStart).filter(Boolean).sort();
+            const ends = rows.map(r => r.planEnd).filter(Boolean).sort();
+            const planStart = starts.length ? starts[0] : null;
+            const planEnd = ends.length ? ends[ends.length - 1] : null;
+            const gEnd = objFinish(rows) || planEnd;
+            if (planStart && (!ganttMin || planStart < ganttMin)) ganttMin = planStart;
+            if (gEnd && (!ganttMax || gEnd > ganttMax)) ganttMax = gEnd;
+            const costVat = rows.reduce((s, r) => s + effCostRule(r), 0);
+            const done = rows.reduce((s, r) => s + (r.done || 0), 0);
+            const remainder = costVat - done;
+            const factPct = objPct(rows);
+            let planPct = 0;
+            if (planStart && planEnd) {
+              const total = new Date(planEnd) - new Date(planStart);
+              const elapsed = today2 - new Date(planStart);
+              planPct = total > 0 ? Math.max(0, Math.min(100, Math.round(elapsed / total * 100))) : 0;
+            }
+            const delta = factPct - planPct;
+            const allDone = rows.length && rows.every(r => /заверш/i.test(r.status || ""));
+            const status = allDone ? "Завершено" : (done > 0 ? "В работе" : "Не начато");
+            const statusBg = allDone ? "#1d5c3f" : (done > 0 ? "#2c5c8f" : "#8a5a2c");
+            const isLate = factPct < 100 && gEnd && gEnd < today2.toISOString().slice(0, 10);
+            const barCls = allDone ? "done" : (isLate ? "late" : "");
+            return `<div class="prep-obj-row">
+              <div title="${p.name}">${p.name}</div>
+              <div>${fmtD2(planStart)}</div>
+              <div>${fmtD2(planEnd)}</div>
+              <div>${Math.round(costVat).toLocaleString("ru-RU")}</div>
+              <div>${Math.round(done).toLocaleString("ru-RU")}</div>
+              <div>${Math.round(remainder).toLocaleString("ru-RU")}</div>
+              <div>${planPct}%</div>
+              <div>${factPct}%</div>
+              <div style="color:${delta < 0 ? "#f09595" : "#9fe1cb"}">${delta > 0 ? "+" : ""}${delta}%</div>
+              <div><span class="prep-obj-status" style="background:${statusBg}">${status}</span></div>
+              <div class="prep-obj-gantt-track" data-start="${planStart || ""}" data-end="${gEnd || ""}" data-cls="${barCls}"><div class="prep-obj-gantt-inner"></div></div>
+            </div>`;
+          }).join("");
+          objListBox.innerHTML = `
+            <div class="prep-obj-head">
+              <div>Объект</div><div>Начало</div><div>Оконч.</div><div>Стоимость</div><div>Выполнено</div><div>Остаток</div><div>План</div><div>Факт</div><div>δ</div><div>Статус</div>
+              <div class="prep-obj-gantt-track" id="ganttHead-${par}"><div class="prep-obj-gantt-inner"></div></div>
+            </div>` + objRows;
+
+          function sizeAndDrawGantt() {
+            const headTrack = document.getElementById("ganttHead-" + par);
+            if (!headTrack || !ganttMin || !ganttMax) return;
+            const trackW = headTrack.clientWidth;
+            if (!trackW) return;
+            const visibleYears = 4;
+            const visibleDays = visibleYears * 365;
+            const totalDays = Math.max(1, (new Date(ganttMax) - new Date(ganttMin)) / 86400000);
+            const pxPerDay = trackW / visibleDays;
+            const innerW = Math.max(trackW, totalDays * pxPerDay);
+            objListBox.querySelectorAll(".prep-obj-gantt-inner").forEach(el => { el.style.width = innerW + "px"; });
+
+            const years = [];
+            const startY = new Date(ganttMin).getFullYear();
+            const endY = new Date(ganttMax).getFullYear();
+            for (let y = startY; y <= endY; y++) years.push(y);
+            let yearTicksHtml = years.map(y => {
+              const divLeft = (new Date(y, 0, 1) - new Date(ganttMin)) / 86400000 * pxPerDay;
+              const midLeft = (new Date(y, 6, 1) - new Date(ganttMin)) / 86400000 * pxPerDay;
+              return `<div class="prep-obj-gantt-yeardiv" style="left:${divLeft}px"></div><div class="prep-obj-gantt-year" style="left:${midLeft}px">${y}</div>`;
+            }).join("");
+            const monthCur = new Date(new Date(ganttMin).getFullYear(), new Date(ganttMin).getMonth(), 1);
+            const monthEnd = new Date(ganttMax);
+            let monthTicksHtml = "";
+            while (monthCur <= monthEnd) {
+              const left = (monthCur - new Date(ganttMin)) / 86400000 * pxPerDay;
+              monthTicksHtml += `<div class="prep-obj-gantt-month" style="left:${left}px">${String(monthCur.getMonth() + 1).padStart(2, "0")}</div>`;
+              monthCur.setMonth(monthCur.getMonth() + 1);
+            }
+            headTrack.querySelector(".prep-obj-gantt-inner").innerHTML = yearTicksHtml + monthTicksHtml;
+
+            objListBox.querySelectorAll(".prep-obj-gantt-track[data-start]").forEach(track => {
+              const s = track.dataset.start, e = track.dataset.end, cls = track.dataset.cls;
+              const inner = track.querySelector(".prep-obj-gantt-inner");
+              if (!s) { inner.innerHTML = ""; return; }
+              const left = (new Date(s) - new Date(ganttMin)) / 86400000 * pxPerDay;
+              const width = Math.max(2, ((new Date(e || s) - new Date(s)) / 86400000) * pxPerDay);
+              inner.innerHTML = `<div class="prep-obj-gantt-bar ${cls}" style="left:${left}px;width:${width}px"></div>`;
+            });
+            if (!objListBox.dataset.ganttInit) {
+              objListBox.dataset.ganttInit = "1";
+              const minOffsetInit = Math.min(0, trackW - innerW);
+              objListBox.style.setProperty("--gantt-offset", minOffsetInit + "px");
+            }
+          }
+          sizeAndDrawGantt();
+          window.prepGanttResize = window.prepGanttResize || {};
+          window.prepGanttResize[par] = sizeAndDrawGantt;
+
+          let ganttDragging = false, ganttStartX = 0, ganttStartOffset = 0;
+          objListBox.addEventListener("pointerdown", e => {
+            const track = e.target.closest(".prep-obj-gantt-track");
+            if (!track) return;
+            ganttDragging = true;
+            ganttStartX = e.clientX;
+            const cur = getComputedStyle(objListBox).getPropertyValue("--gantt-offset") || "0px";
+            ganttStartOffset = parseFloat(cur) || 0;
+            objListBox.querySelectorAll(".prep-obj-gantt-track").forEach(t => t.classList.add("dragging"));
+            e.preventDefault();
+          });
+          window.addEventListener("pointermove", e => {
+            if (!ganttDragging) return;
+            const delta = e.clientX - ganttStartX;
+            const headTrack = document.getElementById("ganttHead-" + par);
+            const headInner = headTrack ? headTrack.querySelector(".prep-obj-gantt-inner") : null;
+            const trackW = headTrack ? headTrack.clientWidth : 0;
+            const innerW = headInner ? headInner.offsetWidth : 0;
+            const minOffset = Math.min(0, trackW - innerW);
+            let newOffset = ganttStartOffset + delta;
+            newOffset = Math.max(minOffset, Math.min(0, newOffset));
+            objListBox.style.setProperty("--gantt-offset", newOffset + "px");
+          });
+          window.addEventListener("pointerup", () => {
+            ganttDragging = false;
+            objListBox.querySelectorAll(".prep-obj-gantt-track").forEach(t => t.classList.remove("dragging"));
+          });
+        }
+        const cnv = document.getElementById("scurve-" + par);
+        if (cnv) {
+          const wrap = cnv.parentElement;
+          let sChart = null;
+          function sizeAndDrawScurve() {
+            const visibleMonths = 36;
+            const cw = wrap.clientWidth;
+            const ch = wrap.clientHeight;
+            if (!cw || !ch) return;
+            const objListBox2 = document.getElementById("objlist-" + par);
+            if (objListBox2) {
+              const availTop = objListBox2.getBoundingClientRect().top;
+              const availH = window.innerHeight - availTop - 12;
+              objListBox2.style.height = Math.max(150, availH) + "px";
+            }
+            const monthW = cw / visibleMonths;
+            const w = Math.max(cw, cashKeys.length * monthW);
+            if (sChart) { sChart.resize(w, ch); return; }
+            cnv.width = w;
+            cnv.height = ch;
+            const monthMax = Math.max(1, ...cashKeys.map(k => Math.max(cashByMonth[k].plan || 0, cashByMonth[k].fact || 0)));
+            sChart = new Chart(cnv, {
+              type: "bar",
+              data: {
+                labels: cashKeys.map(k => k.slice(5) + "." + k.slice(2, 4)),
+                datasets: [
+                  { type: "bar", label: "За месяц план", data: cashKeys.map(k => cashByMonth[k].plan || 0), backgroundColor: "rgba(133,183,235,0.55)", yAxisID: "y1", order: 2 },
+                  { type: "bar", label: "За месяц факт", data: cashKeys.map(k => k <= nowKey ? (cashByMonth[k].fact || 0) : null), backgroundColor: "rgba(93,202,165,0.55)", yAxisID: "y1", order: 2 },
+                  { type: "line", label: "План", data: cashKeys.map(k => totalPlan ? Math.round(cumPlan[k] / totalPlan * 1000) / 10 : 0), borderColor: "#2a78d6", pointRadius: 0, tension: 0.3, borderWidth: 2, yAxisID: "y", order: 1 },
+                  { type: "line", label: "Факт", data: cashKeys.map(k => k <= nowKey ? (totalPlan ? Math.round(cumFact[k] / totalPlan * 1000) / 10 : 0) : null), borderColor: "#1baf7a", pointRadius: 0, tension: 0.3, borderWidth: 2, yAxisID: "y", order: 1 }
+                ]
+              },
+              options: { responsive: false, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: { ticks: { font: { size: 8 }, color: "#cdd8e8", maxRotation: 0, autoSkip: false, callback: function(v, i) { const l = this.getLabelForValue(v); const mm = l.slice(0, 2); return mm === "07" ? [mm, "20" + l.slice(3)] : mm; } }, grid: { color: "rgba(255,255,255,0.08)" } },
+                  y: { display: false, min: 0, max: 100 },
+                  y1: { display: false, min: 0, max: monthMax * 1.03, position: "right" }
+                }
               }
             });
-            const factNow = cumFact[nowKey] !== undefined ? cumFact[nowKey] : _cf;
-            const gap = planNow - factNow;
-            const pPct = totalPlan ? Math.min(100, Math.round(planNow / totalPlan * 100)) : 0;
-            const fPct = totalPlan ? Math.min(100, Math.round(factNow / totalPlan * 100)) : 0;
-            const prevKey = cashKeys.filter(k => k < nowKey).pop();
-            const mFact = prevKey ? cashByMonth[prevKey].fact : 0;
-            const mPlan = cashByMonth[nowKey] ? cashByMonth[nowKey].plan : 0;
-            const F = v => Math.round(v).toLocaleString("ru-RU");
-            box.innerHTML = `
-              <div class="pk-card">
-                <div class="pk-label">Стоимость работ</div>
-                <div class="pk-big" style="font-size:19px">${F(totalPlan)}</div>
-                <div class="pk-row"><span>План на сегодня</span><b>${F(planNow)}</b></div>
-                <div class="pk-row"><span>Выполнено</span><b>${F(factNow)}</b></div>
-                <div class="pk-row"><span>Разрыв</span><b class="${gap > 0 ? "pk-bad" : "pk-good"}">${gap > 0 ? "−" : "+"}${F(Math.abs(gap))}</b></div>
-              </div>
-              <div class="pk-card">
-                <div class="pk-label">Прогресс</div>
-                <div class="pk-row"><span>План</span><b>${pPct}%</b></div>
-                <div class="pk-bar"><div style="width:${pPct}%;background:#2a78d6"></div></div>
-                <div class="pk-row"><span>Факт</span><b>${fPct}%</b></div>
-                <div class="pk-bar"><div style="width:${fPct}%;background:#1baf7a"></div></div>
-              </div>
-              <div class="pk-card">
-                <div class="pk-label">Месячные показатели</div>
-                <div class="pk-two">
-                  <div><small>Факт пред. месяца</small><div class="pk-mid" style="font-size:15px">${F(mFact)}</div></div>
-                  <div><small>План текущего</small><div class="pk-mid" style="font-size:15px">${F(mPlan)}</div></div>
-                </div>
-              </div>
-              <div class="pk-card">
-                <div class="pk-label">Отставание от плана</div>
-                <div class="pk-big ${gap > 0 ? "pk-bad" : "pk-good"}" style="font-size:19px">${F(Math.abs(gap))}</div>
-                <div class="pk-note">${gap > 0 ? "факт отстаёт от плана" : "идём с опережением"}</div>
-              </div>`;
-          })();
-          const mkData = from => {
-            const keys = cashKeys.slice(from, from + WIN);
-            return {
-              labels: keys.map(k => k.slice(5) + "." + k.slice(2, 4)),
-              datasets: [
-                { type: "line", label: "Накопительно план", data: keys.map(k => Math.round(cumPlan[k] / 1e9 * 100) / 100), borderColor: "#2a78d6", pointRadius: 2, tension: 0.3, borderWidth: 2, order: 0 },
-                { type: "line", label: "Накопительно факт", data: keys.map(k => k <= nowKey ? Math.round(cumFact[k] / 1e9 * 100) / 100 : null), borderColor: "#1baf7a", pointRadius: 2, tension: 0.3, borderWidth: 2, order: 0 },
-                { type: "bar", label: "За месяц план", data: keys.map(k => Math.round(cashByMonth[k].plan / 1e9 * 100) / 100), backgroundColor: "#85b7eb", order: 1 },
-                { type: "bar", label: "За месяц факт", data: keys.map(k => k <= nowKey ? Math.round(cashByMonth[k].fact / 1e9 * 100) / 100 : null), backgroundColor: "#5dcaa5", order: 1 }
-              ]
-            };
-          };
-          const start = Math.max(0, cashKeys.length - WIN);
-          const chart = new Chart(cnv, {
-            type: "bar",
-            data: mkData(start),
-            options: { responsive: true, maintainAspectRatio: false,
-              plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 10 } } } },
-              scales: { y: { title: { display: true, text: "млрд" } }, x: { grid: { display: false }, ticks: { font: { size: 8 }, maxRotation: 0, autoSkip: false, callback: function(v, i) { const l = this.getLabelForValue(v); const mm = l.slice(0, 2); return mm === "01" || i === 0 ? [mm, "20" + l.slice(3)] : mm; } } } } }
-          });
-          if (cashKeys.length > WIN) {
-            const rng = document.createElement("input");
-            rng.type = "range"; rng.min = 0; rng.max = cashKeys.length - WIN; rng.value = start;
-            rng.style.width = "100%";
-            cnv.parentElement.after(rng);
-            rng.addEventListener("input", () => {
-              chart.data = mkData(Number(rng.value));
-              chart.update("none");
-            });
+            wrap.scrollLeft = w - cw;
           }
-        }
-
-        const wfByMonth = {};
-        items.forEach(p => {
-          ((reportsFull[p.code] || {}).workforce || []).forEach(w => {
-            (wfByMonth[w.month] = wfByMonth[w.month] || { plan: 0, fact: 0 }).plan += w.plan || 0;
-            wfByMonth[w.month].fact += w.fact || 0;
+          sizeAndDrawScurve();
+          window.prepChartResize = window.prepChartResize || {};
+          window.prepChartResize[par] = sizeAndDrawScurve;
+          let dragging = false, dragStartX = 0, dragStartScroll = 0;
+          wrap.style.cursor = "grab";
+          wrap.addEventListener("pointerdown", e => {
+            dragging = true;
+            dragStartX = e.clientX;
+            dragStartScroll = wrap.scrollLeft;
+            wrap.style.cursor = "grabbing";
+            e.preventDefault();
           });
-        });
-        const wfKeys = Object.keys(wfByMonth).sort();
-        if (!wfKeys.length) document.getElementById("wfwrap-" + par).innerHTML = `<div class="prep-loading">Нет данных мобилизации</div>`;
-        else {
-          const WIN2 = 48;
-          const cnv2 = document.getElementById("wf-" + par);
-          const mkWf = from => {
-            const keys = wfKeys.slice(from, from + WIN2);
-            return {
-              labels: keys.map(k => k.slice(5) + "." + k.slice(2, 4)),
-              datasets: [
-                { label: "План", data: keys.map(k => wfByMonth[k].plan), borderColor: "#2a78d6", pointRadius: 2, tension: 0.3, borderWidth: 2 },
-                { label: "Факт", data: keys.map(k => k <= nowKey ? wfByMonth[k].fact : null), borderColor: "#1baf7a", pointRadius: 2, tension: 0.3, borderWidth: 2, borderDash: [6, 3] }
-              ]
-            };
-          };
-          const start2 = Math.max(0, wfKeys.length - WIN2);
-          const chart2 = new Chart(cnv2, {
-            type: "line",
-            data: mkWf(start2),
-            options: { responsive: true, maintainAspectRatio: false,
-              plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 10 } } } },
-              scales: { y: { title: { display: true, text: "чел" } }, x: { grid: { display: false }, ticks: { font: { size: 8 }, maxRotation: 0, autoSkip: false, callback: function(v, i) { const l = this.getLabelForValue(v); const mm = l.slice(0, 2); return mm === "01" || i === 0 ? [mm, "20" + l.slice(3)] : mm; } } } } }
+          window.addEventListener("pointermove", e => {
+            if (!dragging) return;
+            wrap.scrollLeft = dragStartScroll - (e.clientX - dragStartX);
           });
-          if (wfKeys.length > WIN2) {
-            const rng2 = document.createElement("input");
-            rng2.type = "range"; rng2.min = 0; rng2.max = wfKeys.length - WIN2; rng2.value = start2;
-            rng2.style.width = "100%";
-            cnv2.parentElement.after(rng2);
-            rng2.addEventListener("input", () => {
-              chart2.data = mkWf(Number(rng2.value));
-              chart2.update("none");
-            });
-          }
+          window.addEventListener("pointerup", () => { dragging = false; wrap.style.cursor = "grab"; });
         }
       }
       Object.keys(groups).forEach(par => drawGroupCharts(par, groups[par]));
@@ -1937,14 +2204,6 @@
         });
       });
 
-        document.querySelectorAll(".prep-group-head").forEach(h => {
-        h.addEventListener("click", () => {
-          const g = h.parentElement;
-          g.classList.toggle("open");
-          h.querySelector(".prep-group-title").innerHTML =
-            h.querySelector(".prep-group-title").innerHTML.replace(g.classList.contains("open") ? "▶" : "▼", g.classList.contains("open") ? "▼" : "▶");
-        });
-      });
     }
 
     function objPct(rows) {
@@ -2453,6 +2712,16 @@
         if (btn.dataset.tab === "main") document.getElementById("tab-aux").classList.add("active");
         document.getElementById("projects-sidebar").style.display = btn.dataset.tab === "main" ? "flex" : "none";
         document.getElementById("projects-dashboard-full").style.display = btn.dataset.tab === "main" ? "block" : "none";
+        if (btn.dataset.tab === "prep") {
+          requestAnimationFrame(() => {
+            const row = document.querySelector(".kpi-row.prep-kpi");
+            if (row) document.documentElement.style.setProperty("--prep-kpi-h", row.offsetHeight + "px");
+            const activeBtn = document.querySelector(".kpi-inout.active");
+            const activePar = activeBtn ? activeBtn.dataset.par : "in";
+            if (window.prepChartResize && window.prepChartResize[activePar]) window.prepChartResize[activePar]();
+            if (window.prepGanttResize && window.prepGanttResize[activePar]) window.prepGanttResize[activePar]();
+          });
+        }
       });
     });
     document.getElementById("projects-sidebar").style.display = document.querySelector('.subnav-btn[data-tab="main"]').classList.contains("active") ? "flex" : "none";
