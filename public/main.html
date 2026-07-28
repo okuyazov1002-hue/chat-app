@@ -861,8 +861,46 @@
     .prep-obj-gantt-bar.late { background: #e24b4a; }
     .prep-obj-row > div:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .prep-obj-head { color: rgba(255,255,255,0.55); font-size: 10.5px; border-bottom: 1px solid rgba(255,255,255,0.12); position: sticky; top: 0; background: #0f2b52; z-index: 6; }
-    .prep-obj-row { border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .prep-obj-row { border-bottom: 1px solid rgba(255,255,255,0.06); cursor: pointer; }
     .prep-obj-status { font-size: 9.5px; padding: 2px 6px; display: inline-block; width: fit-content; }
+    .prep-obj-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 300; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s; }
+    .prep-obj-modal-overlay.open { opacity: 1; visibility: visible; }
+    .prep-obj-modal { width: 1440px; max-width: 96vw; max-height: 95vh; min-height: 70vh; overflow-y: auto; background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(190,205,225,0.5)); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(10,30,60,0.15); box-shadow: 0 20px 60px rgba(0,0,0,0.3); color: #0a1e3d; transform: translateY(-16px); transition: transform 0.2s ease; }
+    .prep-obj-modal-overlay.open .prep-obj-modal { transform: translateY(0); }
+    .prep-obj-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; position: relative; }
+    .prep-obj-modal-title { font-size: 15px; font-weight: 700; }
+    .prep-obj-modal-close { cursor: pointer; font-size: 20px; line-height: 1; color: rgba(255,255,255,0.6); background: none; border: none; }
+    .prep-obj-modal-close:hover { color: #fff; }
+    .prep-obj-modal-body { padding: 0 18px 18px; font-size: 12.5px; }
+    .prep-obj-modal-actions { display: flex; align-items: center; gap: 8px; }
+    .prep-obj-modal-btn { background: rgba(10,30,60,0.08); border: 1px solid rgba(10,30,60,0.15); color: #0a1e3d; font-size: 12px; font-weight: 600; padding: 6px 12px; cursor: pointer; }
+    .prep-obj-modal-btn:hover { background: rgba(10,30,60,0.16); }
+    .prep-obj-modal-data-wrap { position: relative; }
+    .prep-obj-modal-data-drop { position: absolute; top: 100%; right: 0; width: 130px; background: rgba(10,30,60,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.16); box-shadow: 0 12px 30px rgba(0,0,0,0.35); opacity: 0; visibility: hidden; transform: translateY(-8px); transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; z-index: 10; }
+    .prep-obj-modal-data-drop.open { opacity: 1; visibility: visible; transform: translateY(0); }
+    .prep-obj-modal-data-drop button { display: block; width: 100%; box-sizing: border-box; padding: 10px 14px; font-size: 13px; color: #fff; background: none; border: none; text-align: left; cursor: pointer; }
+    .prep-obj-modal-data-drop button:hover { background: rgba(255,255,255,0.12); }
+    @media print {
+      body * { visibility: hidden; }
+      .prep-obj-modal-overlay, .prep-obj-modal-overlay * { visibility: visible; }
+      .prep-obj-modal-overlay { position: static; background: #fff; display: block; }
+      .prep-obj-modal { position: static; box-shadow: none; max-height: none !important; overflow: visible !important; margin: 0 !important; transform-origin: top left; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: #eef2f7 !important; }
+      .prep-obj-modal-actions { display: none; }
+    }
+    @media print and (max-width: 1300px) {
+      .prep-obj-modal { zoom: 0.72; }
+    }
+    .prep-obj-modal-grid { display: grid; grid-template-columns: 260px 1fr; gap: 0; align-items: start; }
+    .prep-obj-cards { display: flex; flex-direction: column; gap: 0; }
+    .prep-obj-card { background: linear-gradient(135deg, rgba(255,255,255,0.75), rgba(200,215,235,0.45)); border: 1px solid rgba(10,30,60,0.12); border-radius: 0; padding: 12px 14px; }
+    .prep-obj-card-title { font-size: 11px; font-weight: 700; color: rgba(10,30,60,0.65); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.03em; }
+    .prep-obj-card-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 3px 0; }
+    .prep-obj-card-row b { font-weight: 700; }
+    .prep-obj-side { min-height: 200px; display: flex; flex-direction: column; gap: 0; }
+    .prep-obj-chart-box { background: rgba(255,255,255,0.5); border: 1px solid rgba(10,30,60,0.12); padding: 10px; height: 220px; }
+    .prep-obj-chart-box-half { height: 300px; }
+    .prep-obj-mh-toggle { position: absolute; bottom: 8px; right: 8px; background: rgba(10,30,60,0.1); border: 1px solid rgba(10,30,60,0.2); color: #0a1e3d; font-size: 11px; font-weight: 700; padding: 4px 10px; cursor: pointer; z-index: 5; }
+    .prep-obj-mh-toggle:hover { background: rgba(10,30,60,0.2); }
     .prep-group-kpi .pk-card:nth-child(1) { background: linear-gradient(135deg, #0a1e3d, #16345c); }
     .prep-group-kpi .pk-card:nth-child(2) { background: linear-gradient(135deg, #123456, #1e4a73); }
     .prep-group-kpi .pk-card:nth-child(3) { background: linear-gradient(135deg, #16345c, #2c5c8f); }
@@ -1349,7 +1387,7 @@
       const prepItems = PROJECTS.prep.items;
       const reports = {};
       const reportsFull = {};
-      await Promise.all(prepItems.map(async p => {
+      const reportsPromise = Promise.all(prepItems.map(async p => {
         const res = await fetch("/api/reports/" + p.code);
         const data = await res.json();
         reportsFull[p.code] = data;
@@ -1359,7 +1397,7 @@
       // Дата старта СМР родительских проектов (мин. planStart строк этапа СМР/строительство)
       const parentCodes = [...PROJECTS.main.items, ...PROJECTS.aux.items].map(p => p.code);
       const smrStart = {};
-      await Promise.all(parentCodes.map(async code => {
+      const smrPromise = Promise.all(parentCodes.map(async code => {
         const res = await fetch("/api/reports/" + code);
         const rows = (await res.json()).rows || [];
         const dates = rows
@@ -1367,6 +1405,7 @@
           .map(r => r.planStart).filter(Boolean).sort();
         smrStart[code] = dates[0] || null;
       }));
+      await Promise.all([reportsPromise, smrPromise]);
 
       // Прогноз окончания объекта: макс. из forecastEnd (или planEnd) его строк
       function objFinish(rows) {
@@ -2026,7 +2065,15 @@
             const statusBg = allDone ? "#1d5c3f" : (done > 0 ? "#2c5c8f" : "#8a5a2c");
             const isLate = factPct < 100 && gEnd && gEnd < today2.toISOString().slice(0, 10);
             const barCls = allDone ? "done" : (isLate ? "late" : "");
-            return `<div class="prep-obj-row">
+            window.prepObjData = window.prepObjData || {};
+            const scheduleDeltaDays = (gEnd && planEnd) ? daysBetween(gEnd, planEnd) : null;
+            window.prepObjData[p.code] = { name: p.name, planStart, planEnd, costVat, done, remainder, planPct, factPct, delta, status, scheduleDeltaDays,
+              rows,
+              workforce: (reportsFull[p.code] && reportsFull[p.code].workforce) || [],
+              equipment: (reportsFull[p.code] && reportsFull[p.code].equipment) || [],
+              volumes: (reportsFull[p.code] && reportsFull[p.code].volumes) || [],
+              mobilization: (reportsFull[p.code] && reportsFull[p.code].mobilization) || [] };
+            return `<div class="prep-obj-row" data-obj="${p.code}">
               <div title="${p.name}">${p.name}</div>
               <div>${fmtD2(planStart)}</div>
               <div>${fmtD2(planEnd)}</div>
@@ -2094,6 +2141,355 @@
           sizeAndDrawGantt();
           window.prepGanttResize = window.prepGanttResize || {};
           window.prepGanttResize[par] = sizeAndDrawGantt;
+          if (!objListBox.dataset.panelClickInit) {
+            objListBox.dataset.panelClickInit = "1";
+            objListBox.addEventListener("click", e => {
+              if (e.target.closest(".prep-obj-gantt-track")) return;
+              const row = e.target.closest(".prep-obj-row");
+              if (!row) return;
+              const code = row.dataset.obj;
+              window.prepObjCurrentCode = code;
+              const nameEl = row.querySelector("div[title]");
+              const objName = nameEl ? nameEl.getAttribute("title") : code;
+              const overlay = document.getElementById("prepObjModalOverlay");
+              document.getElementById("prepObjModalTitle").textContent = objName;
+              const d = (window.prepObjData && window.prepObjData[code]) || {};
+              if (d.volumes && d.volumes.length) {
+                d.costVat = d.volumes.reduce((s, v) => s + (v.costPlan || 0), 0);
+                d.done = d.volumes.reduce((s, v) => s + (v.costFact || 0), 0);
+                d.remainder = d.costVat - d.done;
+                const vStarts = d.volumes.map(v => v.planStart).filter(Boolean).sort();
+                const vEnds = d.volumes.map(v => v.planEnd).filter(Boolean).sort();
+                d.planStart = vStarts.length ? vStarts[0] : null;
+                d.planEnd = vEnds.length ? vEnds[vEnds.length - 1] : null;
+                d.factPct = d.costVat ? Math.round(d.done / d.costVat * 100) : 0;
+                const nowD = new Date();
+                const totalMhPlan = d.volumes.reduce((s, v) => s + (v.mhPlan || 0), 0) || 1;
+                const accumMhPlan = d.volumes.reduce((s, v) => {
+                  if (!v.planStart || !v.planEnd) return s;
+                  const vs = new Date(v.planStart), ve = new Date(v.planEnd);
+                  const totalDur = ve - vs;
+                  let frac;
+                  if (totalDur <= 0) frac = nowD >= vs ? 1 : 0;
+                  else frac = Math.max(0, Math.min(1, (nowD - vs) / totalDur));
+                  return s + (v.mhPlan || 0) * frac;
+                }, 0);
+                d.planPct = Math.round(accumMhPlan / totalMhPlan * 100);
+                d.delta = d.factPct - d.planPct;
+                d.status = d.factPct >= 100 ? "Завершено" : (d.done > 0 ? "В работе" : "Не начато");
+                d.scheduleDeltaDays = null;
+              }
+              const fmtM = v => Math.round(v || 0).toLocaleString("ru-RU");
+              const fmtDt = v => v ? new Date(v).toLocaleDateString("ru-RU") : "—";
+              document.getElementById("prepObjModalBody").innerHTML = `
+                <div class="prep-obj-modal-grid">
+                  <div class="prep-obj-cards">
+                    <div class="prep-obj-card">
+                      <div class="prep-obj-card-title">Стоимость</div>
+                      <div class="prep-obj-card-row"><span>План</span><b>${fmtM(d.costVat)}</b></div>
+                      <div class="prep-obj-card-row"><span>Выполнено</span><b>${fmtM(d.done)}</b></div>
+                      <div class="prep-obj-card-row"><span>Остаток</span><b>${fmtM(d.remainder)}</b></div>
+                    </div>
+                    <div class="prep-obj-card">
+                      <div class="prep-obj-card-title">Сроки</div>
+                      <div class="prep-obj-card-row"><span>Начало</span><b>${fmtDt(d.planStart)}</b></div>
+                      <div class="prep-obj-card-row"><span>Окончание</span><b>${fmtDt(d.planEnd)}</b></div>
+                      <div class="prep-obj-card-row"><span>Статус</span><b>${d.status || "—"}</b></div>
+                      ${(d.scheduleDeltaDays !== null && d.scheduleDeltaDays !== 0) ? `<div class="prep-obj-card-row"><span>${d.scheduleDeltaDays > 0 ? "Отставание" : "Опережение"}</span><b style="color:${d.scheduleDeltaDays > 0 ? '#b91c1c' : '#1d5c3f'}">${Math.abs(d.scheduleDeltaDays)} дн.</b></div>` : (d.scheduleDeltaDays === 0 ? `<div class="prep-obj-card-row"><span>Срок</span><b>в срок</b></div>` : "")}
+                    </div>
+                    <div class="prep-obj-card">
+                      <div class="prep-obj-card-title">Прогресс</div>
+                      <div class="prep-obj-card-row"><span>План</span><b>${d.planPct ?? 0}%</b></div>
+                      <div class="prep-obj-card-row"><span>Факт</span><b>${d.factPct ?? 0}%</b></div>
+                      <div class="prep-obj-card-row"><span>δ</span><b>${(d.delta ?? 0) > 0 ? "+" : ""}${d.delta ?? 0}%</b></div>
+                    </div>
+                  </div>
+                  <div class="prep-obj-side">
+                    <div class="prep-obj-chart-box prep-obj-chart-box-half" style="position:relative">
+                      <canvas id="prepObjChartMh" height="140"></canvas>
+                      <button class="prep-obj-mh-toggle" id="prepObjMhToggle" data-mode="percent">%</button>
+                    </div>
+                    <div class="prep-obj-chart-box prep-obj-chart-box-half"><canvas id="prepObjChartWf" height="140"></canvas></div>
+                  </div>
+                </div>`;
+              function buildMonthChart(canvasId, dataArr, label) {
+                const months = (dataArr || []).map(m => m.month).sort();
+                const plan = months.map(m => (dataArr.find(x => x.month === m) || {}).plan || 0);
+                const fact = months.map(m => (dataArr.find(x => x.month === m) || {}).fact || 0);
+                const monthNums = months.map(m => m.slice(5, 7));
+                const yearOf = months.map(m => m.slice(0, 4));
+                const yearGroups = [];
+                yearOf.forEach((y, idx) => {
+                  if (!yearGroups.length || yearGroups[yearGroups.length - 1].year !== y) yearGroups.push({ year: y, start: idx, end: idx });
+                  else yearGroups[yearGroups.length - 1].end = idx;
+                });
+                const labels = monthNums.map((mm, idx) => {
+                  const grp = yearGroups.find(g => idx >= g.start && idx <= g.end);
+                  const centerIdx = grp ? Math.floor((grp.start + grp.end) / 2) : -1;
+                  return [mm, idx === centerIdx ? grp.year : ""];
+                });
+                const barValueLabelsPlugin = {
+                  id: "prepObjMobLabels",
+                  afterDatasetsDraw(chart) {
+                    const ctx = chart.ctx;
+                    chart.data.datasets.forEach((ds, dsIndex) => {
+                      const meta = chart.getDatasetMeta(dsIndex);
+                      meta.data.forEach((bar, i) => {
+                        const val = ds.data[i];
+                        if (val === null || val === undefined || val === 0) return;
+                        ctx.save();
+                        ctx.font = "bold 12px sans-serif";
+                        ctx.textAlign = "center";
+                        ctx.lineWidth = 3;
+                        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+                        ctx.fillStyle = "#1a2f4a";
+                        ctx.strokeText(val, bar.x, bar.y - 6);
+                        ctx.fillText(val, bar.x, bar.y - 6);
+                        ctx.restore();
+                      });
+                    });
+                  }
+                };
+                window.prepObjChartInstances = window.prepObjChartInstances || {};
+                if (window.prepObjChartInstances[canvasId]) window.prepObjChartInstances[canvasId].destroy();
+                const ctx = document.getElementById(canvasId);
+                window.prepObjChartInstances[canvasId] = new Chart(ctx, {
+                  type: "bar",
+                  plugins: [barValueLabelsPlugin],
+                  data: {
+                    labels,
+                    datasets: [
+                      { label: "План", data: plan, backgroundColor: "#0a1e3d" },
+                      { label: "Факт", data: fact, backgroundColor: "#7da7d9" }
+                    ]
+                  },
+                  options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, title: { display: true, text: label, align: "start", font: { size: 11 } } },
+                    scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, display: false, ticks: { display: false }, grid: { display: false } } }
+                  }
+                });
+              }
+              window.buildManHoursChart = function(canvasId, rows, mode) {
+                mode = mode || window.prepObjMhMode || "percent";
+                window.prepObjMhLastRows = rows;
+                window.prepObjMhMode = mode;
+                const byMonth = {};
+                (rows || []).forEach(r => {
+                  if (!r.planStart || !r.planEnd) return;
+                  const ps = new Date(r.planStart), pe = new Date(r.planEnd);
+                  const nMonths = (pe.getFullYear() - ps.getFullYear()) * 12 + (pe.getMonth() - ps.getMonth()) + 1;
+                  const perMonth = (r.mhPlan || 0) / nMonths;
+                  const dt = new Date(ps.getFullYear(), ps.getMonth(), 1);
+                  for (let i = 0; i < nMonths; i++) {
+                    const key = dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0");
+                    byMonth[key] = byMonth[key] || { plan: 0, fact: 0 };
+                    byMonth[key].plan += perMonth;
+                    dt.setMonth(dt.getMonth() + 1);
+                  }
+                });
+                (rows || []).forEach(r => {
+                  const fs = r.factStart ? new Date(r.factStart) : (r.planStart ? new Date(r.planStart) : null);
+                  if (!fs) return;
+                  const fe = r.factEnd ? new Date(r.factEnd) : (r.planEnd ? new Date(r.planEnd) : new Date());
+                  const nMonths = (fe.getFullYear() - fs.getFullYear()) * 12 + (fe.getMonth() - fs.getMonth()) + 1;
+                  const perMonth = (r.mhFact || 0) / nMonths;
+                  const dt = new Date(fs.getFullYear(), fs.getMonth(), 1);
+                  for (let i = 0; i < nMonths; i++) {
+                    const key = dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0");
+                    byMonth[key] = byMonth[key] || { plan: 0, fact: 0 };
+                    byMonth[key].fact += perMonth;
+                    dt.setMonth(dt.getMonth() + 1);
+                  }
+                });
+                const keys = Object.keys(byMonth).sort();
+                const total = (rows || []).reduce((s, r) => s + (r.mhPlan || 0), 0) || 1;
+                const now = new Date();
+                const nowKey = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+                let cp = 0, cf = 0;
+                const planCum = [], factCum = [], planPer = [], factPer = [], monthNums = [], yearOf = [];
+                keys.forEach(k => {
+                  cp += byMonth[k].plan; cf += byMonth[k].fact;
+                  monthNums.push(k.slice(5, 7));
+                  yearOf.push(k.slice(0, 4));
+                  if (mode === "percent") {
+                    planCum.push(Math.round(cp / total * 100));
+                    factCum.push(k <= nowKey ? Math.round(cf / total * 100) : null);
+                    planPer.push(Math.round(byMonth[k].plan / total * 100 * 10) / 10);
+                    factPer.push(k <= nowKey ? Math.round(byMonth[k].fact / total * 100 * 10) / 10 : null);
+                  } else {
+                    planCum.push(Math.round(cp * 10) / 10);
+                    factCum.push(k <= nowKey ? Math.round(cf * 10) / 10 : null);
+                    planPer.push(Math.round(byMonth[k].plan * 10) / 10);
+                    factPer.push(k <= nowKey ? Math.round(byMonth[k].fact * 10) / 10 : null);
+                  }
+                });
+                const yearGroups = [];
+                yearOf.forEach((y, idx) => {
+                  if (!yearGroups.length || yearGroups[yearGroups.length - 1].year !== y) yearGroups.push({ year: y, start: idx, end: idx });
+                  else yearGroups[yearGroups.length - 1].end = idx;
+                });
+                const labels = monthNums.map((mm, idx) => {
+                  const grp = yearGroups.find(g => idx >= g.start && idx <= g.end);
+                  const centerIdx = grp ? Math.floor((grp.start + grp.end) / 2) : -1;
+                  return [mm, idx === centerIdx ? grp.year : ""];
+                });
+                const suffix = mode === "percent" ? "%" : "";
+                const valueLabelsPlugin = {
+                  id: "prepObjMhLabels",
+                  afterDatasetsDraw(chart) {
+                    const ctx = chart.ctx;
+                    chart.data.datasets.forEach((ds, dsIndex) => {
+                      const meta = chart.getDatasetMeta(dsIndex);
+                      meta.data.forEach((point, i) => {
+                        const val = ds.data[i];
+                        if (val === null || val === undefined) return;
+                        ctx.save();
+                        ctx.font = "bold 12px sans-serif";
+                        ctx.textAlign = "center";
+                        ctx.lineWidth = 3;
+                        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+                        ctx.fillStyle = ds.type === "bar" ? "#1a2f4a" : ds.borderColor;
+                        const ly = ds.type === "bar" ? point.y - 6 : point.y - (dsIndex === 0 ? 18 : 6);
+                        ctx.strokeText(val + suffix, point.x, ly);
+                        ctx.fillText(val + suffix, point.x, ly);
+                        ctx.restore();
+                      });
+                    });
+                  }
+                };
+                window.prepObjChartInstances = window.prepObjChartInstances || {};
+                if (window.prepObjChartInstances[canvasId]) window.prepObjChartInstances[canvasId].destroy();
+                const ctx = document.getElementById(canvasId);
+                window.prepObjChartInstances[canvasId] = new Chart(ctx, {
+                  plugins: [valueLabelsPlugin],
+                  data: {
+                    labels,
+                    datasets: [
+                      { type: "line", label: "План накопительно", data: planCum, borderColor: "#0a1e3d", borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: "#0a1e3d", tension: 0.3 },
+                      { type: "line", label: "Факт накопительно", data: factCum, borderColor: "#7da7d9", borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: "#7da7d9", tension: 0.3 },
+                      { type: "bar", label: "План за месяц", data: planPer, backgroundColor: "#0a1e3d", yAxisID: "y1" },
+                      { type: "bar", label: "Факт за месяц", data: factPer, backgroundColor: "#7da7d9", yAxisID: "y1" }
+                    ]
+                  },
+                  options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 16 } },
+                    plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 10 } } }, title: { display: true, text: "Человеко-часы", align: "start", font: { size: 11 } } },
+                    scales: {
+                      y: mode === "percent"
+                        ? { min: 0, max: 100, ticks: { callback: v => v + "%", font: { size: 9 } } }
+                        : { beginAtZero: true, ticks: { font: { size: 9 } } },
+                      y1: { display: false, min: 0, max: Math.max(1, ...planPer, ...factPer.filter(v => v !== null)) * 3 },
+                      x: { ticks: { font: { size: 9 } } }
+                    }
+                  }
+                });
+              }
+              buildManHoursChart("prepObjChartMh", d.volumes);
+              function mobilizationToMonthly(mob) {
+                const byMonth = {};
+                (mob || []).forEach(m => {
+                  if (!m.date) return;
+                  const key = new Date(m.date).toISOString().slice(0, 7);
+                  byMonth[key] = byMonth[key] || { month: key, plan: 0, fact: 0 };
+                  byMonth[key].plan = Math.max(byMonth[key].plan, m.plan || 0);
+                  byMonth[key].fact = Math.max(byMonth[key].fact, m.fact || 0);
+                });
+                return Object.values(byMonth);
+              }
+              const mobMonthly = (d.mobilization && d.mobilization.length) ? mobilizationToMonthly(d.mobilization) : d.workforce;
+              buildMonthChart("prepObjChartWf", mobMonthly, "Мобилизация — рабочая сила");
+              overlay.classList.add("open");
+            });
+          }
+          if (!document.getElementById("prepObjModalOverlay").dataset.closeInit) {
+            const overlayEl = document.getElementById("prepObjModalOverlay");
+            overlayEl.dataset.closeInit = "1";
+            document.getElementById("prepObjModalClose").addEventListener("click", () => overlayEl.classList.remove("open"));
+            overlayEl.addEventListener("click", e => { if (e.target === overlayEl) overlayEl.classList.remove("open"); });
+          }
+          if (!document.getElementById("prepObjPrintBtn").dataset.printInit) {
+            document.getElementById("prepObjPrintBtn").dataset.printInit = "1";
+            document.getElementById("prepObjPrintBtn").addEventListener("click", () => window.print());
+            document.getElementById("prepObjDataBtn").addEventListener("click", () => {
+              document.getElementById("prepObjDataDrop").classList.toggle("open");
+            });
+            document.addEventListener("click", e => {
+              const wrap = document.querySelector(".prep-obj-modal-data-wrap");
+              const drop = document.getElementById("prepObjDataDrop");
+              if (wrap && drop && !wrap.contains(e.target)) drop.classList.remove("open");
+            });
+            document.getElementById("prepObjImportBtn").addEventListener("click", () => document.getElementById("prepObjImportFile").click());
+            document.getElementById("prepObjImportFile").addEventListener("change", async e => {
+              const file = e.target.files[0];
+              e.target.value = "";
+              if (!file) return;
+              const code = window.prepObjCurrentCode;
+              if (!code) return;
+              try {
+                const wb = new ExcelJS.Workbook();
+                await wb.xlsx.load(await file.arrayBuffer());
+                const rv = (row, i) => { const x = row.getCell(i).value; return x && x.result !== undefined ? x.result : x; };
+                const volSheet = wb.worksheets.find(w => w.name.trim().toLowerCase() === "объем" || w.name.trim().toLowerCase() === "объём");
+                const volumes = [];
+                if (volSheet) {
+                  volSheet.eachRow((row, n) => {
+                    if (n < 4) return;
+                    const discipline = String(rv(row, 4) || "").trim();
+                    const item = String(rv(row, 5) || "").trim();
+                    if (!item) return;
+                    volumes.push({
+                      discipline,
+                      item,
+                      unit: String(rv(row, 6) || "").trim(),
+                      volumePlan: Number(rv(row, 7)) || 0,
+                      volumeFact: Number(rv(row, 8)) || 0,
+                      mhPlan: Number(rv(row, 9)) || 0,
+                      mhFact: Number(rv(row, 10)) || 0,
+                      costPlan: Number(rv(row, 11)) || 0,
+                      costFact: Number(rv(row, 12)) || 0,
+                      planStart: rv(row, 13) instanceof Date ? rv(row, 13) : null,
+                      planEnd: rv(row, 14) instanceof Date ? rv(row, 14) : null
+                    });
+                  });
+                }
+                const mobSheet = wb.worksheets.find(w => w.name.trim().toLowerCase() === "мобилизация");
+                const mobilization = [];
+                if (mobSheet) {
+                  mobSheet.eachRow((row, n) => {
+                    if (n < 2) return;
+                    const dt = rv(row, 1);
+                    if (!(dt instanceof Date)) return;
+                    mobilization.push({ date: dt, plan: Number(rv(row, 2)) || 0, fact: Number(rv(row, 3)) || 0 });
+                  });
+                }
+                const res = await fetch("/api/reports/" + code, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ volumes, mobilization })
+                });
+                if (res.ok) {
+                  alert(`Загружено: объёмов ${volumes.length}, точек мобилизации ${mobilization.length}`);
+                  location.reload();
+                } else {
+                  alert("Ошибка сохранения");
+                }
+              } catch (err) {
+                alert("Ошибка чтения файла: " + err.message);
+              }
+            });
+            document.getElementById("prepObjExportBtn").addEventListener("click", () => alert("Выгрузка объёмов и дат — скоро"));
+            document.getElementById("prepObjModalBody").addEventListener("click", e => {
+              const btn = e.target.closest("#prepObjMhToggle");
+              if (!btn) return;
+              const newMode = btn.dataset.mode === "percent" ? "hours" : "percent";
+              btn.dataset.mode = newMode;
+              btn.textContent = newMode === "percent" ? "%" : "час";
+              window.buildManHoursChart("prepObjChartMh", window.prepObjMhLastRows, newMode);
+            });
+
+          }
 
           let ganttDragging = false, ganttStartX = 0, ganttStartOffset = 0;
           objListBox.addEventListener("pointerdown", e => {
@@ -3459,5 +3855,25 @@
       });
     });
   </script>
+    <div class="prep-obj-modal-overlay" id="prepObjModalOverlay">
+      <div class="prep-obj-modal">
+        <div class="prep-obj-modal-head">
+          <div class="prep-obj-modal-title" id="prepObjModalTitle"></div>
+          <div class="prep-obj-modal-actions">
+            <button class="prep-obj-modal-btn" id="prepObjPrintBtn">Печать</button>
+            <div class="prep-obj-modal-data-wrap">
+              <button class="prep-obj-modal-btn" id="prepObjDataBtn">Данные</button>
+              <div class="prep-obj-modal-data-drop" id="prepObjDataDrop">
+                <button id="prepObjImportBtn">↓ импорт</button>
+                <button id="prepObjExportBtn">↑ экспорт</button>
+                <input type="file" id="prepObjImportFile" accept=".xlsx" style="display:none">
+              </div>
+            </div>
+            <button class="prep-obj-modal-close" id="prepObjModalClose">×</button>
+          </div>
+        </div>
+        <div class="prep-obj-modal-body" id="prepObjModalBody"></div>
+      </div>
+    </div>
 </body>
 </html>

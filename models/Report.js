@@ -30,6 +30,21 @@ const reportSchema = new mongoose.Schema({
   rows:    { type: [rowSchema], default: [] },
   workforce: { type: [{ month: String, plan: Number, fact: Number, _id: false }], default: [] },
   equipment: { type: [{ month: String, plan: Number, fact: Number, _id: false }], default: [] },
+  volumes: { type: [{
+    discipline: String,
+    item: String,
+    unit: String,
+    volumePlan: Number,
+    volumeFact: Number,
+    mhPlan: Number,
+    mhFact: Number,
+    costPlan: Number,
+    costFact: Number,
+    planStart: Date,
+    planEnd: Date,
+    _id: false
+  }], default: [] },
+  mobilization: { type: [{ date: Date, plan: Number, fact: Number, _id: false }], default: [] },
   updatedAt: { type: Date, default: Date.now }
 });
 
