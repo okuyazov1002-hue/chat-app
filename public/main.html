@@ -57,18 +57,6 @@
     }
     .topbar-left { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 
-    /* Логотип */
-    .logo { display: flex; align-items: center; gap: 14px; color: #fff; }
-    .logo-mark {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      color: #0a1628;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 15px; letter-spacing: 0.5px;
-    }
-    .logo-text .title { font-size: 15px; font-weight: 700; letter-spacing: 0.4px; }
-    .logo-text .subtitle { font-size: 16px; font-weight: 600; color: #fff; margin-top: 0; }
-
     /* Навигация по разделам */
     .nav { display: flex; gap: 0px; flex-wrap: wrap; }
     .nav-btn {
@@ -84,13 +72,14 @@
       transition: all 0.2s ease;
     }
     .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
-    .subnav { display: flex; background: rgba(10, 22, 40, 0.45); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); position: relative; z-index: 2; }
+    .subnav { display: flex; flex-wrap: nowrap; background: rgba(10, 22, 40, 0.45); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); position: relative; z-index: 2; }
     .subnav-btn {
       
-      padding: 10px 16px;
+      padding: clamp(3px, 0.8vw, 10px) clamp(3px, 1vw, 16px);
       text-align: center;
-      min-width: 230px;
-      font-size: 14px;
+      flex: 1 1 0;
+      min-width: 0;
+      font-size: clamp(7px, 0.95vw, 14px);
       font-weight: 600;
       color: rgba(255, 255, 255, 0.7);
       background: none;
@@ -99,6 +88,7 @@
       cursor: pointer;
       transition: all 0.2s ease;
       position: relative; z-index: 1;
+      white-space: nowrap;
     }
     .subnav-btn:hover { transform: scale(1.05); z-index: 2; }
     .subnav-btn.active { color: #fff; background: rgba(255, 255, 255, 0.12); }
@@ -216,7 +206,7 @@
     .pk-card { background: linear-gradient(135deg, #0a1e3d, #16345c); border: none; border-radius: 0; padding: 6px 16px; color: #fff; }
     
     #tab-prep .tab-title { display: none; }
-    #tab-prep { position: fixed; left: 0; right: 0; top: var(--header-h, 73px); bottom: 0; overflow: hidden; padding: 0 28px; box-sizing: border-box; }
+    #tab-prep { position: fixed; left: 220px; right: 0; top: 0; bottom: 0; overflow: hidden; padding: 0 28px; box-sizing: border-box; }
     .kpi-row.prep-kpi { gap: 0; }
     .pk-label { font-size: 12px; color: rgba(255,255,255,0.65); margin-bottom: 6px; }
     .pk-big { font-size: 22px; font-weight: 700; }
@@ -242,25 +232,27 @@
     /* Кнопка пользователя */
     .user-menu { position: relative; align-self: stretch; margin: 0; display: flex; }
     .user-btn {
-      padding: 12px 21px;
-      display: flex; align-items: center; gap: 10px;
+      padding: clamp(6px, 0.9vw, 12px) clamp(8px, 1.6vw, 21px);
+      display: flex; align-items: center; gap: clamp(4px, 0.7vw, 10px);
       
 
-      font-size: 13.5px; font-weight: 600; color: #fff;
+      font-size: clamp(10px, 1.1vw, 13.5px); font-weight: 600; color: #fff;
       background: rgba(255, 255, 255, 0.12);
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 0px;
       cursor: pointer;
       transition: all 0.2s ease;
+      white-space: nowrap;
     }
     .user-btn:hover { background: rgba(255, 255, 255, 0.2); }
     .user-btn .avatar {
-      width: 30px; height: 30px; border-radius: 50%; overflow: hidden;
+      width: clamp(20px, 2.2vw, 30px); height: clamp(20px, 2.2vw, 30px); border-radius: 50%; overflow: hidden;
       background: #fff; color: #0a1628;
       display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 700;
+      font-size: clamp(9px, 1vw, 13px); font-weight: 700;
       flex-shrink: 0;
     }
+    #username { white-space: nowrap; }
 
     /* Выпадающее меню */
     .dropdown {
@@ -306,25 +298,287 @@
     }
     .dropdown button:hover { background: rgba(255, 255, 255, 0.12); }
     .dropdown .danger { color: #ffb4b4; }
+    /* Кнопка гамбургер-меню — видна только на мобильных */
+    .mobile-topbar {
+      display: none;
+    }
+    .menu-toggle {
+      border: none; border-radius: 0;
+      background: none;
+      color: #0a1e3d;
+      font-size: 20px;
+      cursor: pointer;
+      width: 44px; height: 44px;
+      flex: none;
+    }
+    .mobile-topbar-title {
+      color: #0a1e3d;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100% !important;
+        transition: transform 0.3s ease;
+      }
+      body.menu-hidden .sidebar { transform: translateX(-100%); }
+      .content { margin-left: 0 !important; }
+      #tab-prep { left: 0 !important; }
+      .project-sidebar { left: 0 !important; }
+      .project-dashboard-full { left: 66px !important; }
+      /* Плашка с гамбургером и названием страницы — видна только когда меню свёрнуто */
+      body.menu-hidden .mobile-topbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: 44px;
+        background: #dbeeff;
+        z-index: 30;
+        padding-left: 8px;
+      }
+      body.menu-hidden .content { padding-top: 54px !important; }
+      .sidebar-nav .subnav-btn { font-size: 17px !important; padding: 16px 22px !important; }
+      #tab-prep > * { display: none !important; }
+      #tab-prep > .prep-mobile-card { display: block !important; margin-left: -28px !important; margin-right: -28px !important; width: calc(100% + 56px) !important; }
+      .bg { display: none !important; }
+      body {
+        background-color: #fff !important;
+        background-image: none !important;
+      }
+    }
+    .prep-mobile-card {
+      display: none;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg, #7dd0f7 260px, #fff 290px);
+      color: #fff;
+      padding: 78px 18px 24px;
+      margin: 0 0 12px;
+    }
+    .prep-mobile-subcards { position: relative; z-index: 1; display: flex; gap: 10px; margin-top: 18px; }
+    .prep-mobile-subcard { flex: 1; background: #fff; border-radius: 4px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(10,30,61,0.15); }
+    .prep-mobile-status-card { position: relative; z-index: 1; background: #fff; border-radius: 4px; padding: 14px 16px; margin-top: 10px; box-shadow: 0 2px 8px rgba(10,30,61,0.15); }
+    .prep-mobile-status-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .prep-mobile-status-table th { text-align: center; font-weight: 700; color: #0a1e3d; padding: 4px 6px; font-size: 12px; }
+    .prep-mobile-status-table th:first-child { text-align: left; }
+    .prep-mobile-status-table td { text-align: center; padding: 5px 6px; color: #0a1e3d; }
+    .prep-mobile-status-table td:first-child { text-align: left; font-weight: 600; }
+    .prep-mobile-status-table tr.total td { font-weight: 700; }
+    .prep-mobile-progress-card { position: relative; z-index: 1; background: #fff; border-radius: 4px; padding: 14px 16px; margin-top: 10px; box-shadow: 0 2px 8px rgba(10,30,61,0.15); }
+    .prep-mobile-progress-group { margin-bottom: 14px; }
+    .prep-mobile-progress-group:last-child { margin-bottom: 0; }
+    .prep-mobile-progress-title { font-size: 13px; font-weight: 700; color: #0a1e3d; margin-bottom: 6px; }
+    .prep-mobile-progress-label { display: flex; justify-content: space-between; font-size: 12px; color: #0a1e3d; margin-bottom: 6px; }
+    .prep-mobile-progress-label .plan-lbl { color: #7dd0f7; font-weight: 600; }
+    .prep-mobile-progress-label .fact-lbl { color: #2e9e5b; font-weight: 600; }
+    .prep-mobile-progress-track { position: relative; width: 100%; height: 10px; background: rgba(10,30,61,0.08); border-radius: 5px; overflow: hidden; }
+    .prep-mobile-progress-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 5px; }
+    .prep-mobile-progress-fill.plan { background: #7dd0f7; }
+    .prep-mobile-progress-fill.fact { background: #2e9e5b; z-index: 1; }
+    .prep-mobile-scurve-card { position: relative; z-index: 1; background: #fff; border-radius: 4px; padding: 14px 16px; margin-top: 10px; box-shadow: 0 2px 8px rgba(10,30,61,0.15); }
+    .prep-mobile-scurve-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .prep-mobile-scurve-cal { margin-top: 4px; }
+    .prep-mobile-subcard-title { font-size: 13px; font-weight: 700; color: #0a1e3d; margin-bottom: 8px; }
+    .prep-mobile-subcard-val { font-size: 18px; font-weight: 700; color: #0a1e3d; margin-bottom: 8px; }
+    .prep-mobile-subcard-line { font-size: 13px; color: #0a1e3d; opacity: 0.8; }
+    .prep-mobile-subcard-line span { opacity: 0.6; }
+    .prep-mobile-main-row { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; }
+    .prep-mobile-total-label { font-size: 30px; font-weight: 700; opacity: 0.8; margin-bottom: 10px; }
+    .prep-mobile-total-val { font-size: 30px; font-weight: 700; }
+    .prep-mobile-sub-col { display: flex; flex-direction: column; gap: 8px; text-align: right; }
+    .prep-mobile-sub-line { font-size: 18px; color: #0a1e3d; font-weight: 600; }
+    .prep-mobile-sub-line span { font-weight: 400; opacity: 0.7; }
+    @media (max-width: 768px) {
+      .sidebar-username { font-size: 16px !important; }
+      #usersBtn, #changePassBtn, .sidebar-logout { font-size: 16px !important; }
+    }
+    /* Боковая панель навигации */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 220px;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(180deg, #7dd0f7, #1c5e94);
+      z-index: 10;
+      overflow-y: auto;
+    }
+    .sidebar-user {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      padding: 32px 16px 24px;
+    }
+    .sidebar-user .avatar {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: rgba(255,255,255,0.25); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; font-weight: 700; overflow: hidden;
+    }
+    .sidebar-username {
+      color: #fff; font-weight: 600; font-size: 14px; text-align: center;
+      word-break: break-word;
+    }
+    .sidebar-nav {
+      display: flex; flex-direction: column;
+      margin-top: 8px;
+    }
+    .sidebar-nav .subnav-btn {
+      flex: none;
+      width: 100%;
+      text-align: left;
+      padding: 13px 16px;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .sidebar-bottom {
+      margin-top: auto;
+      display: flex; flex-direction: column;
+      padding: 14px 0 22px;
+      border-top: 1px solid rgba(255,255,255,0.25);
+    }
+    .sidebar-bottom button {
+      text-align: left;
+      padding: 12px 22px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .sidebar-bottom button:hover { background: rgba(255,255,255,0.12); }
+    .sidebar-logout {
+      color: #ff5252 !important;
+      font-weight: 700 !important;
+    }
 
     /* Контент */
     .content {
       position: relative;
       z-index: 1;
       padding: 40px 28px;
+      margin-left: 220px;
       color: rgba(255, 255, 255, 0.85);
       font-size: 17px;
     }
+    body.prep-active { background: #fff !important; }
+    body.prep-active .bg { display: none !important; }
+    body.prep-active .content { background: #fff; color: #0a1e3d; }
+    #prep-board { display: none; }
+    .prep-desktop-card {
+      display: none;
+      max-width: 360px;
+      background: #fff;
+      border-radius: 6px;
+      padding: 24px 28px;
+      margin: 20px 0 0 -12px;
+      box-shadow: 0 4px 16px rgba(10,30,61,0.15);
+    }
+    #prepDesktopProgress.prep-desktop-card { padding: 18px 28px; }
+    .prep-desktop-subcards { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+    .prep-desktop-subcard { flex: 1; background: #f7f9fb; border-radius: 4px; padding: 14px 18px; }
+    .prep-desktop-subcard-title { font-size: 13px; font-weight: 700; color: #0a1e3d; margin-bottom: 8px; }
+    .prep-desktop-subcard-val { font-size: 20px; font-weight: 700; color: #0a1e3d; margin-bottom: 8px; }
+    .prep-desktop-subcard-line { font-size: 13px; color: #0a1e3d; opacity: 0.75; }
+    .prep-desktop-subcard-line span { opacity: 0.6; }
+    .prep-desktop-subcard { cursor: pointer; position: relative; transition: box-shadow 0.15s, background 0.15s; }
+    .prep-desktop-subcard:hover { box-shadow: 0 2px 10px rgba(10,30,61,0.18); }
+    .prep-desktop-subcard.active { background: #eaf6ff; }
+    .prep-desktop-subcard-check { position: absolute; top: 8px; right: 8px; width: 18px; height: 18px; border-radius: 50%; background: #2e9e5b; color: #fff; font-size: 11px; display: none; align-items: center; justify-content: center; }
+    .prep-desktop-subcard.active .prep-desktop-subcard-check { display: flex; }
+    .prep-desktop-status-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .prep-desktop-status-table th { text-align: center; font-weight: 700; color: #0a1e3d; padding: 4px 6px; font-size: 12px; }
+    .prep-desktop-status-table th:first-child { text-align: left; }
+    .prep-desktop-status-table td { text-align: center; padding: 5px 6px; color: #0a1e3d; }
+    .prep-desktop-status-table td:first-child { text-align: left; font-weight: 600; }
+    .prep-desktop-status-table tr.total td { font-weight: 700; }
+    .prep-desktop-progress-group { margin-bottom: 10px; }
+    .prep-desktop-progress-group:last-child { margin-bottom: 0; }
+    .prep-desktop-progress-title { font-size: 13px; font-weight: 700; color: #0a1e3d; margin-bottom: 6px; }
+    .prep-desktop-progress-label { display: flex; justify-content: space-between; font-size: 12px; color: #0a1e3d; margin-bottom: 6px; }
+    .prep-desktop-progress-label .plan-lbl { color: #7dd0f7; font-weight: 600; }
+    .prep-desktop-progress-label .fact-lbl { color: #2e9e5b; font-weight: 600; }
+    .prep-desktop-progress-track { position: relative; width: 100%; height: 10px; background: rgba(10,30,61,0.08); border-radius: 5px; overflow: hidden; }
+    .prep-desktop-progress-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 5px; }
+    .prep-desktop-progress-fill.plan { background: #7dd0f7; }
+    .prep-desktop-progress-fill.fact { background: #2e9e5b; z-index: 1; }
+    .prep-desktop-toolbar { display: flex; gap: 10px; margin: 4px 0 0 -12px; }
+    .prep-desktop-btn { background: #7dd0f7; color: #0a1e3d; border: none; border-radius: 4px; padding: 8px 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .prep-desktop-btn:hover { background: #4fb8ea; color: #fff; }
+    .prep-desktop-dropdown { position: relative; }
+    .prep-desktop-dropdown-menu { display: none; position: absolute; top: 110%; left: 0; background: #fff; border-radius: 4px; box-shadow: 0 4px 16px rgba(10,30,61,0.2); z-index: 20; min-width: 140px; overflow: hidden; }
+    .prep-desktop-dropdown-menu.open { display: block; }
+    .prep-desktop-dropdown-menu button { display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 16px; font-size: 13px; color: #0a1e3d; cursor: pointer; }
+    .prep-desktop-dropdown-menu button:hover { background: #f0f5fa; }
+    .prep-desktop-row { display: flex; gap: 20px; align-items: stretch; margin: 12px 0 0 -12px; position: relative; }
+    .prep-desktop-objects-panel {
+      position: absolute;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 8px 28px rgba(10,30,61,0.28);
+      z-index: 30;
+      padding: 20px 24px;
+      overflow: auto;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.96);
+      transform-origin: top left;
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    }
+    .prep-desktop-objects-panel.open { opacity: 1; visibility: visible; transform: scale(1); }
+    .prep-desktop-objects-panel-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .prep-desktop-objects-search-wrap { position: relative; flex: 1; }
+    .prep-desktop-objects-search { width: 100%; box-sizing: border-box; border: 1px solid #d0d7de; border-radius: 20px; padding: 9px 16px; font-size: 13px; color: #0a1e3d; outline: none; }
+    .prep-desktop-objects-search:focus { border-color: #7dd0f7; }
+    .prep-desktop-objects-search-dropdown {
+      display: none; position: absolute; top: 110%; left: 0; right: 0; background: #fff;
+      border-radius: 10px; box-shadow: 0 6px 20px rgba(10,30,61,0.2); z-index: 25;
+      max-height: 260px; overflow-y: auto;
+    }
+    .prep-desktop-objects-search-dropdown.open { display: block; }
+    .prep-desktop-objects-search-item { padding: 9px 16px; font-size: 13px; color: #0a1e3d; cursor: pointer; }
+    .prep-desktop-objects-search-item:hover { background: #f0f5fa; }
+    .prep-desktop-objects-search-empty { padding: 9px 16px; font-size: 13px; color: #0a1e3d; opacity: 0.5; }
+    .prep-desktop-objects-panel-close { background: none; border: none; font-size: 16px; color: #0a1e3d; opacity: 0.5; cursor: pointer; }
+    .prep-desktop-objects-panel-close:hover { opacity: 1; }
+    .prep-desktop-col-left { display: flex; flex-direction: column; gap: 20px; width: 360px; flex-shrink: 0; }
+    .prep-desktop-col-left #prepDesktopProgress { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    .prep-desktop-col-left .prep-desktop-card { margin: 0; }
+    .prep-desktop-scurve-card { flex: 1; min-width: 0; background: #fff; border-radius: 6px; padding: 24px 28px; box-shadow: 0 4px 16px rgba(10,30,61,0.15); }
+    .prep-desktop-scurve-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; cursor: grab; scrollbar-width: none; -ms-overflow-style: none; }
+    .prep-desktop-scurve-scroll::-webkit-scrollbar { display: none; }
+    .prep-desktop-scurve-scroll.dragging { cursor: grabbing; }
+    .prep-desktop-scurve-cal { margin-top: 4px; }
+    .prep-desktop-col-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+    .prep-desktop-col-right .prep-desktop-scurve-card:last-child { flex: 1; display: flex; flex-direction: column; }
+    .prep-desktop-col-right .prep-desktop-scurve-card:last-child #prepDesktopMobScroll { flex: 1; }
+    .prep-desktop-monthcards-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; cursor: grab; scrollbar-width: none; -ms-overflow-style: none; }
+    .prep-desktop-monthcards-scroll::-webkit-scrollbar { display: none; }
+    .prep-desktop-monthcards-scroll.dragging { cursor: grabbing; }
+    .prep-desktop-monthcards-inner { display: flex; gap: 10px; }
+    .prep-desktop-monthcard { flex-shrink: 0; width: 110px; background: #f7f9fb; border-radius: 4px; padding: 10px 12px; }
+    .prep-desktop-monthcard-title { font-size: 12px; font-weight: 700; color: #0a1e3d; margin-bottom: 8px; text-align: center; }
+    .prep-desktop-monthcard-line { font-size: 11px; margin-bottom: 4px; }
+    .prep-desktop-monthcard-line .lbl { color: #0a1e3d; opacity: 0.6; }
+    .prep-desktop-monthcard-line.plan .val { color: #7dd0f7; font-weight: 700; }
+    .prep-desktop-monthcard-line.fact .val { color: #2e9e5b; font-weight: 700; }
+    .prep-desktop-monthcards-legend { display: flex; gap: 6px; margin-top: 10px; }
+    .prep-desktop-monthcards-legend span { font-size: 12px; font-weight: 700; color: #fff; padding: 4px 14px; border-radius: 4px; }
+    .prep-desktop-monthcards-legend .plan-badge { background: #7dd0f7; }
+    .prep-desktop-monthcards-legend .fact-badge { background: #2e9e5b; }
+    body.prep-active .prep-desktop-card { display: block; }
 
     /* Вкладки и списки проектов */
     .tab { display: none; }
     .tab.active { display: block; }
-    .tab-title { color: #fff; font-size: 22px; margin-bottom: 20px; }
+    .tab-title { color: #fff; font-size: 17px; margin-bottom: 20px; }
     .tab-empty { color: rgba(255,255,255,0.6); }
 
     .project-list { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
     .project-dashboard-full {
-      position: fixed; left: 66px; top: var(--header-h, 73px); right: 0; bottom: 0;
+      position: fixed; left: 286px; top: 0; right: 0; bottom: 0;
       overflow-y: auto;
       margin: 0; padding: 0;
     }
@@ -450,7 +704,7 @@
       display: flex; flex-direction: column; gap: 0;
       width: 66px; overflow: hidden;
       transition: width 0.25s ease;
-      position: fixed; left: 0; top: var(--header-h, 73px); bottom: 0;
+      position: fixed; left: 220px; top: 0; bottom: 0;
       z-index: 50;
       border: 1px solid rgba(255,255,255,0.14);
       border-radius: 0;
@@ -865,7 +1119,7 @@
     .prep-obj-status { font-size: 9.5px; padding: 2px 6px; display: inline-block; width: fit-content; }
     .prep-obj-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 300; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s; }
     .prep-obj-modal-overlay.open { opacity: 1; visibility: visible; }
-    .prep-obj-modal { width: 1440px; max-width: 96vw; max-height: 95vh; min-height: 70vh; overflow-y: auto; background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(190,205,225,0.5)); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(10,30,60,0.15); box-shadow: 0 20px 60px rgba(0,0,0,0.3); color: #0a1e3d; transform: translateY(-16px); transition: transform 0.2s ease; }
+    .prep-obj-modal { zoom: 0.85; width: 1600px; max-width: 96vw; max-height: 95vh; min-height: 70vh; overflow-y: auto; background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(190,205,225,0.5)); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(10,30,60,0.15); box-shadow: 0 20px 60px rgba(0,0,0,0.3); color: #0a1e3d; transform: translateY(-16px); transition: transform 0.2s ease; }
     .prep-obj-modal-overlay.open .prep-obj-modal { transform: translateY(0); }
     .prep-obj-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; position: relative; }
     .prep-obj-modal-title { font-size: 15px; font-weight: 700; }
@@ -884,15 +1138,34 @@
       body * { visibility: hidden; }
       .prep-obj-modal-overlay, .prep-obj-modal-overlay * { visibility: visible; }
       .prep-obj-modal-overlay { position: static; background: #fff; display: block; }
-      .prep-obj-modal { position: static; box-shadow: none; max-height: none !important; overflow: visible !important; margin: 0 !important; transform-origin: top left; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: #eef2f7 !important; }
+      .prep-obj-modal { position: static; box-shadow: none; max-height: none !important; overflow: visible !important; margin: 0 !important; transform-origin: top left; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: transparent !important; border: none !important; }
       .prep-obj-modal-actions { display: none; }
+      body.printing-prep .content, body.printing-prep .content * { visibility: visible !important; }
+      body.printing-prep .content { margin: 0 !important; padding: 6px !important; width: 100% !important; box-sizing: border-box !important; }
+      body.printing-prep .sidebar, body.printing-prep .mobile-topbar { display: none !important; }
+      body.printing-prep .prep-desktop-toolbar { display: none !important; }
+      body.printing-prep .prep-desktop-row { margin: 0 !important; }
+      body.printing-prep .prep-desktop-objects-panel { display: none !important; }
+      @page { margin: 5mm; }
     }
-    @media print and (max-width: 1300px) {
-      .prep-obj-modal { zoom: 0.72; }
+    @media print {
+      .prep-obj-modal { zoom: 0.65; }
     }
-    .prep-obj-modal-grid { display: grid; grid-template-columns: 260px 1fr; gap: 0; align-items: start; }
-    .prep-obj-cards { display: flex; flex-direction: column; gap: 0; }
-    .prep-obj-card { background: linear-gradient(135deg, rgba(255,255,255,0.75), rgba(200,215,235,0.45)); border: 1px solid rgba(10,30,60,0.12); border-radius: 0; padding: 12px 14px; }
+    .prep-obj-modal-grid { display: grid; grid-template-columns: clamp(180px, 20vw, 272px) 1fr; gap: 12px; align-items: start; }
+    .prep-obj-cards { display: flex; flex-direction: column; gap: 12px; }
+    .prep-obj-card { flex: 0 0 auto; background: linear-gradient(135deg, rgba(255,255,255,0.75), rgba(200,215,235,0.45)); border: 1px solid rgba(10,30,60,0.12); border-radius: 0; padding: 20px 14px; }
+    .prep-obj-card-cost { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .prep-obj-card-viz { flex-shrink: 0; text-align: center; }
+    .prep-obj-mini-track { position: relative; height: 10px; border-radius: 5px; background: rgba(10,30,60,0.08); overflow: hidden; margin-top: 8px; }
+    .prep-obj-mini-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 5px; }
+    .prep-obj-cost-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px 6px; text-align: center; margin-top: 4px; }
+    .prep-obj-cost-grid span { font-size: 11px; opacity: 0.75; }
+    .prep-obj-cost-grid b { font-size: 13px; }
+    .prep-obj-progress-caption { display: flex; justify-content: space-between; font-size: 11px; margin-top: 4px; font-weight: 600; }
+    .prep-obj-bracket-total { text-align: center; font-size: 11px; font-weight: 700; margin-bottom: 3px; margin-top: 10px; }
+    .prep-obj-bracket-labels { display: flex; margin-top: 3px; }
+    .prep-obj-bracket-labels > div { text-align: center; font-size: 11px; font-weight: 700; }
+    .prep-obj-bracket-tick { width: 1px; height: 6px; background: rgba(10,30,60,0.5); margin: 0 auto; }
     .prep-obj-card-title { font-size: 11px; font-weight: 700; color: rgba(10,30,60,0.65); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.03em; }
     .prep-obj-card-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 3px 0; }
     .prep-obj-card-row b { font-weight: 700; }
@@ -940,7 +1213,7 @@
     .proj-gantt .pg-scale-year > span:first-child, .proj-gantt .pg-scale-month > span:first-child { width: 428px; }
     .sch-gantt .pg-name { width: 420px; }
     .sch-gantt .pg-scale-year > span:first-child, .sch-gantt .pg-scale-month > span:first-child { width: 688px; }
-    .sch-scale-sticky { position: sticky; top: var(--header-h, 73px); z-index: 4; background: #eef2f7; }
+    .sch-scale-sticky { position: sticky; top: 0; z-index: 4; background: #eef2f7; }
     .sch-gantt .sch-body { display: none; }
     .sch-gantt .sch-body.open { display: block; }
     .sch-gantt .sch-sec-head { background: linear-gradient(to right, #0a1e3d, #16345c 688px, transparent 688px); border-radius: 0; padding: 5px 6px; margin-top: 0; margin-bottom: 0; }
@@ -1032,38 +1305,31 @@
 </head>
 <body>
   <div class="bg"></div>
+  <div class="mobile-topbar" id="mobileTopbar">
+    <button class="menu-toggle" id="menuToggle">☰</button>
+    <span class="mobile-topbar-title" id="mobileTopbarTitle"></span>
+  </div>
 
-  <header class="topbar">
-    <div class="topbar-left">
-      <div class="topbar-row">
-        <div class="logo">
-          <div class="logo-text">
-            <div class="subtitle">Дирекция Строительства Объектов Металлургического Комплекса</div>
-          </div>
-        </div>
-      </div>
-      <div class="subnav" id="subnav">
-        <button class="subnav-btn active" data-tab="info">Общая информация</button>
-        <button class="subnav-btn" data-tab="schedule">Общий график</button>
-        <button class="subnav-btn" data-tab="prep">Подготовительные работы</button>
-        <button class="subnav-btn" data-tab="main">Проекты</button>
-        <button class="subnav-btn" data-tab="chrono">Хронология</button>
-        <button class="subnav-btn" data-tab="personnel">Персонал</button>
-        <button class="subnav-btn" data-tab="risk">Риск</button>
-      </div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-user">
+      <span class="avatar" id="avatar">?</span>
+      <div class="sidebar-username" id="username">...</div>
     </div>
-    <div class="user-menu">
-      <button class="user-btn" id="userBtn">
-        <span class="avatar" id="avatar">?</span>
-        <span id="username">...</span>
-      </button>
-      <div class="dropdown" id="dropdown">
-        <button id="usersBtn" style="display:none">👥 Пользователи</button>
-        <button id="changePassBtn">👤 Аккаунт</button>
-        <button class="danger" id="logoutBtn">🚪 Выйти</button>
-      </div>
+    <nav class="sidebar-nav" id="subnav">
+      <button class="subnav-btn active" data-tab="info">Общая информация</button>
+      <button class="subnav-btn" data-tab="schedule">Общий график</button>
+      <button class="subnav-btn" data-tab="prep">Подготовительные работы</button>
+      <button class="subnav-btn" data-tab="main">Проекты</button>
+      <button class="subnav-btn" data-tab="chrono">Хронология</button>
+      <button class="subnav-btn" data-tab="personnel">Персонал</button>
+      <button class="subnav-btn" data-tab="risk">Риск</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <button id="usersBtn" style="display:none">Пользователи</button>
+      <button id="changePassBtn">⚙ Настройки</button>
+      <button class="sidebar-logout" id="logoutBtn">Выйти</button>
     </div>
-  </header>
+  </aside>
 
 
   <main class="content">
@@ -1224,14 +1490,6 @@
       }
     });
 
-    // Открытие/закрытие меню
-    const dropdown = document.getElementById("dropdown");
-    document.getElementById("userBtn").addEventListener("click", (e) => {
-      e.stopPropagation();
-      dropdown.classList.toggle("open");
-    });
-    document.addEventListener("click", () => dropdown.classList.remove("open"));
-
     // ===== ПОЛЬЗОВАТЕЛИ =====
     const usersModal = document.getElementById("usersModal");
 
@@ -1382,6 +1640,67 @@
       if (!container || container.dataset.rendered) return;
       container.dataset.rendered = "1";
       container.innerHTML = `<h2 class="tab-title">Подготовительные работы</h2>
+        <div class="prep-mobile-card" id="prepMobileSummary"></div>
+        <div class="prep-desktop-toolbar">
+          <div class="prep-desktop-dropdown">
+            <button class="prep-desktop-btn" id="prepDesktopDataBtn">Данные</button>
+            <div class="prep-desktop-dropdown-menu" id="prepDesktopDataMenu">
+              <button id="prepDesktopExportBtn">Экспорт</button>
+              <button id="prepDesktopImportBtn">Импорт</button>
+            </div>
+          </div>
+          <button class="prep-desktop-btn" id="prepDesktopObjectsBtn">Объекты</button>
+          <button class="prep-desktop-btn" id="prepDesktopPrintBtn" style="margin-left:auto">Печать</button>
+          <input type="file" id="prepDesktopImportFile" accept=".xlsx" style="display:none">
+        </div>
+        <div class="prep-obj-modal-overlay" id="prepPrintClone" style="display:none"></div>
+        <div class="prep-desktop-row">
+          <div class="prep-desktop-objects-panel" id="prepDesktopObjectsPanel">
+            <div class="prep-desktop-objects-panel-header">
+              <div class="prep-desktop-objects-search-wrap">
+                <input type="text" class="prep-desktop-objects-search" id="prepDesktopObjectsSearch" placeholder="Поиск проекта..." autocomplete="off">
+                <div class="prep-desktop-objects-search-dropdown" id="prepDesktopObjectsSearchDropdown"></div>
+              </div>
+              <button class="prep-desktop-objects-panel-close" id="prepDesktopObjectsClose">✕</button>
+            </div>
+            <div class="prep-desktop-objects-panel-body"></div>
+          </div>
+          <div class="prep-desktop-col-left">
+            <div class="prep-desktop-card" id="prepDesktopSummary"></div>
+            <div class="prep-desktop-card" id="prepDesktopStatus"></div>
+            <div class="prep-desktop-card" id="prepDesktopProgress"></div>
+          </div>
+          <div class="prep-desktop-col-right">
+            <div class="prep-desktop-scurve-card" id="prepDesktopSCurve">
+              <div class="prep-desktop-progress-title">Динамика по стоимости</div>
+              <div class="prep-desktop-scurve-scroll" id="prepDesktopSCurveScroll">
+                <div id="prepDesktopSCurveInner">
+                  <div style="height:220px"><canvas id="prepDesktopSCurveCanvas"></canvas></div>
+                  <div class="prep-desktop-scurve-cal" id="prepDesktopSCurveCal"></div>
+                </div>
+              </div>
+            </div>
+            <div class="prep-desktop-scurve-card">
+              <div class="prep-desktop-progress-title">Данные по месяцам</div>
+              <div class="prep-desktop-monthcards-scroll" id="prepDesktopMonthCardsScroll">
+                <div class="prep-desktop-monthcards-inner" id="prepDesktopMonthCardsInner"></div>
+              </div>
+              <div class="prep-desktop-monthcards-legend">
+                <span class="plan-badge">План</span>
+                <span class="fact-badge">Факт</span>
+              </div>
+            </div>
+            <div class="prep-desktop-scurve-card">
+              <div class="prep-desktop-progress-title">Мобилизация — рабочая сила</div>
+              <div class="prep-desktop-scurve-scroll" id="prepDesktopMobScroll">
+                <div id="prepDesktopMobInner">
+                  <div style="height:240px"><canvas id="prepDesktopMobCanvas"></canvas></div>
+                  <div class="prep-desktop-scurve-cal" id="prepDesktopMobCal"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="prep-board" id="prep-board"><div class="prep-loading">Загрузка данных...</div></div>`;
 
       const prepItems = PROJECTS.prep.items;
@@ -1545,10 +1864,17 @@
           if (!r.planStart) return;
           planCostAll += r.cost || 0;
           const pe = r.forecastEnd || r.planEnd || today;
-          if (today >= pe) planNowAll += r.cost || 0;
+          let planNowRow = 0;
+          if (today >= pe) planNowRow = r.cost || 0;
           else if (today > r.planStart) {
             const t = (new Date(today) - new Date(r.planStart)) / (new Date(pe) - new Date(r.planStart));
-            planNowAll += (r.cost || 0) * t;
+            planNowRow = (r.cost || 0) * t;
+          }
+          planNowAll += planNowRow;
+          const pc = /внутр/i.test(r.contractor || "") ? inC : (/внеш/i.test(r.contractor || "") ? exC : null);
+          if (pc) {
+            pc.planCost = (pc.planCost || 0) + (r.cost || 0);
+            pc.planNow = (pc.planNow || 0) + planNowRow;
           }
         });
         const oc = wIn >= wEx && wIn > 0 ? inC : (wEx > 0 ? exC : null);
@@ -1567,6 +1893,10 @@
       const readiness = totalFact ? Math.min(100, Math.round(doneCost / totalFact * 100)) : 0;
       const readinessPlan = planCostAll ? Math.min(100, Math.round(planNowAll / planCostAll * 100)) : 0;
       const readinessDelta = readiness - readinessPlan;
+      const inReadiness = inC.fact ? Math.min(100, Math.round(inC.done / inC.fact * 100)) : 0;
+      const inReadinessPlan = inC.planCost ? Math.min(100, Math.round(inC.planNow / inC.planCost * 100)) : 0;
+      const exReadiness = exC.fact ? Math.min(100, Math.round(exC.done / exC.fact * 100)) : 0;
+      const exReadinessPlan = exC.planCost ? Math.min(100, Math.round(exC.planNow / exC.planCost * 100)) : 0;
 
       // Объекты, блокирующие старт СМР основных проектов
       const blockers = [];
@@ -1581,6 +1911,681 @@
       });
       blockers.sort((a, b) => b.days - a.days);
 
+      const desktopSummaryEl = document.getElementById("prepDesktopSummary");
+      if (desktopSummaryEl) {
+        desktopSummaryEl.innerHTML = `
+          <div style="font-size:15px;color:#0a1e3d;opacity:0.7;margin-bottom:6px;">Общая стоимость</div>
+          <div style="font-size:32px;font-weight:700;color:#0a1e3d;margin-bottom:16px;">${money(totalCostVat).replace(" €", "")}</div>
+          <div style="display:flex;gap:32px;">
+            <div>
+              <div style="font-size:12px;color:#0a1e3d;opacity:0.6;">Выполнено</div>
+              <div style="font-size:16px;font-weight:600;color:#0a1e3d;">${money(doneCost).replace(" €", "")}</div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:#0a1e3d;opacity:0.6;">Остаток</div>
+              <div style="font-size:16px;font-weight:600;color:#0a1e3d;">${money(totalCostVat - doneCost).replace(" €", "")}</div>
+            </div>
+          </div>
+          <div class="prep-desktop-subcards">
+            <div class="prep-desktop-subcard" id="prepDesktopSubcardIn" data-filter="in">
+              <div class="prep-desktop-subcard-check">✓</div>
+              <div class="prep-desktop-subcard-title">Внутренний</div>
+              <div class="prep-desktop-subcard-val">${money(inC.cost).replace(" €", "")}</div>
+              <div class="prep-desktop-subcard-line"><span>Выполнено:</span> ${money(inC.done).replace(" €", "")}</div>
+              <div class="prep-desktop-subcard-line"><span>Остаток:</span> ${money(inC.cost - inC.done).replace(" €", "")}</div>
+            </div>
+            <div class="prep-desktop-subcard" id="prepDesktopSubcardEx" data-filter="ex">
+              <div class="prep-desktop-subcard-check">✓</div>
+              <div class="prep-desktop-subcard-title">Внешний</div>
+              <div class="prep-desktop-subcard-val">${money(exC.cost).replace(" €", "")}</div>
+              <div class="prep-desktop-subcard-line"><span>Выполнено:</span> ${money(exC.done).replace(" €", "")}</div>
+              <div class="prep-desktop-subcard-line"><span>Остаток:</span> ${money(exC.cost - exC.done).replace(" €", "")}</div>
+            </div>
+          </div>`;
+      }
+      const desktopStatusEl = document.getElementById("prepDesktopStatus");
+      if (desktopStatusEl) {
+        desktopStatusEl.innerHTML = `
+          <table class="prep-desktop-status-table">
+            <tr><th></th><th>Всего</th><th>Заверш.</th><th>Выполн.</th><th>Не нач.</th></tr>
+            <tr class="total"><td>Общий</td><td>${prepItems.length}</td><td>${done}</td><td>${inWork}</td><td>${notStarted}</td></tr>
+            <tr><td>Внутренний</td><td>${inC.total || 0}</td><td>${inC.fin || 0}</td><td>${inC.wip || 0}</td><td>${inC.ns || 0}</td></tr>
+            <tr><td>Внешний</td><td>${exC.total || 0}</td><td>${exC.fin || 0}</td><td>${exC.wip || 0}</td><td>${exC.ns || 0}</td></tr>
+          </table>`;
+      }
+      const desktopProgressEl = document.getElementById("prepDesktopProgress");
+      if (desktopProgressEl) {
+        desktopProgressEl.innerHTML = `
+          <div class="prep-desktop-progress-group">
+            <div class="prep-desktop-progress-title">Общий</div>
+            <div class="prep-desktop-progress-label"><span class="plan-lbl">План ${readinessPlan}%</span><span class="fact-lbl">Факт ${readiness}%</span></div>
+            <div class="prep-desktop-progress-track">
+              <div class="prep-desktop-progress-fill plan" style="width:${readinessPlan}%"></div>
+              <div class="prep-desktop-progress-fill fact" style="width:${readiness}%"></div>
+            </div>
+          </div>
+          <div class="prep-desktop-progress-group">
+            <div class="prep-desktop-progress-title">Внутренний</div>
+            <div class="prep-desktop-progress-label"><span class="plan-lbl">План ${inReadinessPlan}%</span><span class="fact-lbl">Факт ${inReadiness}%</span></div>
+            <div class="prep-desktop-progress-track">
+              <div class="prep-desktop-progress-fill plan" style="width:${inReadinessPlan}%"></div>
+              <div class="prep-desktop-progress-fill fact" style="width:${inReadiness}%"></div>
+            </div>
+          </div>
+          <div class="prep-desktop-progress-group">
+            <div class="prep-desktop-progress-title">Внешний</div>
+            <div class="prep-desktop-progress-label"><span class="plan-lbl">План ${exReadinessPlan}%</span><span class="fact-lbl">Факт ${exReadiness}%</span></div>
+            <div class="prep-desktop-progress-track">
+              <div class="prep-desktop-progress-fill plan" style="width:${exReadinessPlan}%"></div>
+              <div class="prep-desktop-progress-fill fact" style="width:${exReadiness}%"></div>
+            </div>
+          </div>`;
+      }
+      const mobileSummaryEl = document.getElementById("prepMobileSummary");
+      if (mobileSummaryEl) {
+        mobileSummaryEl.innerHTML = `
+          <div class="prep-mobile-main-row">
+            <div>
+              <div class="prep-mobile-total-label">Общая стоимость</div>
+              <div class="prep-mobile-total-val">${money(totalCostVat).replace(" €", "")}</div>
+            </div>
+            <div class="prep-mobile-sub-col">
+              <div class="prep-mobile-sub-line"><span>Выполнено:</span> ${money(doneCost).replace(" €", "")}</div>
+              <div class="prep-mobile-sub-line"><span>Остаток:</span> ${money(totalCostVat - doneCost).replace(" €", "")}</div>
+            </div>
+          </div>
+          <div class="prep-mobile-subcards">
+            <div class="prep-mobile-subcard">
+              <div class="prep-mobile-subcard-title">Внутренний</div>
+              <div class="prep-mobile-subcard-val">${money(inC.cost).replace(" €", "")}</div>
+              <div class="prep-mobile-subcard-line"><span>Выполнено:</span> ${money(inC.done).replace(" €", "")}</div>
+              <div class="prep-mobile-subcard-line"><span>Остаток:</span> ${money(inC.cost - inC.done).replace(" €", "")}</div>
+            </div>
+            <div class="prep-mobile-subcard">
+              <div class="prep-mobile-subcard-title">Внешний</div>
+              <div class="prep-mobile-subcard-val">${money(exC.cost).replace(" €", "")}</div>
+              <div class="prep-mobile-subcard-line"><span>Выполнено:</span> ${money(exC.done).replace(" €", "")}</div>
+              <div class="prep-mobile-subcard-line"><span>Остаток:</span> ${money(exC.cost - exC.done).replace(" €", "")}</div>
+            </div>
+          </div>
+          <div class="prep-mobile-status-card">
+            <table class="prep-mobile-status-table">
+              <tr><th></th><th>Всего</th><th>Заверш.</th><th>Выполн.</th><th>Не нач.</th></tr>
+              <tr class="total"><td>Общий</td><td>${prepItems.length}</td><td>${done}</td><td>${inWork}</td><td>${notStarted}</td></tr>
+              <tr><td>Внутренний</td><td>${inC.total || 0}</td><td>${inC.fin || 0}</td><td>${inC.wip || 0}</td><td>${inC.ns || 0}</td></tr>
+              <tr><td>Внешний</td><td>${exC.total || 0}</td><td>${exC.fin || 0}</td><td>${exC.wip || 0}</td><td>${exC.ns || 0}</td></tr>
+            </table>
+          </div>
+          <div class="prep-mobile-progress-card">
+            <div class="prep-mobile-progress-group">
+              <div class="prep-mobile-progress-title">Общий</div>
+              <div class="prep-mobile-progress-label"><span class="plan-lbl">План ${readinessPlan}%</span><span class="fact-lbl">Факт ${readiness}%</span></div>
+              <div class="prep-mobile-progress-track">
+                <div class="prep-mobile-progress-fill plan" style="width:${readinessPlan}%"></div>
+                <div class="prep-mobile-progress-fill fact" style="width:${readiness}%"></div>
+              </div>
+            </div>
+            <div class="prep-mobile-progress-group">
+              <div class="prep-mobile-progress-title">Внутренний</div>
+              <div class="prep-mobile-progress-label"><span class="plan-lbl">План ${inReadinessPlan}%</span><span class="fact-lbl">Факт ${inReadiness}%</span></div>
+              <div class="prep-mobile-progress-track">
+                <div class="prep-mobile-progress-fill plan" style="width:${inReadinessPlan}%"></div>
+                <div class="prep-mobile-progress-fill fact" style="width:${inReadiness}%"></div>
+              </div>
+            </div>
+            <div class="prep-mobile-progress-group">
+              <div class="prep-mobile-progress-title">Внешний</div>
+              <div class="prep-mobile-progress-label"><span class="plan-lbl">План ${exReadinessPlan}%</span><span class="fact-lbl">Факт ${exReadiness}%</span></div>
+              <div class="prep-mobile-progress-track">
+                <div class="prep-mobile-progress-fill plan" style="width:${exReadinessPlan}%"></div>
+                <div class="prep-mobile-progress-fill fact" style="width:${exReadiness}%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="prep-mobile-scurve-card">
+            <div class="prep-mobile-progress-title">Динамика по стоимости</div>
+            <div class="prep-mobile-scurve-scroll" id="prepMobileSCurveScroll">
+              <div id="prepMobileSCurveInner">
+                <div style="height:200px"><canvas id="prepMobileSCurve"></canvas></div>
+                <div class="prep-mobile-scurve-cal" id="prepMobileSCurveCal"></div>
+              </div>
+            </div>
+          </div>`;
+        function enableDragScroll(el) {
+          if (!el || el.dataset.dragScrollBound) return;
+          el.dataset.dragScrollBound = "1";
+          let isDown = false, startX = 0, scrollStart = 0;
+          el.addEventListener("mousedown", (e) => {
+            isDown = true;
+            el.classList.add("dragging");
+            startX = e.pageX;
+            scrollStart = el.scrollLeft;
+          });
+          window.addEventListener("mouseup", () => {
+            if (isDown) el.classList.remove("dragging");
+            isDown = false;
+          });
+          window.addEventListener("mousemove", (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const dx = e.pageX - startX;
+            el.scrollLeft = scrollStart - dx;
+          });
+          el.addEventListener("wheel", (e) => {
+            el.scrollLeft += e.deltaY;
+            e.preventDefault();
+          }, { passive: false });
+        }
+        function buildPrepSCurve(scrollId, innerId, calId, canvasId, instanceKey, targetMonths, monthCardsScrollId, monthCardsInnerId, filterMode) {
+          targetMonths = targetMonths || 24;
+          filterMode = filterMode || "all";
+          if (window[instanceKey]) window[instanceKey].destroy();
+          const scurveCanvas = document.getElementById(canvasId);
+          if (!scurveCanvas) return;
+          const allRows = [];
+          let minStart = null, maxEnd = null;
+          prepItems.forEach(p => {
+            (reports[p.code] || []).forEach(r => {
+              if (!r.planStart) return;
+              const pe = r.forecastEnd || r.planEnd;
+              if (!pe) return;
+              if (filterMode !== "all") {
+                const isIn = /внутр/i.test(r.contractor || "");
+                const isEx = /внеш/i.test(r.contractor || "");
+                if (filterMode === "in" && !isIn) return;
+                if (filterMode === "ex" && !isEx) return;
+              }
+              allRows.push(r);
+              if (!minStart || r.planStart < minStart) minStart = r.planStart;
+              if (!maxEnd || pe > maxEnd) maxEnd = pe;
+            });
+          });
+          if (!allRows.length) return;
+          let months = [];
+          let cur = new Date(minStart.slice(0, 7) + "-01");
+          const endD = new Date(maxEnd.slice(0, 7) + "-01");
+          while (cur <= endD) {
+            months.push(cur.toISOString().slice(0, 7));
+            cur.setMonth(cur.getMonth() + 1);
+          }
+          const todayYM = new Date().toISOString().slice(0, 7);
+          let cumPlan = 0, cumFact = 0;
+          let planCum = [], factCum = [];
+          let planPer = [], factPer = [];
+          months.forEach(ym => {
+            const monthStart = ym + "-01";
+            const nd = new Date(monthStart);
+            nd.setMonth(nd.getMonth() + 1);
+            const monthEnd = nd.toISOString().slice(0, 10);
+            let planAdd = 0, factAdd = 0;
+            allRows.forEach(r => {
+              const pe = r.forecastEnd || r.planEnd;
+              const ps = r.planStart;
+              const s = ps > monthStart ? ps : monthStart;
+              const e = pe < monthEnd ? pe : monthEnd;
+              if (s < e) {
+                const totalDur = (new Date(pe) - new Date(ps)) || 1;
+                const overlapDur = (new Date(e) - new Date(s));
+                const frac = overlapDur / totalDur;
+                planAdd += (r.cost || 0) * frac;
+                factAdd += (r.costFact || r.done || 0) * frac;
+              }
+            });
+            cumPlan += planAdd;
+            planCum.push(Math.round(cumPlan));
+            planPer.push(Math.round(planAdd));
+            if (ym <= todayYM) {
+              cumFact += factAdd;
+              factCum.push(Math.round(cumFact));
+              factPer.push(Math.round(factAdd));
+            } else {
+              factCum.push(null);
+              factPer.push(null);
+            }
+          });
+          let lastFactIdx = -1;
+          factCum.forEach((v, i) => { if (v !== null && v !== undefined) lastFactIdx = i; });
+          const labels = months.map(ym => ym.split("-")[1]);
+
+          const scrollWrap = document.getElementById(scrollId);
+          const innerWrap = document.getElementById(innerId);
+          const calEl = document.getElementById(calId);
+          enableDragScroll(scrollWrap);
+          const availW = (scrollWrap && scrollWrap.clientWidth) || 350;
+          const targetCols = Math.min(targetMonths, months.length);
+          const colWidth = Math.max(12, Math.floor(availW / targetCols));
+          const totalWidth = colWidth * months.length;
+          if (innerWrap) innerWrap.style.width = totalWidth + "px";
+          if (scrollWrap) {
+            requestAnimationFrame(() => {
+              scrollWrap.scrollLeft = scrollWrap.scrollWidth;
+            });
+          }
+
+          if (calEl) {
+            let monthRowHtml = '<div style="display:flex">';
+            months.forEach(ym => {
+              monthRowHtml += '<div style="width:' + colWidth + 'px;text-align:center;font-size:12px;color:#0a1e3d;opacity:0.8">' + ym.split("-")[1] + '</div>';
+            });
+            monthRowHtml += '</div>';
+            let yearRowHtml = '<div style="display:flex">';
+            let yi = 0;
+            while (yi < months.length) {
+              const y = months[yi].split("-")[0];
+              let cnt = 0;
+              while (yi < months.length && months[yi].split("-")[0] === y) { cnt++; yi++; }
+              yearRowHtml += '<div style="width:' + (colWidth * cnt) + 'px;text-align:center;font-size:13px;font-weight:700;color:#0a1e3d;border-right:1px solid #d0d7de">' + y + '</div>';
+            }
+            yearRowHtml += '</div>';
+            calEl.innerHTML = monthRowHtml + yearRowHtml;
+          }
+
+          if (monthCardsInnerId) {
+            const mcInner = document.getElementById(monthCardsInnerId);
+            const mcScroll = document.getElementById(monthCardsScrollId);
+            enableDragScroll(mcScroll);
+            if (mcInner) {
+              const monthNames = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+              let cardsHtml = "";
+              months.forEach((ym, i) => {
+                const [y, m] = ym.split("-");
+                const planV = planPer[i] != null ? money(planPer[i]).replace(" €", "") : "—";
+                const factV = factPer[i] != null ? money(factPer[i]).replace(" €", "") : "—";
+                cardsHtml += '<div class="prep-desktop-monthcard">'
+                  + '<div class="prep-desktop-monthcard-title">' + monthNames[+m - 1] + " " + y + '</div>'
+                  + '<div class="prep-desktop-monthcard-line plan"><span class="val">' + planV + '</span></div>'
+                  + '<div class="prep-desktop-monthcard-line fact"><span class="val">' + factV + '</span></div>'
+                  + '</div>';
+              });
+              mcInner.innerHTML = cardsHtml;
+              if (mcScroll) {
+                requestAnimationFrame(() => {
+                  mcScroll.scrollLeft = mcScroll.scrollWidth;
+                });
+              }
+            }
+          }
+
+          const yearBoundaryIdx = [];
+          for (let bi = 1; bi < months.length; bi++) {
+            if (months[bi].split("-")[0] !== months[bi - 1].split("-")[0]) yearBoundaryIdx.push(bi);
+          }
+          window[instanceKey] = new Chart(scurveCanvas, {
+            type: "line",
+            data: {
+              labels,
+              datasets: [
+                { type: "line", label: "План", data: planCum, borderColor: "#7dd0f7", borderWidth: 2.5, pointRadius: 0, tension: 0.4 },
+                { type: "line", label: "Факт", data: factCum, borderColor: "#2e9e5b", borderWidth: 2.5, pointRadius: (c) => c.dataIndex === lastFactIdx ? 4 : 0, pointBackgroundColor: "#2e9e5b", tension: 0.4 },
+                { type: "bar", label: "План за месяц", data: planPer, backgroundColor: "rgba(125,208,247,0.5)", yAxisID: "y1" },
+                { type: "bar", label: "Факт за месяц", data: factPer, backgroundColor: "rgba(46,158,91,0.35)", yAxisID: "y1" }
+              ]
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { display: false, grid: { display: false } },
+                y1: { display: false, min: 0, max: Math.max(1, ...planPer, ...factPer.filter(v => v !== null)) * 3 },
+                x: { display: false, grid: { display: false } }
+              }
+            },
+            plugins: [{
+              id: "yearLines",
+              afterDraw(chart) {
+                const ctx = chart.ctx;
+                const area = chart.chartArea;
+                ctx.save();
+                ctx.strokeStyle = "#d0d7de";
+                ctx.lineWidth = 1;
+                yearBoundaryIdx.forEach(idx => {
+                  const x = area.left + (idx / months.length) * (area.right - area.left);
+                  ctx.beginPath();
+                  ctx.moveTo(x, area.top);
+                  ctx.lineTo(x, area.bottom);
+                  ctx.stroke();
+                });
+                ctx.restore();
+              }
+            }]
+          });
+        }
+        buildPrepSCurve("prepMobileSCurveScroll", "prepMobileSCurveInner", "prepMobileSCurveCal", "prepMobileSCurve", "prepMobileSCurveInstance");
+        buildPrepSCurve("prepDesktopSCurveScroll", "prepDesktopSCurveInner", "prepDesktopSCurveCal", "prepDesktopSCurveCanvas", "prepDesktopSCurveInstance", 48, "prepDesktopMonthCardsScroll", "prepDesktopMonthCardsInner");
+
+        function buildPrepMobilization(filterMode) {
+          filterMode = filterMode || "all";
+          const mobCanvas = document.getElementById("prepDesktopMobCanvas");
+          if (!mobCanvas) return;
+          const byMonth = {};
+          prepItems.forEach(p => {
+            if (filterMode !== "all") {
+              const rows = reports[p.code] || [];
+              let wIn = 0, wEx = 0;
+              rows.forEach(r => {
+                if (/внутр/i.test(r.contractor || "")) wIn += r.costVat || 0;
+                else if (/внеш/i.test(r.contractor || "")) wEx += r.costVat || 0;
+              });
+              const cat = wIn >= wEx && wIn > 0 ? "in" : (wEx > 0 ? "ex" : null);
+              if (cat !== filterMode) return;
+            }
+            const mob = (reportsFull[p.code] && reportsFull[p.code].mobilization) || [];
+            mob.forEach(pt => {
+              if (!pt.date) return;
+              const ym = String(pt.date).slice(0, 7);
+              if (!byMonth[ym]) byMonth[ym] = { plan: 0, fact: 0 };
+              byMonth[ym].plan += pt.plan || 0;
+              byMonth[ym].fact += pt.fact || 0;
+            });
+          });
+          const monthsMob = Object.keys(byMonth).sort();
+          if (!monthsMob.length) return;
+          const planMob = monthsMob.map(ym => byMonth[ym].plan);
+          const factMob = monthsMob.map(ym => byMonth[ym].fact);
+          const labelsMob = monthsMob.map(ym => ym.split("-")[1]);
+
+          const mobScroll = document.getElementById("prepDesktopMobScroll");
+          const mobInner = document.getElementById("prepDesktopMobInner");
+          const mobCal = document.getElementById("prepDesktopMobCal");
+          enableDragScroll(mobScroll);
+          const availW = (mobScroll && mobScroll.clientWidth) || 350;
+          const targetCols = Math.min(48, monthsMob.length);
+          const colWidth = Math.max(12, Math.floor(availW / targetCols));
+          const totalWidth = colWidth * monthsMob.length;
+          if (mobInner) mobInner.style.width = totalWidth + "px";
+          if (mobScroll) {
+            requestAnimationFrame(() => { mobScroll.scrollLeft = mobScroll.scrollWidth; });
+          }
+          if (mobCal) {
+            let monthRowHtml = '<div style="display:flex">';
+            monthsMob.forEach(ym => {
+              monthRowHtml += '<div style="width:' + colWidth + 'px;text-align:center;font-size:12px;color:#0a1e3d;opacity:0.8">' + ym.split("-")[1] + '</div>';
+            });
+            monthRowHtml += '</div>';
+            let yearRowHtml = '<div style="display:flex">';
+            let yi = 0;
+            while (yi < monthsMob.length) {
+              const y = monthsMob[yi].split("-")[0];
+              let cnt = 0;
+              while (yi < monthsMob.length && monthsMob[yi].split("-")[0] === y) { cnt++; yi++; }
+              yearRowHtml += '<div style="width:' + (colWidth * cnt) + 'px;text-align:center;font-size:13px;font-weight:700;color:#0a1e3d;border-right:1px solid #d0d7de">' + y + '</div>';
+            }
+            yearRowHtml += '</div>';
+            mobCal.innerHTML = monthRowHtml + yearRowHtml;
+          }
+          if (window.prepDesktopMobInstance) window.prepDesktopMobInstance.destroy();
+          window.prepDesktopMobInstance = new Chart(mobCanvas, {
+            type: "bar",
+            data: {
+              labels: labelsMob,
+              datasets: [
+                { label: "План", data: planMob, backgroundColor: "#7dd0f7", barPercentage: 0.85, categoryPercentage: 0.9 },
+                { label: "Факт", data: factMob, backgroundColor: "#2e9e5b", barPercentage: 0.85, categoryPercentage: 0.9 }
+              ]
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              layout: { padding: { top: 20 } },
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { display: false, grid: { display: false }, beginAtZero: true },
+                x: { display: false, grid: { display: false } }
+              }
+            },
+            plugins: [{
+              id: "barValueLabels",
+              afterDatasetsDraw(chart) {
+                const ctx = chart.ctx;
+                chart.data.datasets.forEach((dataset, dsIndex) => {
+                  const meta = chart.getDatasetMeta(dsIndex);
+                  meta.data.forEach((bar, index) => {
+                    const value = dataset.data[index];
+                    if (!value) return;
+                    ctx.save();
+                    ctx.fillStyle = "#0a1e3d";
+                    ctx.font = "10px sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.fillText(String(value), bar.x, bar.y - 4);
+                    ctx.restore();
+                  });
+                });
+              }
+            }]
+          });
+        }
+        buildPrepMobilization("all");
+
+        let prepDesktopFilter = "all";
+        function applyPrepDesktopFilter(mode) {
+          prepDesktopFilter = (prepDesktopFilter === mode) ? "all" : mode;
+          document.querySelectorAll(".prep-desktop-subcard").forEach(c => c.classList.remove("active"));
+          if (prepDesktopFilter !== "all") {
+            const el = document.querySelector('.prep-desktop-subcard[data-filter="' + prepDesktopFilter + '"]');
+            if (el) el.classList.add("active");
+          }
+          buildPrepSCurve("prepDesktopSCurveScroll", "prepDesktopSCurveInner", "prepDesktopSCurveCal", "prepDesktopSCurveCanvas", "prepDesktopSCurveInstance", 48, "prepDesktopMonthCardsScroll", "prepDesktopMonthCardsInner", prepDesktopFilter);
+          buildPrepMobilization(prepDesktopFilter);
+        }
+        document.querySelectorAll(".prep-desktop-subcard").forEach(card => {
+          card.addEventListener("click", () => applyPrepDesktopFilter(card.dataset.filter));
+        });
+
+        const objectsBtn = document.getElementById("prepDesktopObjectsBtn");
+        const objectsPanel = document.getElementById("prepDesktopObjectsPanel");
+        const objectsClose = document.getElementById("prepDesktopObjectsClose");
+        const colRightEl = document.querySelector(".prep-desktop-col-right");
+        function renderObjectsList(filterMode) {
+          const body = objectsPanel ? objectsPanel.querySelector(".prep-desktop-objects-panel-body") : null;
+          if (!body) return;
+          let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+          prepItems.forEach(p => {
+            const rows = reports[p.code] || [];
+            let wIn = 0, wEx = 0;
+            rows.forEach(r => {
+              if (/внутр/i.test(r.contractor || "")) wIn += r.costVat || 0;
+              else if (/внеш/i.test(r.contractor || "")) wEx += r.costVat || 0;
+            });
+            const cat = wIn >= wEx && wIn > 0 ? "in" : (wEx > 0 ? "ex" : null);
+            if (filterMode !== "all" && cat !== filterMode) return;
+            const cost = rows.reduce((s, r) => s + (r.cost || 0), 0);
+            const pct = objPct(rows);
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f7f9fb;border-radius:4px;">'
+              + '<span style="font-weight:600;color:#0a1e3d;">' + p.code + '</span>'
+              + '<span style="color:#0a1e3d;">' + money(cost).replace(" €", "") + '</span>'
+              + '<span style="color:' + (pct >= 100 ? "#2e9e5b" : "#0a1e3d") + ';font-weight:700;">' + pct + '%</span>'
+              + '</div>';
+          });
+          html += '</div>';
+          body.innerHTML = html;
+        }
+        function openObjectsPanel() {
+          if (!objectsPanel || !colRightEl) return;
+          objectsPanel.style.left = colRightEl.offsetLeft + "px";
+          objectsPanel.style.top = colRightEl.offsetTop + "px";
+          objectsPanel.style.width = colRightEl.offsetWidth + "px";
+          objectsPanel.style.height = colRightEl.offsetHeight + "px";
+          objectsPanel.classList.add("open");
+        }
+        const objectsSearchInput = document.getElementById("prepDesktopObjectsSearch");
+        const objectsSearchDropdown = document.getElementById("prepDesktopObjectsSearchDropdown");
+        function objectCategory(p) {
+          const rows = reports[p.code] || [];
+          let wIn = 0, wEx = 0;
+          rows.forEach(r => {
+            if (/внутр/i.test(r.contractor || "")) wIn += r.costVat || 0;
+            else if (/внеш/i.test(r.contractor || "")) wEx += r.costVat || 0;
+          });
+          return wIn >= wEx && wIn > 0 ? "in" : (wEx > 0 ? "ex" : null);
+        }
+        function renderObjectsSearchDropdown(query) {
+          if (!objectsSearchDropdown) return;
+          const q = (query || "").trim().toLowerCase();
+          const matches = prepItems.filter(p => {
+            if (prepDesktopFilter !== "all" && objectCategory(p) !== prepDesktopFilter) return false;
+            const label = (p.name || p.code || "").toLowerCase();
+            return !q || label.includes(q) || String(p.code || "").toLowerCase().includes(q);
+          });
+          if (!matches.length) {
+            objectsSearchDropdown.innerHTML = '<div class="prep-desktop-objects-search-empty">Ничего не найдено</div>';
+            return;
+          }
+          objectsSearchDropdown.innerHTML = matches.map(p =>
+            '<div class="prep-desktop-objects-search-item" data-code="' + p.code + '">' + (p.name || p.code) + '</div>'
+          ).join("");
+        }
+        if (objectsSearchInput && objectsSearchDropdown) {
+          objectsSearchInput.addEventListener("focus", () => {
+            renderObjectsSearchDropdown(objectsSearchInput.value);
+            objectsSearchDropdown.classList.add("open");
+          });
+          objectsSearchInput.addEventListener("input", () => {
+            renderObjectsSearchDropdown(objectsSearchInput.value);
+            objectsSearchDropdown.classList.add("open");
+          });
+          objectsSearchInput.addEventListener("click", (e) => e.stopPropagation());
+          objectsSearchDropdown.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const item = e.target.closest(".prep-desktop-objects-search-item");
+            if (!item) return;
+            objectsSearchInput.value = item.textContent;
+            objectsSearchDropdown.classList.remove("open");
+          });
+          document.addEventListener("click", () => objectsSearchDropdown.classList.remove("open"));
+        }
+        function closeObjectsPanel() {
+          if (objectsPanel) objectsPanel.classList.remove("open");
+        }
+        if (objectsBtn) objectsBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (objectsPanel && objectsPanel.classList.contains("open")) closeObjectsPanel();
+          else openObjectsPanel();
+        });
+        if (objectsClose) objectsClose.addEventListener("click", (e) => { e.stopPropagation(); closeObjectsPanel(); });
+
+        async function exportAllPrep() {
+          const wb = new ExcelJS.Workbook();
+          const ws = wb.addWorksheet("Отчёт");
+          const allRowsOut = [];
+          prepItems.forEach(p => {
+            const rows = reports[p.code] || [];
+            if (!rows.length) { allRowsOut.push([p.code, p.name || p.code, "", "", "", "", "", "", "", "", 0, 0, ""]); return; }
+            rows.forEach(r => {
+              const d = v => v ? new Date(v) : "";
+              allRowsOut.push([p.code, p.name || p.code, r.stage || "", r.obj || "", r.equip || "", r.item || "",
+                d(r.planStart), d(r.planEnd), d(r.factStart), d(r.factEnd),
+                r.cost || 0, r.done || 0, r.status || ""]);
+            });
+          });
+          ws.addTable({
+            name: "ReportAll",
+            ref: "A1",
+            headerRow: true,
+            style: { showRowStripes: false },
+            columns: REPORT_COLUMNS.map(c => ({ name: c })),
+            rows: allRowsOut.length ? allRowsOut : [ REPORT_COLUMNS.map(() => "") ],
+          });
+          ws.columns.forEach(col => { col.width = 14; });
+          ws.getRow(1).eachCell(cell => {
+            cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 8 };
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF000000" } };
+          });
+          ws.eachRow(row => {
+            row.eachCell(cell => {
+              cell.font = cell.font && cell.font.bold ? cell.font : { size: 8 };
+              cell.border = {
+                top: { style: "thin", color: { argb: "FFCCCCCC" } },
+                left: { style: "thin", color: { argb: "FFCCCCCC" } },
+                bottom: { style: "thin", color: { argb: "FFCCCCCC" } },
+                right: { style: "thin", color: { argb: "FFCCCCCC" } },
+              };
+            });
+          });
+          const buffer = await wb.xlsx.writeBuffer();
+          const blob = new Blob([buffer], { type: "application/octet-stream" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "Подготовительные_работы.xlsx";
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+
+        async function importAllPrep(file) {
+          const wb = new ExcelJS.Workbook();
+          await wb.xlsx.load(await file.arrayBuffer());
+          const ws = wb.worksheets[0];
+          const byCode = {};
+          ws.eachRow((row, n) => {
+            if (n === 1) return;
+            const v = i => { const x = row.getCell(i).value; return x && typeof x === "object" && x.result !== undefined ? x.result : x; };
+            const d = i => { const x = v(i); return (x instanceof Date && x.getFullYear() > 2000) ? x : null; };
+            const code = String(v(1) || "").trim();
+            if (!code) return;
+            if (!byCode[code]) byCode[code] = [];
+            byCode[code].push({
+              stage: String(v(3) || ""),
+              obj: String(v(4) || ""),
+              equip: String(v(5) || ""),
+              item: String(v(6) || ""),
+              planStart: d(7), planEnd: d(8),
+              factStart: d(9), factEnd: d(10),
+              cost: Number(v(11)) || 0,
+              done: Number(v(12)) || 0,
+              status: String(v(13) || "")
+            });
+          });
+          let totalCount = 0;
+          for (const code of Object.keys(byCode)) {
+            const res = await fetch("/api/reports/" + code, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ rows: byCode[code] })
+            });
+            const data = await res.json();
+            if (res.ok) totalCount += data.count || 0;
+          }
+          alert("Импортировано строк: " + totalCount);
+          renderPrepTab();
+        }
+
+        const dataBtn = document.getElementById("prepDesktopDataBtn");
+        const dataMenu = document.getElementById("prepDesktopDataMenu");
+        if (dataBtn && dataMenu) {
+          dataBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            dataMenu.classList.toggle("open");
+          });
+          document.addEventListener("click", () => dataMenu.classList.remove("open"));
+        }
+        const exportBtn = document.getElementById("prepDesktopExportBtn");
+        if (exportBtn) exportBtn.addEventListener("click", () => { dataMenu.classList.remove("open"); exportAllPrep(); });
+        const importBtn = document.getElementById("prepDesktopImportBtn");
+        const importFileInput = document.getElementById("prepDesktopImportFile");
+        if (importBtn && importFileInput) {
+          importBtn.addEventListener("click", () => { dataMenu.classList.remove("open"); importFileInput.click(); });
+          importFileInput.addEventListener("change", (e) => {
+            if (e.target.files[0]) { importAllPrep(e.target.files[0]); e.target.value = ""; }
+          });
+        }
+        const printBtn = document.getElementById("prepDesktopPrintBtn");
+        const printClone = document.getElementById("prepPrintClone");
+        if (printBtn) printBtn.addEventListener("click", () => {
+          if (printClone) {
+            const row = document.querySelector(".prep-desktop-row");
+            printClone.innerHTML = row ? row.outerHTML : "";
+            printClone.style.display = "";
+            printClone.classList.add("open");
+          }
+          window.print();
+        });
+        window.addEventListener("afterprint", () => {
+          if (printClone) {
+            printClone.style.display = "none";
+            printClone.classList.remove("open");
+            printClone.innerHTML = "";
+          }
+        });
+      }
       document.getElementById("prep-board").innerHTML = `
         <div id="prepStickyWrap">
         <div class="kpi-row prep-kpi">
@@ -2072,7 +3077,8 @@
               workforce: (reportsFull[p.code] && reportsFull[p.code].workforce) || [],
               equipment: (reportsFull[p.code] && reportsFull[p.code].equipment) || [],
               volumes: (reportsFull[p.code] && reportsFull[p.code].volumes) || [],
-              mobilization: (reportsFull[p.code] && reportsFull[p.code].mobilization) || [] };
+              mobilization: (reportsFull[p.code] && reportsFull[p.code].mobilization) || [],
+              notes: (reportsFull[p.code] && reportsFull[p.code].notes) || "" };
             return `<div class="prep-obj-row" data-obj="${p.code}">
               <div title="${p.name}">${p.name}</div>
               <div>${fmtD2(planStart)}</div>
@@ -2154,6 +3160,7 @@
               const overlay = document.getElementById("prepObjModalOverlay");
               document.getElementById("prepObjModalTitle").textContent = objName;
               const d = (window.prepObjData && window.prepObjData[code]) || {};
+              window.prepObjCurrentD = d;
               if (d.volumes && d.volumes.length) {
                 d.costVat = d.volumes.reduce((s, v) => s + (v.costPlan || 0), 0);
                 d.done = d.volumes.reduce((s, v) => s + (v.costFact || 0), 0);
@@ -2181,52 +3188,98 @@
               }
               const fmtM = v => Math.round(v || 0).toLocaleString("ru-RU");
               const fmtDt = v => v ? new Date(v).toLocaleDateString("ru-RU") : "—";
+              const escHtml = s => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+              const schedElapsedPct = (() => {
+                if (!d.planStart || !d.planEnd) return null;
+                const s = new Date(d.planStart), e = new Date(d.planEnd), now = new Date();
+                const total = e - s;
+                if (total <= 0) return null;
+                return Math.max(0, Math.min(100, Math.round((now - s) / total * 100)));
+              })();
+              const progressBarHtml = (() => {
+                const pl = Math.max(0, Math.min(100, d.planPct ?? 0));
+                const fa = Math.max(0, Math.min(100, d.factPct ?? 0));
+                const delta = d.delta ?? (fa - pl);
+                const bluePct = fa;
+                const redPct = Math.max(0, pl - fa);
+                const grayPct = Math.max(0, 100 - Math.max(fa, pl));
+                const labelsWidth = bluePct + redPct;
+                let html = labelsWidth > 0
+                  ? '<div class="prep-obj-bracket-total" style="width:' + labelsWidth + '%">' + pl + '%<div class="prep-obj-bracket-tick"></div></div>'
+                  : '<div class="prep-obj-bracket-total">' + pl + '%<div class="prep-obj-bracket-tick"></div></div>';
+                html += '<div class="prep-obj-mini-track" style="display:flex">';
+                if (bluePct > 0) html += '<div style="flex:' + bluePct + ';background:#2563eb;height:100%"></div>';
+                if (redPct > 0) html += '<div style="flex:' + redPct + ';background:#b91c1c;height:100%"></div>';
+                if (grayPct > 0) html += '<div style="flex:' + grayPct + ';background:rgba(10,30,60,0.15);height:100%"></div>';
+                html += '</div>';
+                if (labelsWidth > 0) {
+                  html += '<div class="prep-obj-bracket-labels" style="width:' + labelsWidth + '%">';
+                  if (bluePct > 0) html += '<div style="flex:' + bluePct + '"><div class="prep-obj-bracket-tick"></div><span style="color:#2563eb">' + fa + '%</span></div>';
+                  if (redPct > 0) html += '<div style="flex:' + redPct + '"><div class="prep-obj-bracket-tick"></div><span style="color:#b91c1c">' + delta + '%</span></div>';
+                  html += '</div>';
+                }
+                return html;
+              })();
               document.getElementById("prepObjModalBody").innerHTML = `
                 <div class="prep-obj-modal-grid">
                   <div class="prep-obj-cards">
-                    <div class="prep-obj-card">
+                    <div class="prep-obj-card" style="width:clamp(180px, 20vw, 272px)">
                       <div class="prep-obj-card-title">Стоимость</div>
-                      <div class="prep-obj-card-row"><span>План</span><b>${fmtM(d.costVat)}</b></div>
+                      <div class="prep-obj-card-row"><span>Стоимость</span><b>${fmtM(d.costVat)}</b></div>
                       <div class="prep-obj-card-row"><span>Выполнено</span><b>${fmtM(d.done)}</b></div>
                       <div class="prep-obj-card-row"><span>Остаток</span><b>${fmtM(d.remainder)}</b></div>
+                      ${progressBarHtml}
                     </div>
-                    <div class="prep-obj-card">
+                    <div class="prep-obj-card" style="width:clamp(180px, 20vw, 272px)">
                       <div class="prep-obj-card-title">Сроки</div>
                       <div class="prep-obj-card-row"><span>Начало</span><b>${fmtDt(d.planStart)}</b></div>
                       <div class="prep-obj-card-row"><span>Окончание</span><b>${fmtDt(d.planEnd)}</b></div>
-                      <div class="prep-obj-card-row"><span>Статус</span><b>${d.status || "—"}</b></div>
-                      ${(d.scheduleDeltaDays !== null && d.scheduleDeltaDays !== 0) ? `<div class="prep-obj-card-row"><span>${d.scheduleDeltaDays > 0 ? "Отставание" : "Опережение"}</span><b style="color:${d.scheduleDeltaDays > 0 ? '#b91c1c' : '#1d5c3f'}">${Math.abs(d.scheduleDeltaDays)} дн.</b></div>` : (d.scheduleDeltaDays === 0 ? `<div class="prep-obj-card-row"><span>Срок</span><b>в срок</b></div>` : "")}
+                      ${(d.scheduleDeltaDays !== null && d.scheduleDeltaDays !== 0) ? `<div class="prep-obj-card-row"><span>${d.scheduleDeltaDays > 0 ? "Отставание" : "Опережение"}</span><b style="color:${d.scheduleDeltaDays > 0 ? '#b91c1c' : '#2563eb'}">${Math.abs(d.scheduleDeltaDays)} дн.</b></div>` : (d.scheduleDeltaDays === 0 ? `<div class="prep-obj-card-row"><span>Срок</span><b>в срок</b></div>` : `<div class="prep-obj-card-row"><span>Статус</span><b>${d.status || "—"}</b></div>`)}
+                      ${schedElapsedPct !== null ? `<div class="prep-obj-mini-track"><div class="prep-obj-mini-fill" style="width:${schedElapsedPct}%;background:#0a1e3d"></div></div>` : ""}
                     </div>
-                    <div class="prep-obj-card">
-                      <div class="prep-obj-card-title">Прогресс</div>
-                      <div class="prep-obj-card-row"><span>План</span><b>${d.planPct ?? 0}%</b></div>
-                      <div class="prep-obj-card-row"><span>Факт</span><b>${d.factPct ?? 0}%</b></div>
-                      <div class="prep-obj-card-row"><span>δ</span><b>${(d.delta ?? 0) > 0 ? "+" : ""}${d.delta ?? 0}%</b></div>
+                    <div class="prep-obj-card" style="flex:1;min-width:260px;display:none;">
+                      <div class="prep-obj-card-title">Примечание</div>
+                      <textarea id="prepObjNotesInput" style="width:100%;box-sizing:border-box;min-height:110px;margin-top:6px;resize:vertical;border:1px solid rgba(10,30,60,0.2);border-radius:2px;padding:6px;font-size:12px;font-family:inherit;background:rgba(255,255,255,0.6);color:#0a1e3d;">${escHtml(d.notes)}</textarea>
+                      <div style="text-align:right;margin-top:6px;">
+                        <button class="prep-obj-modal-btn" id="prepObjNotesSaveBtn">Сохранить</button>
+                      </div>
                     </div>
                   </div>
                   <div class="prep-obj-side">
-                    <div class="prep-obj-chart-box prep-obj-chart-box-half" style="position:relative">
-                      <canvas id="prepObjChartMh" height="140"></canvas>
-                      <button class="prep-obj-mh-toggle" id="prepObjMhToggle" data-mode="percent">%</button>
+                    <div class="prep-obj-chart-box prep-obj-chart-box-half" style="position:relative;height:auto;display:flex;flex-direction:column;">
+                      <div style="position:relative;height:200px;flex:0 0 auto;">
+                        <canvas id="prepObjChartMh" height="140"></canvas>
+                        <button class="prep-obj-mh-toggle" id="prepObjMhToggle" data-mode="percent" style="top:8px;bottom:auto;">%</button>
+                      </div>
+                      <div style="margin-top:4px;">
+                        <table id="prepObjChartMhTable" style="width:100%;table-layout:fixed;border-collapse:collapse;font-size:11px;"></table>
+                      </div>
                     </div>
                     <div class="prep-obj-chart-box prep-obj-chart-box-half"><canvas id="prepObjChartWf" height="140"></canvas></div>
                   </div>
                 </div>`;
-              function buildMonthChart(canvasId, dataArr, label) {
-                const months = (dataArr || []).map(m => m.month).sort();
-                const plan = months.map(m => (dataArr.find(x => x.month === m) || {}).plan || 0);
-                const fact = months.map(m => (dataArr.find(x => x.month === m) || {}).fact || 0);
-                const monthNums = months.map(m => m.slice(5, 7));
-                const yearOf = months.map(m => m.slice(0, 4));
+              window.buildMonthChart = function(canvasId, dataArr, label, period) {
+                period = period || "month";
+                const keyOf = period === "week"
+                  ? (item => { const dt = new Date(item.date); return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); })
+                  : (item => item.month);
+                const sorted = (dataArr || []).slice().sort((a, b) => keyOf(a) < keyOf(b) ? -1 : (keyOf(a) > keyOf(b) ? 1 : 0));
+                const keys = sorted.map(keyOf);
+                const plan = sorted.map(m => m.plan || 0);
+                const fact = sorted.map(m => m.fact || 0);
+                const labelParts = period === "week"
+                  ? keys.map(k => { const p = k.split("-"); return p[2] + "." + p[1]; })
+                  : keys.map(k => k.slice(5, 7));
+                const yearOf = keys.map(k => k.slice(0, 4));
                 const yearGroups = [];
                 yearOf.forEach((y, idx) => {
                   if (!yearGroups.length || yearGroups[yearGroups.length - 1].year !== y) yearGroups.push({ year: y, start: idx, end: idx });
                   else yearGroups[yearGroups.length - 1].end = idx;
                 });
-                const labels = monthNums.map((mm, idx) => {
+                const labels = labelParts.map((lp, idx) => {
                   const grp = yearGroups.find(g => idx >= g.start && idx <= g.end);
                   const centerIdx = grp ? Math.floor((grp.start + grp.end) / 2) : -1;
-                  return [mm, idx === centerIdx ? grp.year : ""];
+                  return [lp, idx === centerIdx ? grp.year : ""];
                 });
                 const barValueLabelsPlugin = {
                   id: "prepObjMobLabels",
@@ -2270,58 +3323,89 @@
                   }
                 });
               }
-              window.buildManHoursChart = function(canvasId, rows, mode) {
+              window.buildManHoursChart = function(canvasId, rows, mode, period) {
                 mode = mode || window.prepObjMhMode || "percent";
+                period = period || window.prepObjPeriod || "month";
                 window.prepObjMhLastRows = rows;
                 window.prepObjMhMode = mode;
-                const byMonth = {};
+                window.prepObjPeriod = period;
+                function mondayKey(d) {
+                  const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                  const wd = (dt.getDay() + 6) % 7;
+                  dt.setDate(dt.getDate() - wd);
+                  return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
+                }
+                const bucket = {};
+                function distribute(start, end, amount, field) {
+                  if (!start) return;
+                  const s = new Date(start);
+                  const e = end ? new Date(end) : new Date();
+                  if (period === "week") {
+                    let cur = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+                    const wd0 = (cur.getDay() + 6) % 7;
+                    cur.setDate(cur.getDate() - wd0);
+                    const endD = new Date(e.getFullYear(), e.getMonth(), e.getDate());
+                    const wkeys = [];
+                    while (cur <= endD) {
+                      wkeys.push(mondayKey(cur));
+                      cur.setDate(cur.getDate() + 7);
+                    }
+                    const n = wkeys.length || 1;
+                    const per = amount / n;
+                    wkeys.forEach(k => {
+                      bucket[k] = bucket[k] || { plan: 0, fact: 0 };
+                      bucket[k][field] += per;
+                    });
+                  } else {
+                    const nMonths = (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth()) + 1;
+                    const per = amount / nMonths;
+                    const dt = new Date(s.getFullYear(), s.getMonth(), 1);
+                    for (let i = 0; i < nMonths; i++) {
+                      const key = dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0");
+                      bucket[key] = bucket[key] || { plan: 0, fact: 0 };
+                      bucket[key][field] += per;
+                      dt.setMonth(dt.getMonth() + 1);
+                    }
+                  }
+                }
                 (rows || []).forEach(r => {
                   if (!r.planStart || !r.planEnd) return;
-                  const ps = new Date(r.planStart), pe = new Date(r.planEnd);
-                  const nMonths = (pe.getFullYear() - ps.getFullYear()) * 12 + (pe.getMonth() - ps.getMonth()) + 1;
-                  const perMonth = (r.mhPlan || 0) / nMonths;
-                  const dt = new Date(ps.getFullYear(), ps.getMonth(), 1);
-                  for (let i = 0; i < nMonths; i++) {
-                    const key = dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0");
-                    byMonth[key] = byMonth[key] || { plan: 0, fact: 0 };
-                    byMonth[key].plan += perMonth;
-                    dt.setMonth(dt.getMonth() + 1);
-                  }
+                  distribute(r.planStart, r.planEnd, r.mhPlan || 0, "plan");
                 });
                 (rows || []).forEach(r => {
                   const fs = r.factStart ? new Date(r.factStart) : (r.planStart ? new Date(r.planStart) : null);
                   if (!fs) return;
                   const fe = r.factEnd ? new Date(r.factEnd) : (r.planEnd ? new Date(r.planEnd) : new Date());
-                  const nMonths = (fe.getFullYear() - fs.getFullYear()) * 12 + (fe.getMonth() - fs.getMonth()) + 1;
-                  const perMonth = (r.mhFact || 0) / nMonths;
-                  const dt = new Date(fs.getFullYear(), fs.getMonth(), 1);
-                  for (let i = 0; i < nMonths; i++) {
-                    const key = dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0");
-                    byMonth[key] = byMonth[key] || { plan: 0, fact: 0 };
-                    byMonth[key].fact += perMonth;
-                    dt.setMonth(dt.getMonth() + 1);
-                  }
+                  distribute(fs, fe, r.mhFact || 0, "fact");
                 });
-                const keys = Object.keys(byMonth).sort();
+                const keys = Object.keys(bucket).sort();
                 const total = (rows || []).reduce((s, r) => s + (r.mhPlan || 0), 0) || 1;
                 const now = new Date();
-                const nowKey = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+                const nowKey = period === "week" ? mondayKey(now) : (now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0"));
                 let cp = 0, cf = 0;
-                const planCum = [], factCum = [], planPer = [], factPer = [], monthNums = [], yearOf = [];
+                const planCum = [], factCum = [], planPer = [], factPer = [], labelParts = [], yearOf = [], planCumPctArr = [], factCumPctArr = [];
                 keys.forEach(k => {
-                  cp += byMonth[k].plan; cf += byMonth[k].fact;
-                  monthNums.push(k.slice(5, 7));
-                  yearOf.push(k.slice(0, 4));
+                  cp += bucket[k].plan; cf += bucket[k].fact;
+                  if (period === "week") {
+                    const parts = k.split("-");
+                    labelParts.push(parts[2] + "." + parts[1]);
+                    yearOf.push(parts[0]);
+                  } else {
+                    labelParts.push(k.slice(5, 7));
+                    yearOf.push(k.slice(0, 4));
+                  }
+                  planCumPctArr.push(Math.round(cp / total * 100));
+                  factCumPctArr.push(k <= nowKey ? Math.round(cf / total * 100) : null);
                   if (mode === "percent") {
                     planCum.push(Math.round(cp / total * 100));
                     factCum.push(k <= nowKey ? Math.round(cf / total * 100) : null);
-                    planPer.push(Math.round(byMonth[k].plan / total * 100 * 10) / 10);
-                    factPer.push(k <= nowKey ? Math.round(byMonth[k].fact / total * 100 * 10) / 10 : null);
+                    planPer.push(Math.round(bucket[k].plan / total * 100 * 10) / 10);
+                    factPer.push(k <= nowKey ? Math.round(bucket[k].fact / total * 100 * 10) / 10 : null);
                   } else {
-                    planCum.push(Math.round(cp * 10) / 10);
-                    factCum.push(k <= nowKey ? Math.round(cf * 10) / 10 : null);
-                    planPer.push(Math.round(byMonth[k].plan * 10) / 10);
-                    factPer.push(k <= nowKey ? Math.round(byMonth[k].fact * 10) / 10 : null);
+                    planCum.push(Math.round(cp));
+                    factCum.push(k <= nowKey ? Math.round(cf) : null);
+                    planPer.push(Math.round(bucket[k].plan));
+                    factPer.push(k <= nowKey ? Math.round(bucket[k].fact) : null);
                   }
                 });
                 const yearGroups = [];
@@ -2329,12 +3413,13 @@
                   if (!yearGroups.length || yearGroups[yearGroups.length - 1].year !== y) yearGroups.push({ year: y, start: idx, end: idx });
                   else yearGroups[yearGroups.length - 1].end = idx;
                 });
-                const labels = monthNums.map((mm, idx) => {
+                const labels = labelParts.map((lp, idx) => {
                   const grp = yearGroups.find(g => idx >= g.start && idx <= g.end);
                   const centerIdx = grp ? Math.floor((grp.start + grp.end) / 2) : -1;
-                  return [mm, idx === centerIdx ? grp.year : ""];
+                  return [lp, idx === centerIdx ? grp.year : ""];
                 });
                 const suffix = mode === "percent" ? "%" : "";
+                const perLabel = period === "week" ? "за неделю" : "за месяц";
                 const valueLabelsPlugin = {
                   id: "prepObjMhLabels",
                   afterDatasetsDraw(chart) {
@@ -2358,36 +3443,79 @@
                     });
                   }
                 };
+                const mhTableEl = document.getElementById(canvasId + "Table");
+                if (mhTableEl) {
+                  const cellStyle = 'text-align:center;padding:4px 4px;white-space:nowrap;overflow:hidden;';
+                  const labelStyle = 'text-align:left;padding:4px 6px;font-weight:600;white-space:nowrap;width:60px;';
+                  let theadHtml;
+                  if (period === "week") {
+                    const monthGroups = [];
+                    keys.forEach((k, idx) => {
+                      const parts = k.split("-");
+                      const mk = parts[0] + "-" + parts[1];
+                      if (!monthGroups.length || monthGroups[monthGroups.length - 1].mk !== mk) monthGroups.push({ mk, month: parts[1], start: idx, end: idx });
+                      else monthGroups[monthGroups.length - 1].end = idx;
+                    });
+                    let dayRow = '<tr><th style="' + labelStyle + '"></th>';
+                    keys.forEach(k => { dayRow += '<th style="' + cellStyle + 'font-size:8px;opacity:0.5;">' + k.split("-")[2] + '</th>'; });
+                    dayRow += '</tr>';
+                    let monthRow = '<tr><th style="' + labelStyle + '"></th>';
+                    monthGroups.forEach(g => { monthRow += '<th colspan="' + (g.end - g.start + 1) + '" style="' + cellStyle + 'font-size:10px;opacity:0.7;">' + g.month + '</th>'; });
+                    monthRow += '</tr>';
+                    let yearRow = '<tr><th style="' + labelStyle + '"></th>';
+                    yearGroups.forEach(g => { yearRow += '<th colspan="' + (g.end - g.start + 1) + '" style="' + cellStyle + 'font-size:11px;">' + g.year + '</th>'; });
+                    yearRow += '</tr>';
+                    theadHtml = dayRow + monthRow + yearRow;
+                  } else {
+                    const headCellHtml = k => {
+                      const parts = k.split("-");
+                      return '<div>' + parts[1] + '</div><div style="font-size:9px;opacity:0.6">' + parts[0] + '</div>';
+                    };
+                    theadHtml = '<tr><th style="' + labelStyle + '"></th>';
+                    keys.forEach(k => { theadHtml += '<th style="' + cellStyle + '">' + headCellHtml(k) + '</th>'; });
+                    theadHtml += '</tr>';
+                  }
+                  function buildRow(label, arr, suffix) {
+                    let r = '<tr><td style="' + labelStyle + '">' + label + '</td>';
+                    arr.forEach(v => { r += '<td style="' + cellStyle + '">' + (v === null || v === undefined ? '—' : v + (suffix || '')) + '</td>'; });
+                    r += '</tr>';
+                    return r;
+                  }
+                  const suffixMode = mode === "percent" ? "%" : "";
+                  let bodyHtml = buildRow('План', planPer, suffixMode) + buildRow('Факт', factPer, suffixMode) + buildRow('План нак.', planCum, suffixMode) + buildRow('Факт нак.', factCum, suffixMode);
+                  mhTableEl.innerHTML = bodyHtml + theadHtml;
+                }
+                let lastFactIdx = -1;
+                factCum.forEach((v, i) => { if (v !== null && v !== undefined) lastFactIdx = i; });
                 window.prepObjChartInstances = window.prepObjChartInstances || {};
                 if (window.prepObjChartInstances[canvasId]) window.prepObjChartInstances[canvasId].destroy();
                 const ctx = document.getElementById(canvasId);
                 window.prepObjChartInstances[canvasId] = new Chart(ctx, {
-                  plugins: [valueLabelsPlugin],
                   data: {
                     labels,
                     datasets: [
-                      { type: "line", label: "План накопительно", data: planCum, borderColor: "#0a1e3d", borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: "#0a1e3d", tension: 0.3 },
-                      { type: "line", label: "Факт накопительно", data: factCum, borderColor: "#7da7d9", borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: "#7da7d9", tension: 0.3 },
-                      { type: "bar", label: "План за месяц", data: planPer, backgroundColor: "#0a1e3d", yAxisID: "y1" },
-                      { type: "bar", label: "Факт за месяц", data: factPer, backgroundColor: "#7da7d9", yAxisID: "y1" }
+                      { type: "line", label: "План накопительно", data: planCum, borderColor: "#0a1e3d", borderWidth: 2.5, pointRadius: (ctx) => ctx.dataIndex === lastFactIdx ? 4 : 0, pointBackgroundColor: "#0a1e3d", tension: 0.4 },
+                      { type: "line", label: "Факт накопительно", data: factCum, borderColor: "#7da7d9", borderWidth: 2.5, pointRadius: (ctx) => ctx.dataIndex === lastFactIdx ? 4 : 0, pointBackgroundColor: "#7da7d9", tension: 0.4 },
+                      { type: "bar", label: "План " + perLabel, data: planPer, backgroundColor: "#0a1e3d", yAxisID: "y1" },
+                      { type: "bar", label: "Факт " + perLabel, data: factPer, backgroundColor: "#7da7d9", yAxisID: "y1" }
                     ]
                   },
                   options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 16 } },
-                    plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 10 } } }, title: { display: true, text: "Человеко-часы", align: "start", font: { size: 11 } } },
+                    layout: { padding: { top: 4 } },
+                    plugins: { legend: { display: false }, title: { display: true, text: "Человеко-часы", align: "start", font: { size: 11 } } },
                     scales: {
                       y: mode === "percent"
-                        ? { min: 0, max: 100, ticks: { callback: v => v + "%", font: { size: 9 } } }
-                        : { beginAtZero: true, ticks: { font: { size: 9 } } },
+                        ? { min: 0, max: 100, ticks: { callback: v => v + "%", font: { size: 9 } }, afterFit: a => { a.width = 60; } }
+                        : { beginAtZero: true, ticks: { font: { size: 9 } }, afterFit: a => { a.width = 60; } },
                       y1: { display: false, min: 0, max: Math.max(1, ...planPer, ...factPer.filter(v => v !== null)) * 3 },
-                      x: { ticks: { font: { size: 9 } } }
+                      x: { ticks: { display: false }, grid: { display: false } }
                     }
                   }
                 });
               }
-              buildManHoursChart("prepObjChartMh", d.volumes);
-              function mobilizationToMonthly(mob) {
+              buildManHoursChart("prepObjChartMh", d.volumes, window.prepObjMhMode, window.prepObjPeriod);
+              window.mobilizationToMonthly = function(mob) {
                 const byMonth = {};
                 (mob || []).forEach(m => {
                   if (!m.date) return;
@@ -2398,8 +3526,19 @@
                 });
                 return Object.values(byMonth);
               }
-              const mobMonthly = (d.mobilization && d.mobilization.length) ? mobilizationToMonthly(d.mobilization) : d.workforce;
-              buildMonthChart("prepObjChartWf", mobMonthly, "Мобилизация — рабочая сила");
+              window.prepObjRebuildMobilization = function(period) {
+                const dd = window.prepObjCurrentD || {};
+                let per = period || window.prepObjPeriod || "month";
+                let dataArr;
+                if (per === "week" && dd.mobilization && dd.mobilization.length) {
+                  dataArr = dd.mobilization;
+                } else {
+                  dataArr = (dd.mobilization && dd.mobilization.length) ? window.mobilizationToMonthly(dd.mobilization) : dd.workforce;
+                  per = "month";
+                }
+                window.buildMonthChart("prepObjChartWf", dataArr, "Мобилизация — рабочая сила", per);
+              };
+              window.prepObjRebuildMobilization(window.prepObjPeriod);
               overlay.classList.add("open");
             });
           }
@@ -2411,6 +3550,14 @@
           }
           if (!document.getElementById("prepObjPrintBtn").dataset.printInit) {
             document.getElementById("prepObjPrintBtn").dataset.printInit = "1";
+            document.getElementById("prepObjPeriodBtn").addEventListener("click", () => {
+              const btn = document.getElementById("prepObjPeriodBtn");
+              const newPeriod = btn.dataset.period === "month" ? "week" : "month";
+              btn.dataset.period = newPeriod;
+              btn.textContent = newPeriod === "month" ? "Неделя" : "Месяц";
+              window.buildManHoursChart("prepObjChartMh", window.prepObjMhLastRows, window.prepObjMhMode, newPeriod);
+              window.prepObjRebuildMobilization(newPeriod);
+            });
             document.getElementById("prepObjPrintBtn").addEventListener("click", () => window.print());
             document.getElementById("prepObjDataBtn").addEventListener("click", () => {
               document.getElementById("prepObjDataDrop").classList.toggle("open");
@@ -2480,13 +3627,40 @@
               }
             });
             document.getElementById("prepObjExportBtn").addEventListener("click", () => alert("Выгрузка объёмов и дат — скоро"));
-            document.getElementById("prepObjModalBody").addEventListener("click", e => {
-              const btn = e.target.closest("#prepObjMhToggle");
-              if (!btn) return;
-              const newMode = btn.dataset.mode === "percent" ? "hours" : "percent";
-              btn.dataset.mode = newMode;
-              btn.textContent = newMode === "percent" ? "%" : "час";
-              window.buildManHoursChart("prepObjChartMh", window.prepObjMhLastRows, newMode);
+            document.getElementById("prepObjModalBody").addEventListener("click", async e => {
+              const mhBtn = e.target.closest("#prepObjMhToggle");
+              if (mhBtn) {
+                const newMode = mhBtn.dataset.mode === "percent" ? "hours" : "percent";
+                mhBtn.dataset.mode = newMode;
+                mhBtn.textContent = newMode === "percent" ? "%" : "час";
+                window.buildManHoursChart("prepObjChartMh", window.prepObjMhLastRows, newMode);
+                return;
+              }
+              const notesBtn = e.target.closest("#prepObjNotesSaveBtn");
+              if (notesBtn) {
+                const code = window.prepObjCurrentCode;
+                if (!code) return;
+                const val = document.getElementById("prepObjNotesInput").value;
+                const oldText = notesBtn.textContent;
+                notesBtn.disabled = true;
+                notesBtn.textContent = "Сохранение...";
+                try {
+                  const res = await fetch("/api/reports/" + code, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ notes: val })
+                  });
+                  if (res.ok) {
+                    if (window.prepObjData && window.prepObjData[code]) window.prepObjData[code].notes = val;
+                    notesBtn.textContent = "Сохранено ✓";
+                  } else {
+                    notesBtn.textContent = "Ошибка";
+                  }
+                } catch (err) {
+                  notesBtn.textContent = "Ошибка";
+                }
+                setTimeout(() => { notesBtn.textContent = oldText; notesBtn.disabled = false; }, 1500);
+              }
             });
 
           }
@@ -3088,26 +4262,29 @@
 
 
     // Переключение вкладок
-    function updateHeaderHeight() {
-      const h = document.querySelector(".topbar").offsetHeight;
-      document.documentElement.style.setProperty("--header-h", h + "px");
+
+    // Мобильное меню: изначально открыто, скрывается после выбора страницы
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      document.body.classList.remove("menu-hidden");
     }
-    updateHeaderHeight();
-    window.addEventListener("resize", updateHeaderHeight);
-    window.addEventListener("load", updateHeaderHeight);
-    if (window.ResizeObserver) {
-      new ResizeObserver(updateHeaderHeight).observe(document.querySelector(".topbar"));
-    }
+    document.getElementById("menuToggle").addEventListener("click", () => {
+      document.body.classList.toggle("menu-hidden");
+    });
 
     document.querySelectorAll(".subnav-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".subnav-btn").forEach(b => b.classList.remove("active"));
         document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
         btn.classList.add("active");
+        if (window.matchMedia("(max-width: 768px)").matches) {
+          document.body.classList.add("menu-hidden");
+        }
+        document.getElementById("mobileTopbarTitle").textContent = btn.textContent;
         document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
         if (btn.dataset.tab === "main") document.getElementById("tab-aux").classList.add("active");
         document.getElementById("projects-sidebar").style.display = btn.dataset.tab === "main" ? "flex" : "none";
         document.getElementById("projects-dashboard-full").style.display = btn.dataset.tab === "main" ? "block" : "none";
+        document.body.classList.toggle("prep-active", btn.dataset.tab === "prep");
         if (btn.dataset.tab === "prep") {
           requestAnimationFrame(() => {
             const row = document.querySelector(".kpi-row.prep-kpi");
@@ -3860,6 +5037,7 @@
         <div class="prep-obj-modal-head">
           <div class="prep-obj-modal-title" id="prepObjModalTitle"></div>
           <div class="prep-obj-modal-actions">
+            <button class="prep-obj-modal-btn" id="prepObjPeriodBtn" data-period="month">Неделя</button>
             <button class="prep-obj-modal-btn" id="prepObjPrintBtn">Печать</button>
             <div class="prep-obj-modal-data-wrap">
               <button class="prep-obj-modal-btn" id="prepObjDataBtn">Данные</button>

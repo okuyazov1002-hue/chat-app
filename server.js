@@ -360,7 +360,7 @@ app.post("/api/reports/:code", adminOnly, async (req, res) => {
     return res.status(401).json({ message: "Не авторизован" });
   }
   try {
-    const { rows, comment, workforce, equipment, volumes, mobilization } = req.body;
+    const { rows, comment, workforce, equipment, volumes, mobilization, notes } = req.body;
     const u = await User.findById(req.session.userId);
     const uName = (u && (u.name || u.username)) || "";
     const update = { updatedAt: new Date(), updatedBy: uName };
@@ -370,6 +370,7 @@ app.post("/api/reports/:code", adminOnly, async (req, res) => {
     if (equipment !== undefined) update.equipment = equipment;
     if (volumes !== undefined) update.volumes = volumes;
     if (mobilization !== undefined) update.mobilization = mobilization;
+    if (notes !== undefined) update.notes = notes;
     const report = await Report.findOneAndUpdate(
       { code: req.params.code },
       update,

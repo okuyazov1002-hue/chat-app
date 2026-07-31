@@ -45,6 +45,7 @@ const reportSchema = new mongoose.Schema({
     _id: false
   }], default: [] },
   mobilization: { type: [{ date: Date, plan: Number, fact: Number, _id: false }], default: [] },
+  notes: { type: String, default: "" },
   updatedAt: { type: Date, default: Date.now }
 });
 

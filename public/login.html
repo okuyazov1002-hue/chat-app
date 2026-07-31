@@ -11,9 +11,8 @@
       font-family: -apple-system, "SF Pro Display", "Segoe UI", Arial, sans-serif;
       min-height: 100vh;
       display: flex;
-      justify-content: flex-end;
+      justify-content: center;
       align-items: center;
-      padding-right: 12%;
       background: #0f2027;
       overflow: hidden;
     }
@@ -58,9 +57,9 @@
       z-index: 1;
       width: 100%;
       max-width: 380px;
-      margin: 16px;
+      margin: 8px;
       padding: 42px 34px;
-      border-radius: 28px;
+      border-radius: 0;
       background: rgba(255, 255, 255, 0.10);
       backdrop-filter: blur(28px) saturate(160%);
       -webkit-backdrop-filter: blur(28px) saturate(160%);
@@ -69,12 +68,24 @@
     }
 
     h1 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #fff;
-      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
       margin-bottom: 30px;
+    }
+    h1 .title-top {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
       letter-spacing: 0.3px;
+      margin-bottom: 6px;
+    }
+    h1 .title-line {
+      font-size: 15px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.85);
+      letter-spacing: 0.2px;
+      line-height: 1.3;
     }
 
     label {
@@ -132,12 +143,15 @@
 <body>
   <div class="bg"></div>
 
-  <div class="dimmer">
-    🌙 <input type="range" id="dim" min="0.3" max="0.92" step="0.01">
-  </div>
-
   <div class="card">
-    <h1>Отчётность</h1>
+        <h1>
+      <span class="title-top">Единый портал</span>
+      <span class="title-line">Дирекции</span>
+      <span class="title-line">Строительство</span>
+      <span class="title-line">Объектов</span>
+      <span class="title-line">Металлургического</span>
+      <span class="title-line">Комплекса</span>
+    </h1>
     <div class="error" id="error"></div>
     <form id="loginForm">
       <label>Логин</label>
@@ -149,14 +163,6 @@
   </div>
 
   <script>
-    const dim = document.getElementById("dim");
-    dim.value = localStorage.getItem("dim") || 0.75;
-    document.documentElement.style.setProperty("--dim", dim.value);
-    dim.addEventListener("input", () => {
-      document.documentElement.style.setProperty("--dim", dim.value);
-      localStorage.setItem("dim", dim.value);
-    });
-
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target));
