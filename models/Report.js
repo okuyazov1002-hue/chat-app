@@ -45,6 +45,22 @@ const reportSchema = new mongoose.Schema({
     _id: false
   }], default: [] },
   mobilization: { type: [{ date: Date, plan: Number, fact: Number, _id: false }], default: [] },
+  volumesPrev: { type: [{
+    discipline: String,
+    item: String,
+    unit: String,
+    volumePlan: Number,
+    volumeFact: Number,
+    mhPlan: Number,
+    mhFact: Number,
+    costPlan: Number,
+    costFact: Number,
+    planStart: Date,
+    planEnd: Date,
+    _id: false
+  }], default: [] },
+  mobilizationPrev: { type: [{ date: Date, plan: Number, fact: Number, _id: false }], default: [] },
+  prevUpdatedAt: { type: Date, default: null },
   notes: { type: String, default: "" },
   updatedAt: { type: Date, default: Date.now }
 });

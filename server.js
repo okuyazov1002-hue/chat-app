@@ -368,14 +368,62 @@ app.post("/api/reports/:code", adminOnly, async (req, res) => {
     if (comment !== undefined) update.comment = comment;
     if (workforce !== undefined) update.workforce = workforce;
     if (equipment !== undefined) update.equipment = equipment;
+    if (notes !== undefined) update.notes = notes;
+    // При новом импорте объёмов/мобилизации сдвигаем текущие данные в "предыдущий снимок"
+    if (volumes !== undefined || mobilization !== undefined) {
+      const existing = await Report.findOne({ code: req.params.code });
+      if (existing) {
+        if (volumes !== undefined) update.volumesPrev = existing.volumes || [];
+        if (mobilization !== undefined) update.mobilizationPrev = existing.mobilization || [];
+        update.prevUpdatedAt = existing.updatedAt || null;
+      }
+    }
     if (volumes !== undefined) update.volumes = volumes;
     if (mobilization !== undefined) update.mobilization = mobilization;
-    if (notes !== undefined) update.notes = notes;
     const report = await Report.findOneAndUpdate(
       { code: req.params.code },
       update,
       { new: true, upsert: true }
     );
+    res.json({
+      message: "Сохранено",
+      count: report.rows.length,
+      volumes: report.volumes,
+      volumesPrev: report.volumesPrev,
+      mobilization: report.mobilization,
+      mobilizationPrev: report.mobilizationPrev,
+      prevUpdatedAt: report.prevUpdatedAt,
+      updatedAt: report.updatedAt
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
+// Заменить строки rows для конкретного этапа + объектов, встретившихся в присланном массиве
+// (остальные объекты этого же этапа не трогаются)
+app.post("/api/reports/:code/stage-rows", adminOnly, async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: "Не авторизован" });
+  }
+  try {
+    const { stage, rows } = req.body;
+    if (!stage || !Array.isArray(rows)) {
+      return res.status(400).json({ message: "Нужны stage и rows" });
+    }
+    const report = await Report.findOne({ code: req.params.code });
+    if (!report) {
+      return res.status(404).json({ message: "Отчёт не найден" });
+    }
+    const affectedObjs = new Set(rows.map(r => (r.obj || "").trim()));
+    const existingRows = report.rows || [];
+    const keptRows = existingRows.filter(r => !(r.stage === stage && affectedObjs.has((r.obj || "").trim())));
+    const incomingRows = rows.map(r => ({ ...r, stage }));
+    report.rows = keptRows.concat(incomingRows);
+    const u = await User.findById(req.session.userId);
+    report.updatedBy = (u && (u.name || u.username)) || "";
+    report.updatedAt = new Date();
+    await report.save();
     res.json({ message: "Сохранено", count: report.rows.length });
   } catch (err) {
     res.status(500).json({ message: "Ошибка сервера: " + err.message });
