@@ -323,29 +323,35 @@
       }
       body.menu-hidden .sidebar { transform: translateX(-100%); }
       .content { margin-left: 0 !important; }
-      #tab-prep { left: 0 !important; }
+      #tab-prep { left: 0 !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; }
       .project-sidebar { display: none !important; }
       .project-dashboard-full { display: none !important; }
-      .proj-mobile-list { display: block !important; margin-left: -28px !important; margin-right: -28px !important; width: calc(100% + 56px) !important; }
-      body.mobile-proj-detail .proj-mobile-list { display: none !important; }
+      .proj-mobile-list { display: none !important; }
       .proj-mobile-detail { display: none; }
       body.mobile-proj-detail .proj-mobile-detail {
         display: block; position: fixed; inset: 0; top: 44px; z-index: 40; overflow-y: auto;
         background: #fff; padding: 0; color: #0a1e3d;
       }
       .proj-mobile-stage-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 16px; margin-top: -80px; position: relative; z-index: 2; }
+      #passModal.modal-overlay { padding: 0; align-items: stretch; }
+      #passModal .modal {
+        max-width: none; width: 100%; height: 100%; margin: 0;
+        border-radius: 0;
+        overflow-y: auto; -webkit-overflow-scrolling: touch;
+        padding: 32px 22px;
+      }
       .proj-mobile-stage-inner { display: flex; gap: 12px; }
-      .proj-mobile-stage-card { flex-shrink: 0; width: 210px; border-radius: 16px; padding: 16px 18px; background: #fff; box-shadow: 0 6px 20px rgba(10,30,61,0.18); color: #0a1e3d; }
-      .proj-mobile-stage-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
-      .proj-mobile-stage-dates-row { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 4px; }
-      .proj-mobile-stage-dates-val { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 12px; }
-      .proj-mobile-stage-progress-row { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 600; margin-bottom: 4px; }
+      .proj-mobile-stage-card { flex-shrink: 0; width: 150px; border-radius: 10px; padding: 10px 12px; background: #fff; box-shadow: 0 6px 20px rgba(10,30,61,0.18); color: #0a1e3d; }
+      .proj-mobile-stage-title { font-size: 10px; font-weight: 700; margin-bottom: 7px; }
+      .proj-mobile-stage-dates-row { display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; margin-bottom: 3px; }
+      .proj-mobile-stage-dates-val { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 7px; }
+      .proj-mobile-stage-progress-row { display: flex; justify-content: space-between; font-size: 9px; font-weight: 600; margin-bottom: 3px; }
       .proj-mobile-stage-progress-row .plan { color: #2e9e5b; }
       .proj-mobile-stage-progress-row .fact { color: #2563eb; }
-      .proj-mobile-stage-progress-track { position: relative; width: 100%; height: 7px; background: rgba(10,30,61,0.08); border-radius: 4px; overflow: hidden; margin-bottom: 14px; }
+      .proj-mobile-stage-progress-track { position: relative; width: 100%; height: 5px; background: rgba(10,30,61,0.08); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
       .proj-mobile-stage-progress-fill { position: absolute; top: 0; left: 0; height: 100%; background: #2e9e5b; border-radius: 4px; }
-      .proj-mobile-stage-cost { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
-      .proj-mobile-stage-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+      .proj-mobile-stage-cost { font-size: 12px; font-weight: 800; margin-bottom: 5px; }
+      .proj-mobile-stage-row { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 3px; }
       .proj-mobile-stage-row span:first-child { opacity: 0.6; }
       .proj-mobile-stage-row b { font-weight: 700; }
       /* Плашка с гамбургером и названием страницы — видна только когда меню свёрнуто */
@@ -410,13 +416,13 @@
     .prep-mobile-scurve-cal { margin-top: 4px; }
     .prep-mobile-subcard-title { font-size: 13px; font-weight: 700; color: #0a1e3d; margin-bottom: 8px; }
     .prep-mobile-subcard-val { font-size: 18px; font-weight: 700; color: #0a1e3d; margin-bottom: 8px; }
-    .prep-mobile-subcard-line { font-size: 13px; color: #0a1e3d; opacity: 0.8; }
+    .prep-mobile-subcard-line { font-size: 11px; color: #0a1e3d; opacity: 0.8; }
     .prep-mobile-subcard-line span { opacity: 0.6; }
     .prep-mobile-main-row { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; }
-    .prep-mobile-total-label { font-size: 22px; font-weight: 700; opacity: 0.8; margin-bottom: 8px; }
-    .prep-mobile-total-val { font-size: 22px; font-weight: 700; }
+    .prep-mobile-total-label { font-size: 16px; font-weight: 700; opacity: 0.8; margin-bottom: 8px; }
+    .prep-mobile-total-val { font-size: 16px; font-weight: 700; }
     .prep-mobile-sub-col { display: flex; flex-direction: column; gap: 8px; text-align: right; }
-    .prep-mobile-sub-line { font-size: 18px; color: #0a1e3d; font-weight: 600; }
+    .prep-mobile-sub-line { font-size: 13px; color: #0a1e3d; font-weight: 600; }
     .prep-mobile-sub-line span { font-weight: 400; opacity: 0.7; }
     @media (max-width: 768px) {
       .sidebar-username { font-size: 16px !important; }
@@ -897,7 +903,7 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      z-index: 3;
+      z-index: 50;
       display: none;
       justify-content: center;
       align-items: center;
@@ -905,6 +911,119 @@
       backdrop-filter: blur(6px);
     }
     .modal-overlay.open { display: flex; }
+    #passModal.modal-overlay {
+      display: flex;
+      opacity: 0;
+      pointer-events: none;
+      background: rgba(0, 0, 0, 0);
+      backdrop-filter: blur(0px);
+      transition: opacity 0.32s ease, background 0.32s ease, backdrop-filter 0.32s ease;
+    }
+    #passModal.modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(6px);
+    }
+    #passModal .modal {
+      background: #fff; border: none;
+      border-radius: 0;
+      transform: translateX(-80px) scale(0.96);
+      opacity: 0;
+      transition: transform 0.32s ease, opacity 0.32s ease;
+    }
+    #passModal.modal-overlay.open .modal {
+      transform: translateX(0) scale(1);
+      opacity: 1;
+    }
+    #passModal .modal h2 { color: #0f2027; }
+    #passModal .modal input, #passModal .modal select {
+      color: #0f2027;
+      background: #ffffff;
+      border: none;
+    }
+    #passModal .modal input::placeholder { color: rgba(15, 32, 39, 0.4); }
+    #passModal .modal input:focus, #passModal .modal select:focus {
+      background: #ffffff;
+      border-color: rgba(15, 32, 39, 0.4);
+    }
+    #passModal .msg.ok { color: #1e8e5a; }
+    #passModal .msg.err { color: #d64545; }
+    #passModal .btn-save { background: #2c5364; color: #fff; }
+    #passModal .btn-cancel { background: #f4f6f7; color: #0f2027; border: 1px solid rgba(15,32,39,0.15) !important; }
+    #passModal .acc-fields-group { margin: 0 -22px 14px; }
+    #passModal .acc-fields-group input {
+      border-radius: 0;
+      margin-bottom: 0;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+    }
+    #passModal .acc-fields-group input:first-child { border-top: none; }
+    #passModal .row button { border-radius: 0; }
+    #passModal .password-wrap { position: relative; }
+    #passModal .password-wrap input { padding-right: 46px; }
+    #passModal .toggle-pass {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: auto;
+      padding: 4px;
+      margin: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: rgba(15, 32, 39, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #passModal .toggle-pass:hover { color: rgba(15, 32, 39, 0.75); }
+    #passModal .toggle-pass svg { width: 18px; height: 18px; }
+
+    #usersModal .modal {
+      background: #fff; border: none; border-radius: 0;
+    }
+    #usersModal .modal h2 { color: #0f2027; }
+    #usersModal .users-add-title { color: #0f2027; }
+    #usersModal .user-name { color: #0f2027; }
+    #usersModal .user-name small { color: rgba(15,32,39,0.5); }
+    #usersModal .user-row { border-bottom: 1px solid rgba(15,32,39,0.1); }
+    #usersModal #usersList {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    #usersModal #usersList::-webkit-scrollbar { display: none; }
+    #usersModal .acc-fields-group { margin: 0 -22px 14px; }
+    #usersModal .acc-fields-group input,
+    #usersModal .acc-fields-group select {
+      color: #0f2027;
+      background: #ffffff;
+      border: none;
+      border-radius: 0;
+      margin-bottom: 0;
+      border-top: 1px solid rgba(15,32,39,0.1);
+    }
+    #usersModal .acc-fields-group input::placeholder { color: rgba(15, 32, 39, 0.4); }
+    #usersModal .acc-fields-group input:focus,
+    #usersModal .acc-fields-group select:focus {
+      background: #f4f6f7;
+    }
+    #usersModal .row button { border-radius: 0; }
+    #usersModal select option { background: #ffffff; color: #0f2027; }
+    #usersModal select option:hover,
+    #usersModal select option:checked { background: #e5e7eb; }
+    #usersModal .btn-save { background: #2c5364; color: #fff; }
+    #usersModal .btn-cancel { background: #f4f6f7; color: #0f2027; border: 1px solid rgba(15,32,39,0.15) !important; }
+    #usersModal .user-role {
+      color: #0f2027;
+      background: #f4f6f7;
+      border: 1px solid rgba(15,32,39,0.15);
+      border-radius: 6px;
+      width: auto;
+      max-width: none;
+    }
     .modal {
       width: 100%;
       max-width: 380px;
@@ -1360,11 +1479,12 @@
     #usersList { max-height: 46vh; overflow-y: auto; margin-bottom: 4px; }
     #userslist { max-height: 420px; overflow-y: auto; }
     .users-add-title { font-size: 13px; margin: 14px 0 6px; }
-    .user-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #e5e7eb; }
+    .user-row { display: flex; align-items: center; gap: 8px; padding: 0; margin: 0; border-bottom: 1px solid #e5e7eb; min-height: 34px; }
     .user-name { flex: 1; font-size: 13px; display: flex; flex-direction: column; color: #fff; }
     .user-name small { color: #9ca3af; font-size: 11px; }
-    .user-role { font-size: 12px; padding: 3px 6px; }
-    .user-del { background: #fde8e8; color: #b91c1c; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
+    .user-role { font-size: 10px !important; padding: 4px 8px !important; border-radius: 6px !important; width: auto !important; margin-top: 10px !important; }
+    .user-del { background: #fde8e8; color: #b91c1c; border: none; border-radius: 6px; padding: 4px 8px; font-size: 10px; cursor: pointer; white-space: nowrap; }
+    .user-reset { background: #e0edff; color: #1d4ed8; border: none; border-radius: 6px; padding: 4px 8px; font-size: 10px; cursor: pointer; white-space: nowrap; }
     .kpi-badge {
       display: inline-block;
       margin-top: 6px;
@@ -1501,20 +1621,37 @@
     <div class="modal">
       <h2>Аккаунт</h2>
       <div class="msg" id="passMsg"></div>
-      <input type="text" id="accDept" placeholder="Отдел">
-      <input type="text" id="accPos" placeholder="Должность">
-      <input type="text" id="accInt" placeholder="Внутренний номер">
-      <input type="text" id="accMob" placeholder="Мобильный номер">
-      <input type="text" id="accEmail" placeholder="Почта">
-      <div class="row">
-        <button class="btn-save" id="accSave">Сохранить данные</button>
+      <div class="acc-fields-group">
+        <input type="text" id="accDept" placeholder="Отдел">
+        <input type="text" id="accPos" placeholder="Должность">
+        <input type="text" id="accInt" placeholder="Внутренний номер">
+        <input type="text" id="accMob" placeholder="Мобильный номер">
+        <input type="text" id="accEmail" placeholder="Почта">
       </div>
       <h2 style="margin-top:14px;">Смена пароля</h2>
-      <input type="password" id="oldPass" placeholder="Старый пароль">
-      <input type="password" id="newPass" placeholder="Новый пароль (мин. 4 символа)">
+      <div class="acc-fields-group">
+        <div class="password-wrap">
+          <input type="password" id="oldPass" placeholder="Старый пароль (заполните, только если меняете пароль)">
+          <button type="button" class="toggle-pass" data-target="oldPass" aria-label="Показать пароль">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+        <div class="password-wrap">
+          <input type="password" id="newPass" placeholder="Новый пароль (мин. 4 символа)">
+          <button type="button" class="toggle-pass" data-target="newPass" aria-label="Показать пароль">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+      </div>
       <div class="row">
         <button class="btn-cancel" id="passCancel">Закрыть</button>
-        <button class="btn-save" id="passSave">Сменить пароль</button>
+        <button class="btn-save" id="passSave">Сохранить</button>
       </div>
     </div>
   </div>
@@ -1526,13 +1663,16 @@
       <div class="msg" id="usersMsg"></div>
       <div id="usersList"></div>
       <h3 class="users-add-title">Добавить пользователя</h3>
-      <input type="text" id="newUserName" placeholder="Имя и фамилия">
-      <input type="text" id="newUserLogin" placeholder="Логин">
-      <input type="password" id="newUserPass" placeholder="Пароль (мин. 4 символа)">
-      <select id="newUserRole">
-        <option value="user">Пользователь</option>
-        <option value="admin">Администратор</option>
-      </select>
+      <div class="acc-fields-group">
+        <input type="text" id="newUserName" placeholder="Имя и фамилия">
+        <input type="text" id="newUserLogin" placeholder="Логин">
+        <input type="password" id="newUserPass" placeholder="Пароль (мин. 4 символа)">
+        <select id="newUserRole">
+          <option value="user">Пользователь</option>
+          <option value="admin">Администратор</option>
+          <option value="developer">Разработчик</option>
+        </select>
+      </div>
       <div class="row">
         <button class="btn-cancel" id="usersClose">Закрыть</button>
         <button class="btn-save" id="userCreate">Добавить</button>
@@ -1571,11 +1711,13 @@
       const users = await res.json();
       document.getElementById("usersList").innerHTML = users.map(u => `
         <div class="user-row">
-          <span class="user-name">${u.name || u.username}<small>${u.username}</small></span>
+          <span class="user-name">${u.name || u.username}${u.name && u.name !== u.username ? '<small>' + u.username + '</small>' : ''}</span>
           <select class="user-role" data-id="${u._id}">
-            <option value="user" ${u.role !== "admin" ? "selected" : ""}>Пользователь</option>
+            <option value="user" ${u.role !== "admin" && u.role !== "developer" ? "selected" : ""}>Пользователь</option>
             <option value="admin" ${u.role === "admin" ? "selected" : ""}>Администратор</option>
+            <option value="developer" ${u.role === "developer" ? "selected" : ""}>Разработчик</option>
           </select>
+          <button class="user-reset" data-id="${u._id}">Сброс</button>
           <button class="user-del" data-id="${u._id}">Удалить</button>
         </div>`).join("");
       document.querySelectorAll(".user-role").forEach(sel => {
@@ -1597,6 +1739,14 @@
           const d = await res.json();
           document.getElementById("usersMsg").textContent = d.message;
           loadUsers();
+        });
+      });
+      document.querySelectorAll(".user-reset").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Сбросить пароль на 1234?")) return;
+          const res = await fetch("/api/users/" + btn.dataset.id + "/reset-password", { method: "POST" });
+          const d = await res.json();
+          document.getElementById("usersMsg").textContent = d.message;
         });
       });
     }
@@ -1650,8 +1800,24 @@
       document.getElementById("accMob").value = u.mobilePhone || "";
       document.getElementById("accEmail").value = u.email || "";
     });
-    document.getElementById("accSave").addEventListener("click", async () => {
-      const res = await fetch("/api/personnel/" + myPersId, {
+    document.querySelectorAll("#passModal .toggle-pass").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const input = document.getElementById(btn.dataset.target);
+        if (!input) return;
+        const isHidden = input.type === "password";
+        input.type = isHidden ? "text" : "password";
+        btn.setAttribute("aria-label", isHidden ? "Скрыть пароль" : "Показать пароль");
+        btn.querySelector("svg").innerHTML = isHidden
+          ? '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.86 21.86 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 7 11 7a21.86 21.86 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>'
+          : '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle>';
+      });
+    });
+    document.getElementById("passCancel").addEventListener("click", () => {
+      passModal.classList.remove("open");
+      passMsg.textContent = "";
+    });
+    document.getElementById("passSave").addEventListener("click", async () => {
+      const profileRes = await fetch("/api/personnel/" + myPersId, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1662,26 +1828,23 @@
           email: document.getElementById("accEmail").value,
         }),
       });
-      passMsg.textContent = res.ok ? "Данные сохранены" : "Ошибка сохранения";
-      passMsg.className = "msg " + (res.ok ? "ok" : "err");
-    });
-    document.getElementById("passCancel").addEventListener("click", () => {
-      passModal.classList.remove("open");
-      passMsg.textContent = "";
-    });
-    document.getElementById("passSave").addEventListener("click", async () => {
-      const res = await fetch("/api/change-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          oldPassword: document.getElementById("oldPass").value,
-          newPassword: document.getElementById("newPass").value,
-        }),
-      });
-      const d = await res.json();
-      passMsg.textContent = d.message;
-      passMsg.className = "msg " + (res.ok ? "ok" : "err");
-      if (res.ok) setTimeout(() => passModal.classList.remove("open"), 1200);
+      const oldPass = document.getElementById("oldPass").value;
+      const newPass = document.getElementById("newPass").value;
+      let passOk = true, passMessage = "";
+      if (oldPass || newPass) {
+        const passRes = await fetch("/api/change-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ oldPassword: oldPass, newPassword: newPass }),
+        });
+        const d = await passRes.json();
+        passOk = passRes.ok;
+        passMessage = d.message;
+      }
+      const allOk = profileRes.ok && passOk;
+      passMsg.textContent = allOk ? "Сохранено" : (passMessage || "Ошибка сохранения");
+      passMsg.className = "msg " + (allOk ? "ok" : "err");
+      if (allOk) setTimeout(() => passModal.classList.remove("open"), 1200);
     });
 
     // Отрисовка единой левой панели проектов (коды + названия по наведению)
@@ -4590,6 +4753,7 @@
         document.getElementById("menuToggle").textContent = "☰";
         const detail = document.getElementById("projMobileDetail");
         if (detail) detail.innerHTML = "";
+        document.body.classList.remove("menu-hidden");
         return;
       }
       document.body.classList.toggle("menu-hidden");
@@ -4597,10 +4761,20 @@
 
     document.querySelectorAll(".subnav-btn").forEach(btn => {
       btn.addEventListener("click", () => {
+        const isMobile = window.matchMedia("(max-width: 768px)").matches;
+        if (isMobile && btn.dataset.tab === "main") {
+          document.querySelectorAll(".subnav-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+          document.getElementById("tab-main").classList.add("active");
+          document.getElementById("tab-aux").classList.add("active");
+          setProjectsListOpen(!document.getElementById("sidebarProjectsList").classList.contains("open"));
+          return;
+        }
         document.querySelectorAll(".subnav-btn").forEach(b => b.classList.remove("active"));
         document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
         btn.classList.add("active");
-        if (window.matchMedia("(max-width: 768px)").matches) {
+        if (isMobile) {
           document.body.classList.add("menu-hidden");
         }
         document.getElementById("mobileTopbarTitle").textContent = btn.textContent;
@@ -4706,9 +4880,11 @@
     }
 
     function applyRole() {
-      document.body.classList.toggle("is-admin", window.userRole === "admin");
-      if (window.userRole === "admin") {
-        document.getElementById("usersBtn").style.display = "";
+      const isDev = window.userRole === "developer";
+      const isAdmin = window.userRole === "admin" || isDev;
+      document.body.classList.toggle("is-admin", isAdmin);
+      document.getElementById("usersBtn").style.display = isDev ? "" : "none";
+      if (isAdmin) {
         document.querySelectorAll(".btn-import, .btn-export").forEach(b => b.style.display = "");
         document.querySelectorAll(".kpi-comment-edit").forEach(t => t.removeAttribute("readonly"));
         return;
@@ -5223,6 +5399,9 @@
         const mt = document.getElementById("menuToggle");
         if (mt) mt.textContent = "<";
         const code = item.dataset.code;
+        const p = ALL_PROJECTS.find(x => x.code === code);
+        const topTitle = document.getElementById("mobileTopbarTitle");
+        if (topTitle && p) topTitle.textContent = p.name;
         if (!reportsCache[code]) {
           try {
             const res = await fetch("/api/reports/" + code);
@@ -5297,7 +5476,16 @@
     }
     document.getElementById("sidebarProjectsList").addEventListener("click", (e) => {
       const item = e.target.closest(".sidebar-projects-item");
-      if (item) openProject(item.dataset.code);
+      if (!item) return;
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        const mobileItem = document.querySelector('.proj-mobile-item[data-code="' + item.dataset.code + '"]');
+        if (mobileItem) {
+          mobileItem.click();
+          document.body.classList.add("menu-hidden");
+          return;
+        }
+      }
+      openProject(item.dataset.code);
     });
     let wheelLocked = false;
     document.getElementById("projects-dashboard-full").addEventListener("wheel", (e) => {

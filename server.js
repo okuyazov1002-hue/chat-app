@@ -10,7 +10,12 @@ const Report = require("./models/Report");
 const Chrono = require("./models/Chrono");
 function adminOnly(req, res, next) {
   if (!req.session.userId) return res.status(401).json({ message: "Не авторизован" });
-  if (req.session.role !== "admin") return res.status(403).json({ message: "Только для администратора" });
+  if (req.session.role !== "admin" && req.session.role !== "developer") return res.status(403).json({ message: "Только для администратора" });
+  next();
+}
+function developerOnly(req, res, next) {
+  if (!req.session.userId) return res.status(401).json({ message: "Не авторизован" });
+  if (req.session.role !== "developer") return res.status(403).json({ message: "Только для разработчика" });
   next();
 }
 
@@ -42,7 +47,7 @@ app.use(
 app.use(express.static("public"));
 
 // Регистрация (создание пользователя)
-app.post("/api/register", adminOnly, async (req, res) => {
+app.post("/api/register", developerOnly, async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -129,7 +134,7 @@ app.post("/api/change-password", async (req, res) => {
 // ===== ПОЛЬЗОВАТЕЛИ (только admin) =====
 
 // Список пользователей
-app.get("/api/users", adminOnly, async (req, res) => {
+app.get("/api/users", developerOnly, async (req, res) => {
   try {
     const users = await User.find({}, "username role createdAt").sort({ createdAt: 1 });
     res.json(users);
@@ -139,14 +144,15 @@ app.get("/api/users", adminOnly, async (req, res) => {
 });
 
 // Создать пользователя
-app.post("/api/users", adminOnly, async (req, res) => {
+app.post("/api/users", developerOnly, async (req, res) => {
   try {
     const { username, password, role, name } = req.body;
     if (!username || !password) return res.status(400).json({ message: "Укажите логин и пароль" });
     const exists = await User.findOne({ username });
     if (exists) return res.status(409).json({ message: "Такой логин уже есть" });
     const hash = await bcrypt.hash(password, 10);
-    await User.create({ username, password: hash, name: name || "", role: role === "admin" ? "admin" : "user" });
+    const safeRole = ["developer", "admin"].includes(role) ? role : "user";
+    await User.create({ username, password: hash, name: name || "", role: safeRole });
     res.json({ message: "Пользователь создан" });
   } catch (err) {
     res.status(500).json({ message: "Ошибка сервера: " + err.message });
@@ -154,11 +160,11 @@ app.post("/api/users", adminOnly, async (req, res) => {
 });
 
 // Сменить роль
-app.patch("/api/users/:id/role", adminOnly, async (req, res) => {
+app.patch("/api/users/:id/role", developerOnly, async (req, res) => {
   try {
     if (String(req.params.id) === String(req.session.userId))
       return res.status(400).json({ message: "Нельзя менять роль самому себе" });
-    const role = req.body.role === "admin" ? "admin" : "user";
+    const role = ["developer", "admin"].includes(req.body.role) ? req.body.role : "user";
     await User.updateOne({ _id: req.params.id }, { role });
     res.json({ message: "Роль обновлена" });
   } catch (err) {
@@ -166,8 +172,18 @@ app.patch("/api/users/:id/role", adminOnly, async (req, res) => {
   }
 });
 
+// Сбросить пароль до стандартного
+app.post("/api/users/:id/reset-password", developerOnly, async (req, res) => {
+  try {
+    const hash = await bcrypt.hash("1234", 10);
+    await User.updateOne({ _id: req.params.id }, { password: hash });
+    res.json({ message: "Пароль сброшен на 1234" });
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
 // Удалить пользователя
-app.delete("/api/users/:id", adminOnly, async (req, res) => {
+app.delete("/api/users/:id", developerOnly, async (req, res) => {
   try {
     if (String(req.params.id) === String(req.session.userId))
       return res.status(400).json({ message: "Нельзя удалить самого себя" });
