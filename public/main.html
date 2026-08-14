@@ -5479,7 +5479,7 @@
 
 
 
-    function buildReportGantt(containerId, volumeRows) {
+    function buildReportGantt(containerId, volumeRows, colLabel) {
       const container = document.getElementById(containerId);
       if (!container) return;
       if (!volumeRows || !volumeRows.length) { container.innerHTML = ""; return; }
@@ -5580,7 +5580,7 @@
       });
       yearRowHtml += '</div>';
       let headerHtml = '<div style="display:flex;height:40px;font-size:10px;font-weight:700;color:#0a1e3d;">'
-        + '<div style="width:' + labelW + 'px;' + headerCellStyle + 'padding-left:8px;">Вид работы</div>'
+        + '<div style="width:' + labelW + 'px;' + headerCellStyle + 'padding-left:8px;">' + (colLabel || "Вид работы") + '</div>'
         + '<div style="width:' + startW + 'px;' + headerCellStyle + 'justify-content:center;">Начало</div>'
         + '<div style="width:' + endW + 'px;' + headerCellStyle + 'justify-content:center;">Окончание</div>'
         + '<div style="width:' + planW + 'px;' + headerCellStyle + 'justify-content:center;">План</div>'
@@ -6140,7 +6140,13 @@
               const stageRows = rows.filter(r => r.stage === label);
               const objNow = new Date();
               const isManuf = label === "Изготовление";
-              const objKeyOf = r => isManuf ? ((r.equip || "Без оборудования").trim() || "Без оборудования") : ((r.obj || "Без объекта").trim() || "Без объекта");
+              const isDesign = label === "Базовое проектирование" || label === "Детальное проектирование";
+              const isNoMh = isManuf || isDesign;
+              const objKeyOf = r => isManuf
+                ? ((r.equip || "Без оборудования").trim() || "Без оборудования")
+                : isDesign
+                  ? ((r.item || "Без вида работ").trim() || "Без вида работ")
+                  : ((r.obj || "Без объекта").trim() || "Без объекта");
               const objGroups = {};
               stageRows.forEach(r => {
                 const key = objKeyOf(r);
@@ -6171,13 +6177,19 @@
                   if (na !== nb) return na - nb;
                   return a.obj.localeCompare(b.obj, "ru");
                 }
+                if (isDesign) {
+                  const ta = a.planStart ? a.planStart.getTime() : Infinity;
+                  const tb = b.planStart ? b.planStart.getTime() : Infinity;
+                  if (ta !== tb) return ta - tb;
+                  return a.obj.localeCompare(b.obj, "ru");
+                }
                 return b.cost - a.cost;
               });
               const oFmtD = d => d ? (String(d.getDate()).padStart(2,"0") + "." + String(d.getMonth()+1).padStart(2,"0") + "." + d.getFullYear()) : "—";
               const oCellStyle = 'box-sizing:border-box;display:flex;align-items:center;';
               const oLabelW = 320, oStartW = 80, oEndW = 80, oForecastW = 78, oLagW = 60, oCurW = 56, oCostW = 90, oDoneW = 90, oRemW = 90, oPlanW = 50, oFactW = 50, oDiffW = 60;
               const oHeaderHtml = '<div style="display:flex;height:26px;font-size:10px;font-weight:700;color:#0a1e3d;border-bottom:1px solid #d0d7de;">'
-                + '<div style="width:' + oLabelW + 'px;' + oCellStyle + 'padding-left:8px;">' + (isManuf ? "Дисциплина" : "Объект") + '</div>'
+                + '<div style="width:' + oLabelW + 'px;' + oCellStyle + 'padding-left:8px;">' + (isManuf ? "Дисциплина" : (isDesign ? "Вид работы" : "Объект")) + '</div>'
                 + '<div style="width:' + oStartW + 'px;' + oCellStyle + 'justify-content:center;">Начало</div>'
                 + '<div style="width:' + oEndW + 'px;' + oCellStyle + 'justify-content:center;">Окончание</div>'
                 + '<div style="width:' + oForecastW + 'px;' + oCellStyle + 'justify-content:center;">Прогноз</div>'
@@ -6292,7 +6304,7 @@
                 + '</div>';
               panelInner.innerHTML = '<div style="position:relative;padding-top:6px;">'
                 + stageDataBtnHtml
-                + (objList.length ? oHeaderHtml + oTotalsHtml + objRowsHtml : '<div style="opacity:0.5;font-size:12px;padding-top:20px;">' + (isManuf ? "Нет данных по дисциплинам" : "Нет данных по объектам") + '</div>')
+                + (objList.length ? oHeaderHtml + oTotalsHtml + objRowsHtml : '<div style="opacity:0.5;font-size:12px;padding-top:20px;">' + (isManuf ? "Нет данных по дисциплинам" : (isDesign ? "Нет данных по видам работ" : "Нет данных по объектам")) + '</div>')
                 + '</div>';
               panel.style.maxHeight = "none";
               const h = panel.scrollHeight;
@@ -6334,7 +6346,7 @@
                   const grayPct = Math.max(0, 100 - Math.max(oData.planPct, oData.factPct));
                   const sideCardHtml = '<div style="width:300px;flex-shrink:0;background:#fff;border-radius:6px;box-shadow:0 4px 16px rgba(10,30,61,0.15);padding:20px;box-sizing:border-box;">'
                     + '<div style="font-size:12px;margin-bottom:8px;"><span style="opacity:0.6;">Проект:</span> <b>' + projName + '</b></div>'
-                    + '<div style="font-size:12px;margin-bottom:20px;"><span style="opacity:0.6;">Объект:</span> <b>' + objName + '</b></div>'
+                    + '<div style="font-size:12px;margin-bottom:20px;"><span style="opacity:0.6;">' + (isDesign ? "Вид работы:" : "Объект:") + '</span> <b>' + objName + '</b></div>'
                     + '<div style="display:flex;justify-content:space-between;text-align:center;margin-bottom:2px;">'
                     + '<div style="flex:1;font-size:16px;font-weight:700;color:#0a1e3d;">' + oData.planPct + '%</div>'
                     + '<div style="flex:1;font-size:16px;font-weight:700;color:#2e9e5b;">' + oData.factPct + '%</div>'
@@ -6365,7 +6377,7 @@
                     + '<div style="height:208px"><canvas id="objA4SCurve"></canvas></div>'
                     + '<div class="prep-mobile-scurve-cal" id="objA4SCurveCal"></div>'
                     + '</div></div></div>';
-                  const mobCardHtml = isManuf ? '' : ('<div style="background:#fff;border-radius:6px;box-shadow:0 4px 16px rgba(10,30,61,0.15);padding:20px;box-sizing:border-box;margin-top:16px;">'
+                  const mobCardHtml = isNoMh ? '' : ('<div style="background:#fff;border-radius:6px;box-shadow:0 4px 16px rgba(10,30,61,0.15);padding:20px;box-sizing:border-box;margin-top:16px;">'
                     + '<div style="font-size:12px;font-weight:700;color:#0a1e3d;margin-bottom:8px;">Мобилизация</div>'
                     + '<div class="prep-mobile-scurve-scroll" id="objA4MobScroll" style="overflow-x:auto;max-width:100%;">'
                     + '<div id="objA4MobInner">'
@@ -6387,14 +6399,17 @@
                   document.body.appendChild(overlay);
                   const scurveRows = objRows.map(r => ({ planStart: r.planStart, planEnd: r.planEnd, cost: r.cost, done: r.done }));
                   buildReportWeeklySCurve("objA4SCurve", "objA4SCurveCal", "objA4SCurveScroll", "objA4SCurveInner", scurveRows, oData.planPct, oData.factPct);
-                  if (!isManuf) {
+                  if (!isNoMh) {
                     const mobData = (reportsCache[code] && reportsCache[code].mobilization) || [];
                     buildReportMobChart("objA4MobChart", "objA4MobCal", "objA4MobScroll", "objA4MobInner", mobData);
                   }
-                  const volumeRows = objRows.map(r => (isManuf
-                    ? { discipline: r.item || "Без вида работ", mhPlan: r.cost || 0, mhFact: r.done || 0, planStart: r.planStart, planEnd: r.planEnd }
-                    : { discipline: r.item || "Без вида работ", mhPlan: r.mhPlan || 0, mhFact: r.mhFact || 0, planStart: r.planStart, planEnd: r.planEnd }));
-                  buildReportGantt("objA4Gantt", volumeRows);
+                  const volumeRows = objRows.map(r => {
+                    const vLabel = isDesign ? (r.obj || "Без объекта") : (r.item || "Без вида работ");
+                    return isNoMh
+                      ? { discipline: vLabel, mhPlan: r.cost || 0, mhFact: r.done || 0, planStart: r.planStart, planEnd: r.planEnd }
+                      : { discipline: vLabel, mhPlan: r.mhPlan || 0, mhFact: r.mhFact || 0, planStart: r.planStart, planEnd: r.planEnd };
+                  });
+                  buildReportGantt("objA4Gantt", volumeRows, isDesign ? "Объект" : "Вид работы");
                   const ganttCard = document.querySelector("#objA4Gantt > div");
                   if (ganttCard) { ganttCard.style.width = "100%"; ganttCard.style.boxSizing = "border-box"; }
                   const closeIt = () => overlay.remove();
