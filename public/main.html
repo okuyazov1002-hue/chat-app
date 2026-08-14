@@ -425,6 +425,7 @@
       #tab-personnel,
       .pers-grid,
       .bday-wrap { background: #fff !important; }
+      .proj-header-data-wrap { display: none !important; }
       .pers-head {
         position: static !important;
         top: auto !important;
@@ -4742,7 +4743,7 @@
     const REPORT_COLUMNS = [
       "Код", "Проект", "Этап", "Объект", "Дисциплина", "Вид работы",
       "П Начало", "П Окончание", "Ф Начало", "Ф Окончание",
-      "Стоимость", "Выполнено", "Статус"
+      "Валюта", "Стоимость", "Выполнено", "Статус"
     ];
 
     async function exportProject(code, name) {
@@ -4761,7 +4762,7 @@
           const d = v => v ? new Date(v) : "";
           return [code, name, r.stage || "", r.obj || "", r.equip || "", r.item || "",
             d(r.planStart), d(r.planEnd), d(r.factStart), d(r.factEnd),
-            r.cost || 0, r.done || 0, r.status || ""];
+            r.currency || "", r.cost || 0, r.done || 0, r.status || ""];
         }) : [ REPORT_COLUMNS.map(() => "") ],
       });
 
@@ -4844,9 +4845,10 @@
           item: String(v(6) || ""),
           planStart: d(7), planEnd: d(8),
           factStart: d(9), factEnd: d(10),
-          cost: Number(v(11)) || 0,
-          done: Number(v(12)) || 0,
-          status: String(v(13) || "")
+          currency: String(v(11) || ""),
+          cost: Number(v(12)) || 0,
+          done: Number(v(13)) || 0,
+          status: String(v(14) || "")
         });
       });
       const res = await fetch("/api/reports/" + code, {
@@ -4862,6 +4864,78 @@
       if (inp && inp.files[0]) { importFile(inp.dataset.code, inp.files[0]); inp.value = ""; }
     });
 
+    async function exportProjectStage(code, projName, stageLabel, rows) {
+      const stageRows = (rows || []).filter(r => r.stage === stageLabel);
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet("Отчёт");
+      ws.addTable({
+        name: "Stage_" + code.replace(/[^a-zA-Z0-9]/g, ""),
+        ref: "A1",
+        headerRow: true,
+        style: { showRowStripes: false },
+        columns: REPORT_COLUMNS.map(c => ({ name: c })),
+        rows: stageRows.length ? stageRows.map(r => {
+          const d = v => v ? new Date(v) : "";
+          return [code, projName, r.stage || "", r.obj || "", r.equip || "", r.item || "",
+            d(r.planStart), d(r.planEnd), d(r.factStart), d(r.factEnd),
+            r.currency || "", r.cost || 0, r.done || 0, r.status || ""];
+        }) : [ REPORT_COLUMNS.map(() => "") ],
+      });
+      ws.columns.forEach(col => { col.width = 14; });
+      ws.getRow(1).eachCell(cell => {
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 8 };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF000000" } };
+      });
+      ws.eachRow(row => {
+        row.eachCell(cell => {
+          cell.font = cell.font && cell.font.bold ? cell.font : { size: 8 };
+          cell.border = {
+            top: { style: "thin", color: { argb: "FFCCCCCC" } },
+            left: { style: "thin", color: { argb: "FFCCCCCC" } },
+            bottom: { style: "thin", color: { argb: "FFCCCCCC" } },
+            right: { style: "thin", color: { argb: "FFCCCCCC" } },
+          };
+        });
+      });
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Отчёт_${code}_${stageLabel}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    async function importProjectStageFile(code, stageLabel, file) {
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(await file.arrayBuffer());
+      const ws = wb.worksheets[0];
+      const rowsOut = [];
+      ws.eachRow((row, n) => {
+        if (n === 1) return;
+        const v = i => { const x = row.getCell(i).value; return x && typeof x === "object" && x.result !== undefined ? x.result : x; };
+        const d = i => { const x = v(i); return (x instanceof Date && x.getFullYear() > 2000) ? x : null; };
+        rowsOut.push({
+          obj: String(v(4) || ""),
+          equip: String(v(5) || ""),
+          item: String(v(6) || ""),
+          planStart: d(7), planEnd: d(8),
+          factStart: d(9), factEnd: d(10),
+          currency: String(v(11) || ""),
+          cost: Number(v(12)) || 0,
+          done: Number(v(13)) || 0,
+          status: String(v(14) || "")
+        });
+      });
+      const res = await fetch("/api/reports/" + code + "/stage-rows", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: stageLabel, rows: rowsOut })
+      });
+      const data = await res.json();
+      alert(res.ok ? `Импортировано строк по этапу «${stageLabel}»: ${data.count}` : "Ошибка: " + data.message);
+      return res.ok;
+    }
     // ===== ДАШБОРД =====
     function projectsummary(rows) {
       const totalcost = rows.reduce((s, r) => s + (r.cost || 0), 0);
@@ -4959,7 +5033,7 @@
       const stPnr = sumBy(["пнр"]);
       const stBase = sumBy(["базовое"]);
       const stDetail = sumBy(["детальн"]);
-      const DETAILED_CODES = ["PSP01", "CSM01"];
+      const DETAILED_CODES = ["PSP01", "CSM01", "HER01", "MSC01"];
       const isDetailed = DETAILED_CODES.includes(code);
       const stages = isDetailed ? [
         { label: "Базовое проектирование", data: stBase },
@@ -5402,21 +5476,7 @@
       }
       openProject(item.dataset.code);
     });
-    let wheelLocked = false;
-    document.getElementById("projects-dashboard-full").addEventListener("wheel", (e) => {
-      e.preventDefault();
-      if (wheelLocked) return;
-      const idx = ALL_PROJECTS.findIndex(p => p.code === currentProjectCode);
-      if (idx === -1) return;
-      let nextIdx = idx;
-      let dir = null;
-      if (e.deltaY > 0 && idx < ALL_PROJECTS.length - 1) { nextIdx = idx + 1; dir = "down"; }
-      else if (e.deltaY < 0 && idx > 0) { nextIdx = idx - 1; dir = "up"; }
-      if (nextIdx === idx) return;
-      wheelLocked = true;
-      openProject(ALL_PROJECTS[nextIdx].code, dir);
-      setTimeout(() => { wheelLocked = false; }, 550);
-    }, { passive: false });
+
 
 
     function buildReportGantt(containerId, volumeRows) {
@@ -5790,7 +5850,7 @@
       const dtBase = stageDates(rowsBy(["базовое"]));
       const dtDetail = stageDates(rowsBy(["детальн"]));
       const dtSupply = stageDates(rowsBy(["поставка"]));
-      const DETAILED_CODES = ["PSP01", "CSM01"];
+      const DETAILED_CODES = ["PSP01", "CSM01", "HER01", "MSC01"];
       const isDetailed = DETAILED_CODES.includes(code);
       const stages = isDetailed ? [
         { label: "Базовое проектирование", data: stBase, dates: dtBase },
@@ -6000,6 +6060,13 @@
         + '<div style="grid-column:2;grid-row:1;display:flex;align-items:center;gap:8px;margin-bottom:-10px;">'
         + '<span style="padding:4px 10px;border-radius:6px;background:#0a1e3d;color:#fff;font-size:12px;font-weight:700;font-family:\'Consolas\',monospace;">' + code + '</span>'
         + '<span style="font-size:16px;font-weight:700;color:#0a1e3d;">' + projName + '</span>'
+        + '<div class="proj-header-data-wrap" style="margin-left:auto;position:relative;">'
+        + '<button class="prep-desktop-btn proj-header-data-btn" style="padding:4px 10px;font-size:11px;">Данные</button>'
+        + '<div class="prep-desktop-dropdown-menu proj-header-data-menu" style="right:0;left:auto;">'
+        + '<button class="btn-export" data-code="' + code + '" data-name="' + projName.replace(/"/g, "&quot;") + '">Экспорт</button>'
+        + '<button class="btn-import" data-code="' + code + '">Импорт</button>'
+        + '</div>'
+        + '</div>'
         + '</div>'
         + '<div class="prep-desktop-card" id="projDashCard" style="grid-column:1;grid-row:1 / 3;position:relative;display:flex;align-items:flex-start;gap:12px;margin:0;max-width:1575px;width:fit-content;padding:16px 20px;">'
         + '<div style="flex:0 0 auto;">'
@@ -6049,6 +6116,15 @@
         });
         document.addEventListener("click", () => projDataMenu.classList.remove("open"));
       }
+      const projHeaderDataBtn = dash.querySelector(".proj-header-data-btn");
+      const projHeaderDataMenu = dash.querySelector(".proj-header-data-menu");
+      if (projHeaderDataBtn && projHeaderDataMenu) {
+        projHeaderDataBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          projHeaderDataMenu.classList.toggle("open");
+        });
+        document.addEventListener("click", () => projHeaderDataMenu.classList.remove("open"));
+      }
       dash.querySelectorAll(".prep-desktop-subcard").forEach(el => {
         el.addEventListener("click", () => {
           const wasActive = el.classList.contains("active");
@@ -6063,12 +6139,15 @@
               const label = el.dataset.stage;
               const stageRows = rows.filter(r => r.stage === label);
               const objNow = new Date();
+              const isManuf = label === "Изготовление";
+              const objKeyOf = r => isManuf ? ((r.equip || "Без оборудования").trim() || "Без оборудования") : ((r.obj || "Без объекта").trim() || "Без объекта");
               const objGroups = {};
               stageRows.forEach(r => {
-                const key = (r.obj || "Без объекта").trim() || "Без объекта";
-                if (!objGroups[key]) objGroups[key] = { obj: key, cost: 0, done: 0, costPlanNow: 0, starts: [], ends: [] };
+                const key = objKeyOf(r);
+                if (!objGroups[key]) objGroups[key] = { obj: key, cost: 0, done: 0, costPlanNow: 0, starts: [], ends: [], currencies: new Set() };
                 objGroups[key].cost += r.cost || 0;
                 objGroups[key].done += r.done || 0;
+                if (r.currency) objGroups[key].currencies.add(r.currency);
                 if (r.planStart) objGroups[key].starts.push(new Date(r.planStart));
                 if (r.planEnd) objGroups[key].ends.push(new Date(r.planEnd));
                 const rps = r.planStart ? new Date(r.planStart) : null;
@@ -6083,23 +6162,77 @@
                 const oPlanEnd = g.ends.length ? new Date(Math.max(...g.ends)) : null;
                 const oPlanPct = g.cost ? Math.min(100, Math.round(g.costPlanNow / g.cost * 100)) : 0;
                 const oFactPct = g.cost ? Math.min(100, Math.round(g.done / g.cost * 100)) : 0;
-                return { obj: g.obj, cost: g.cost, done: g.done, planPct: oPlanPct, factPct: oFactPct, planStart: oPlanStart, planEnd: oPlanEnd };
-              }).sort((a, b) => b.cost - a.cost);
+                const oCurrency = g.currencies && g.currencies.size ? (g.currencies.size === 1 ? [...g.currencies][0] : "смеш.") : "—";
+                return { obj: g.obj, cost: g.cost, done: g.done, planPct: oPlanPct, factPct: oFactPct, planStart: oPlanStart, planEnd: oPlanEnd, currency: oCurrency };
+              }).filter(o => !(o.cost === 0 && o.done === 0)).sort((a, b) => {
+                if (isManuf) {
+                  const na = parseInt((a.obj.match(/P(\d+)/i) || [])[1] || "999999", 10);
+                  const nb = parseInt((b.obj.match(/P(\d+)/i) || [])[1] || "999999", 10);
+                  if (na !== nb) return na - nb;
+                  return a.obj.localeCompare(b.obj, "ru");
+                }
+                return b.cost - a.cost;
+              });
               const oFmtD = d => d ? (String(d.getDate()).padStart(2,"0") + "." + String(d.getMonth()+1).padStart(2,"0") + "." + d.getFullYear()) : "—";
               const oCellStyle = 'box-sizing:border-box;display:flex;align-items:center;';
-              const oLabelW = 320, oStartW = 80, oEndW = 80, oForecastW = 78, oLagW = 60, oCostW = 90, oDoneW = 90, oRemW = 90, oPlanW = 50, oFactW = 50, oDiffW = 60;
+              const oLabelW = 320, oStartW = 80, oEndW = 80, oForecastW = 78, oLagW = 60, oCurW = 56, oCostW = 90, oDoneW = 90, oRemW = 90, oPlanW = 50, oFactW = 50, oDiffW = 60;
               const oHeaderHtml = '<div style="display:flex;height:26px;font-size:10px;font-weight:700;color:#0a1e3d;border-bottom:1px solid #d0d7de;">'
-                + '<div style="width:' + oLabelW + 'px;' + oCellStyle + 'padding-left:8px;">Объект</div>'
+                + '<div style="width:' + oLabelW + 'px;' + oCellStyle + 'padding-left:8px;">' + (isManuf ? "Дисциплина" : "Объект") + '</div>'
                 + '<div style="width:' + oStartW + 'px;' + oCellStyle + 'justify-content:center;">Начало</div>'
                 + '<div style="width:' + oEndW + 'px;' + oCellStyle + 'justify-content:center;">Окончание</div>'
                 + '<div style="width:' + oForecastW + 'px;' + oCellStyle + 'justify-content:center;">Прогноз</div>'
                 + '<div style="width:' + oLagW + 'px;' + oCellStyle + 'justify-content:center;">Отставание</div>'
+                + '<div style="width:' + oCurW + 'px;' + oCellStyle + 'justify-content:center;">Валюта</div>'
                 + '<div style="width:' + oCostW + 'px;' + oCellStyle + 'justify-content:center;">Стоимость</div>'
                 + '<div style="width:' + oDoneW + 'px;' + oCellStyle + 'justify-content:center;">Выполнено</div>'
                 + '<div style="width:' + oRemW + 'px;' + oCellStyle + 'justify-content:center;">Остаток</div>'
                 + '<div style="width:' + oPlanW + 'px;' + oCellStyle + 'justify-content:center;">План</div>'
                 + '<div style="width:' + oFactW + 'px;' + oCellStyle + 'justify-content:center;">Факт</div>'
                 + '<div style="width:' + oDiffW + 'px;' + oCellStyle + 'justify-content:center;">Разн.</div>'
+                + '<div style="flex:1;"></div>'
+                + '</div>';
+              const oTotalCost = objList.reduce((s, o) => s + o.cost, 0);
+              const oTotalDone = objList.reduce((s, o) => s + o.done, 0);
+              const oTotalRemainder = oTotalCost - oTotalDone;
+              const oTotalPlanPct = oTotalCost ? Math.min(100, Math.round(objList.reduce((s, o) => s + o.cost * o.planPct, 0) / oTotalCost)) : 0;
+              const oTotalFactPct = oTotalCost ? Math.min(100, Math.round(oTotalDone / oTotalCost * 100)) : 0;
+              const oTotalDiff = oTotalFactPct - oTotalPlanPct;
+              const oStartsAll = objList.map(o => o.planStart).filter(Boolean);
+              const oEndsAll = objList.map(o => o.planEnd).filter(Boolean);
+              const oTotalStart = oStartsAll.length ? new Date(Math.min(...oStartsAll)) : null;
+              const oTotalEnd = oEndsAll.length ? new Date(Math.max(...oEndsAll)) : null;
+              let oTotalForecast = null;
+              objList.forEach(o => {
+                if (o.planStart && o.planEnd && o.planEnd > o.planStart) {
+                  const oDur = (o.planEnd - o.planStart) / 86400000;
+                  const oDelta = Math.round((o.planPct - o.factPct) / 100 * oDur);
+                  const oFc = new Date(o.planEnd.getTime() + oDelta * 86400000);
+                  if (!oTotalForecast || oFc > oTotalForecast) oTotalForecast = oFc;
+                }
+              });
+              const oTotalCurSet = new Set(objList.map(o => o.currency).filter(c => c && c !== "—"));
+              const oTotalCurrency = oTotalCurSet.size === 1 ? [...oTotalCurSet][0] : (oTotalCurSet.size > 1 ? "смеш." : "—");
+              let oTotalLagText = "—", oTotalLagColor = "#0a1e3d";
+              if (oTotalEnd && oTotalForecast) {
+                const oLagDays = Math.round((oTotalForecast - oTotalEnd) / 86400000);
+                oTotalLagColor = oLagDays > 0 ? "#b91c1c" : (oLagDays < 0 ? "#2e9e5b" : "#0a1e3d");
+                oTotalLagText = oLagDays > 0 ? ("+" + oLagDays + " дн") : (oLagDays < 0 ? (oLagDays + " дн") : "в срок");
+              }
+              const oTotalDiffColor = oTotalDiff >= 0 ? "#2e9e5b" : "#b91c1c";
+              const oTotalDiffLabel = (oTotalDiff > 0 ? "+" : "") + oTotalDiff + "%";
+              const oTotalsHtml = '<div style="display:flex;height:26px;font-size:11px;font-weight:700;color:#0a1e3d;background:#eef2f8;border-bottom:2px solid #d0d7de;">'
+                + '<div style="width:' + oLabelW + 'px;' + oCellStyle + 'padding-left:8px;">Итого</div>'
+                + '<div style="width:' + oStartW + 'px;' + oCellStyle + 'justify-content:center;">' + oFmtD(oTotalStart) + '</div>'
+                + '<div style="width:' + oEndW + 'px;' + oCellStyle + 'justify-content:center;">' + oFmtD(oTotalEnd) + '</div>'
+                + '<div style="width:' + oForecastW + 'px;' + oCellStyle + 'justify-content:center;">' + oFmtD(oTotalForecast) + '</div>'
+                + '<div style="width:' + oLagW + 'px;' + oCellStyle + 'justify-content:center;color:' + oTotalLagColor + ';">' + oTotalLagText + '</div>'
+                + '<div style="width:' + oCurW + 'px;' + oCellStyle + 'justify-content:center;">' + oTotalCurrency + '</div>'
+                + '<div style="width:' + oCostW + 'px;' + oCellStyle + 'justify-content:center;">' + money(oTotalCost).replace(" €", "") + '</div>'
+                + '<div style="width:' + oDoneW + 'px;' + oCellStyle + 'justify-content:center;">' + money(oTotalDone).replace(" €", "") + '</div>'
+                + '<div style="width:' + oRemW + 'px;' + oCellStyle + 'justify-content:center;">' + money(oTotalRemainder).replace(" €", "") + '</div>'
+                + '<div style="width:' + oPlanW + 'px;' + oCellStyle + 'justify-content:center;">' + oTotalPlanPct + '%</div>'
+                + '<div style="width:' + oFactW + 'px;' + oCellStyle + 'justify-content:center;">' + oTotalFactPct + '%</div>'
+                + '<div style="width:' + oDiffW + 'px;' + oCellStyle + 'justify-content:center;color:' + oTotalDiffColor + ';">' + oTotalDiffLabel + '</div>'
                 + '<div style="flex:1;"></div>'
                 + '</div>';
               let objRowsHtml = objList.map(o => {
@@ -6129,6 +6262,7 @@
                   + '<div style="width:' + oEndW + 'px;' + oCellStyle + 'justify-content:center;">' + oFmtD(o.planEnd) + '</div>'
                   + '<div style="width:' + oForecastW + 'px;' + oCellStyle + 'justify-content:center;">' + oForecastText + '</div>'
                   + '<div style="width:' + oLagW + 'px;' + oCellStyle + 'justify-content:center;font-weight:700;color:' + oLagColor + ';">' + oLagText + '</div>'
+                  + '<div style="width:' + oCurW + 'px;' + oCellStyle + 'justify-content:center;">' + (o.currency || '—') + '</div>'
                   + '<div style="width:' + oCostW + 'px;' + oCellStyle + 'justify-content:center;">' + money(o.cost).replace(" €", "") + '</div>'
                   + '<div style="width:' + oDoneW + 'px;' + oCellStyle + 'justify-content:center;">' + money(o.done).replace(" €", "") + '</div>'
                   + '<div style="width:' + oRemW + 'px;' + oCellStyle + 'justify-content:center;">' + money(oRemainder).replace(" €", "") + '</div>'
@@ -6158,7 +6292,7 @@
                 + '</div>';
               panelInner.innerHTML = '<div style="position:relative;padding-top:6px;">'
                 + stageDataBtnHtml
-                + (objList.length ? oHeaderHtml + objRowsHtml : '<div style="opacity:0.5;font-size:12px;padding-top:20px;">Нет данных по объектам</div>')
+                + (objList.length ? oHeaderHtml + oTotalsHtml + objRowsHtml : '<div style="opacity:0.5;font-size:12px;padding-top:20px;">' + (isManuf ? "Нет данных по дисциплинам" : "Нет данных по объектам") + '</div>')
                 + '</div>';
               panel.style.maxHeight = "none";
               const h = panel.scrollHeight;
@@ -6181,7 +6315,7 @@
                   const objName = rowEl.dataset.obj;
                   const oData = objList.find(x => x.obj === objName);
                   if (!oData) return;
-                  const objRows = stageRows.filter(r => ((r.obj || "Без объекта").trim() || "Без объекта") === objName);
+                  const objRows = stageRows.filter(r => objKeyOf(r) === objName);
                   const fmtD2 = d => d ? (String(d.getDate()).padStart(2,"0") + "." + String(d.getMonth()+1).padStart(2,"0") + "." + d.getFullYear()) : "—";
                   let forecastHtml = "";
                   if (oData.planStart && oData.planEnd && oData.planEnd > oData.planStart) {
@@ -6231,13 +6365,13 @@
                     + '<div style="height:208px"><canvas id="objA4SCurve"></canvas></div>'
                     + '<div class="prep-mobile-scurve-cal" id="objA4SCurveCal"></div>'
                     + '</div></div></div>';
-                  const mobCardHtml = '<div style="background:#fff;border-radius:6px;box-shadow:0 4px 16px rgba(10,30,61,0.15);padding:20px;box-sizing:border-box;margin-top:16px;">'
+                  const mobCardHtml = isManuf ? '' : ('<div style="background:#fff;border-radius:6px;box-shadow:0 4px 16px rgba(10,30,61,0.15);padding:20px;box-sizing:border-box;margin-top:16px;">'
                     + '<div style="font-size:12px;font-weight:700;color:#0a1e3d;margin-bottom:8px;">Мобилизация</div>'
                     + '<div class="prep-mobile-scurve-scroll" id="objA4MobScroll" style="overflow-x:auto;max-width:100%;">'
                     + '<div id="objA4MobInner">'
                     + '<div style="height:90px;"><canvas id="objA4MobChart"></canvas></div>'
                     + '<div class="prep-mobile-scurve-cal" id="objA4MobCal"></div>'
-                    + '</div></div></div>';
+                    + '</div></div></div>');
                   const overlay = document.createElement("div");
                   overlay.style.cssText = "position:fixed;inset:0;background:rgba(10,20,40,0.55);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:20px;padding-top:40px;box-sizing:border-box;overflow-y:auto;";
                   const a4 = document.createElement("div");
@@ -6253,9 +6387,13 @@
                   document.body.appendChild(overlay);
                   const scurveRows = objRows.map(r => ({ planStart: r.planStart, planEnd: r.planEnd, cost: r.cost, done: r.done }));
                   buildReportWeeklySCurve("objA4SCurve", "objA4SCurveCal", "objA4SCurveScroll", "objA4SCurveInner", scurveRows, oData.planPct, oData.factPct);
-                  const mobData = (reportsCache[code] && reportsCache[code].mobilization) || [];
-                  buildReportMobChart("objA4MobChart", "objA4MobCal", "objA4MobScroll", "objA4MobInner", mobData);
-                  const volumeRows = objRows.map(r => ({ discipline: r.item || "Без вида работ", mhPlan: r.mhPlan || 0, mhFact: r.mhFact || 0, planStart: r.planStart, planEnd: r.planEnd }));
+                  if (!isManuf) {
+                    const mobData = (reportsCache[code] && reportsCache[code].mobilization) || [];
+                    buildReportMobChart("objA4MobChart", "objA4MobCal", "objA4MobScroll", "objA4MobInner", mobData);
+                  }
+                  const volumeRows = objRows.map(r => (isManuf
+                    ? { discipline: r.item || "Без вида работ", mhPlan: r.cost || 0, mhFact: r.done || 0, planStart: r.planStart, planEnd: r.planEnd }
+                    : { discipline: r.item || "Без вида работ", mhPlan: r.mhPlan || 0, mhFact: r.mhFact || 0, planStart: r.planStart, planEnd: r.planEnd }));
                   buildReportGantt("objA4Gantt", volumeRows);
                   const ganttCard = document.querySelector("#objA4Gantt > div");
                   if (ganttCard) { ganttCard.style.width = "100%"; ganttCard.style.boxSizing = "border-box"; }
@@ -6285,7 +6423,7 @@
               panelInner.querySelectorAll(".proj-obj-export-btn").forEach(btn => {
                 btn.addEventListener("click", async (e) => {
                   e.stopPropagation();
-                  const objRowsExp = stageRows.filter(r => ((r.obj || "Без объекта").trim() || "Без объекта") === btn.dataset.obj);
+                  const objRowsExp = stageRows.filter(r => objKeyOf(r) === btn.dataset.obj);
                   await exportStageObjectsExcel(code, projName, label + "_" + btn.dataset.obj, objRowsExp, mobDataForExport);
                 });
               });
@@ -6310,7 +6448,7 @@
               panelInner.querySelectorAll(".proj-stage-export-btn").forEach(btn => {
                 btn.addEventListener("click", async (e) => {
                   e.stopPropagation();
-                  await exportStageObjectsExcel(code, projName, label, stageRows, mobDataForExport);
+                  await exportProjectStage(code, projName, label, rows);
                 });
               });
               panelInner.querySelectorAll(".proj-stage-import-btn").forEach(btn => {
@@ -6322,10 +6460,10 @@
                   fileInput.addEventListener("change", async () => {
                     const file = fileInput.files[0];
                     if (!file) return;
-                    const result = await importStageRowsFromFile(file, code, label);
-                    if (result) {
+                    const ok = await importProjectStageFile(code, label, file);
+                    if (ok) {
                       delete reportsCache[code];
-                      alert("Импорт выполнен, данные обновлены. Откройте этап заново, чтобы увидеть изменения.");
+                      await renderDashboard(code);
                     }
                   });
                   fileInput.click();

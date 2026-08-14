@@ -7,6 +7,7 @@ const rowSchema = new mongoose.Schema({
   obj:        { type: String, default: "" },    // объект (колонка D нового шаблона)
   equip:      { type: String, default: "" },    // дисциплина / оборудование (колонка E, пусто для проектирования)
   contractor: { type: String, default: "" },    // Внутренний / Внешний
+  currency:   { type: String, default: "" },    // валюта строки (Euro, UZS и т.д.)
   planStart:  { type: Date, default: null },
   planEnd:    { type: Date, default: null },
   factStart:  { type: Date, default: null },
