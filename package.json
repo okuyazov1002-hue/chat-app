@@ -1,29 +1,15 @@
 {
   "name": "chat-app",
   "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/okuyazov1002-hue/chat-app.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/okuyazov1002-hue/chat-app/issues"
-  },
-  "homepage": "https://github.com/okuyazov1002-hue/chat-app#readme",
   "dependencies": {
-    "bcrypt": "^6.0.0",
-    "connect-mongo": "^6.0.0",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1",
+    "exceljs": "^4.4.0",
+    "express": "^4.18.0",
     "express-session": "^1.19.0",
-    "mongoose": "^9.7.3"
+    "mongoose": "^9.9.4",
+    "multer": "^2.3.0"
   }
 }

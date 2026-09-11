@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Главная</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:Arial;display:flex;background:#f5f7fa;height:100vh;overflow:hidden;}
+.sidebar{width:88px;background:linear-gradient(160deg,#6a5ae0 0%,#4a90d9 45%,#1dd3b0 100%);display:flex;flex-direction:column;align-items:center;padding:20px 0;margin:16px 0 16px 16px;border-radius:20px 0 0 20px;height:calc(100vh - 32px);position:relative;z-index:1;}
+.sidebar-top{display:flex;flex-direction:column;align-items:center;width:100%;margin-bottom:60px;}
+.photo{width:60px;height:60px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:8px;color:#666;font-size:24px;font-weight:700;overflow:hidden;}
+img{width:100%;height:100%;object-fit:cover;}
+.username{font-size:11px;color:#fff;text-align:center;max-width:70px;word-break:break-word;font-weight:600;}
+.buttons{display:flex;flex-direction:column;width:100%;flex:1;}.buttons-top{display:flex;flex-direction:column;width:100%;padding-left:6px;}.buttons-bottom{display:flex;flex-direction:column;width:100%;margin-top:auto;padding-left:6px;}
+button{background:transparent;border:none;color:#fff;border-radius:0;width:100%;height:56px;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s ease;margin-bottom:4px;}button svg{transition:transform 0.2s ease;}button:hover svg{transform:scale(1.15);}button.nav-active{background:#fff;color:#4a9fd8;position:relative;border-radius:28px 0 0 28px;}
+button.nav-active::before{content:"";position:absolute;top:-20px;right:0;width:20px;height:20px;background:radial-gradient(circle at 0 0,transparent 20px,#fff 21px);}
+button.nav-active::after{content:"";position:absolute;bottom:-20px;right:0;width:20px;height:20px;background:radial-gradient(circle at 0 100%,transparent 20px,#fff 21px);}button.nav-active svg{transform:scale(1.2);position:relative;z-index:1;}
+
+.content{flex:1;position:relative;z-index:2;}
+.page{display:none;position:absolute;top:16px;bottom:16px;left:0;right:16px;align-items:center;justify-content:center;background:linear-gradient(90deg,#ffffff 0%,#e8f1fb 50%,#f3e9fb 100%);border-radius:0 20px 20px 0;box-shadow:none;}
+.page.active{display:flex;}
+#page-home{background:transparent;box-shadow:none;}
+.info-wrap{width:100%;height:100%;display:flex;flex-direction:column;}
+.info-topnav{display:flex;width:100%;border-radius:0 20px 0 0;overflow:visible;position:relative;}
+.info-nav-wrap{flex:1;position:relative;display:flex;}
+.info-nav-wrap .info-nav-btn{width:100%;}
+.info-dropdown{display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e5e9ef;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,0.15);z-index:20;padding:6px;margin-top:4px;max-height:300px;overflow-y:auto;}
+.info-dropdown.open{display:block;}
+.info-dropdown .proj-card{background:transparent;border:none;border-bottom:1px solid #eee;border-radius:0;padding:8px 10px;margin:0;min-height:36px;display:flex;align-items:center;gap:4px;}
+.info-dropdown .proj-card:last-child{border-bottom:none;}
+.info-dropdown .proj-name{line-height:1.3;}
+.info-dropdown .proj-card:hover{background:#eef4fa;}
+.info-dropdown .proj-code{font-size:13px;min-width:auto;color:#9ca3af;font-weight:600;}
+.info-dropdown .proj-name{font-size:13px;color:#374151;font-weight:600;}
+.dd-arrow{font-size:10px;margin-left:4px;}
+.info-nav-btn{flex:1;padding:0 8px;height:22px;font-size:13px;font-weight:600;color:#4a5568;background:#f7f9fb;border:none;cursor:pointer;transition:all 0.2s ease;}
+.info-nav-btn:last-child{border-right:none;}
+.info-nav-btn{border-radius:0 0 10px 10px;}
+.info-nav-btn:hover{background:#eef4fa;}
+.info-nav-btn.active{background:linear-gradient(160deg,#6a5ae0 0%,#4a90d9 45%,#1dd3b0 100%);color:#fff;height:30px;}
+.info-body{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:24px;}
+.report-wrap{width:100%;height:100%;}
+.report-box{width:260px;min-height:100%;padding:16px;background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);border:1px solid #eee;box-sizing:border-box;position:relative;}
+.stages-toggle-btn{position:absolute;top:14px;right:14px;width:auto;height:auto;padding:4px 8px;font-size:9px;line-height:1;font-weight:600;color:#4a9fd8;background:#eaf3fb;border:none;border-radius:5px;cursor:pointer;transition:all 0.2s ease;}
+.stages-toggle-btn:hover{background:#4a9fd8;color:#fff;}
+.report-wrap{width:100%;height:100%;}
+.flip-scene{width:260px;flex-shrink:0;height:100%;perspective:1400px;}
+.flip-inner{position:relative;width:100%;height:100%;transition:transform 0.6s ease;transform-style:preserve-3d;}
+.flip-inner.flipped{transform:rotateY(180deg);}
+.flip-face{position:absolute;top:0;left:0;width:100%;height:100%;padding:16px;background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);border:1px solid #eee;box-sizing:border-box;backface-visibility:hidden;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;}
+.flip-face::-webkit-scrollbar{display:none;}
+.flip-back{transform:rotateY(180deg);}
+.side-panel-col{flex:1;min-width:0;display:flex;flex-direction:column;}
+.side-panel-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;margin-top:6px;}
+.proj-code-badge{background:#4a9fd8;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px;}
+.proj-name-title{color:#1f2937;font-size:14px;font-weight:700;}
+.side-panel-row{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;}
+.side-panel{flex:1;min-width:0;min-height:0;background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);border:1px solid #eee;box-sizing:border-box;padding:12px;overflow:auto;}
+#scurvePanel{flex:0 0 286px;}
+#scurvePanel{flex:0 0 286px;}
+.cal-year-row{display:flex;gap:4px;margin-bottom:4px;}
+.cal-year{font-size:9px;font-weight:700;color:#1f2937;text-align:center;}
+.cal-strip{display:flex;gap:4px;}
+.scurve-scroll{width:100%;height:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;cursor:grab;}
+.chart-drag-scroll{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;cursor:grab;}
+.chart-drag-scroll-y{overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-ms-overflow-style:none;cursor:grab;}
+.chart-drag-scroll-y::-webkit-scrollbar{display:none;}
+.chart-drag-scroll-y.dragging{cursor:grabbing;}
+.chart-drag-scroll::-webkit-scrollbar{display:none;}
+.chart-drag-scroll.dragging{cursor:grabbing;}
+.scurve-scroll.dragging{cursor:grabbing;}
+.gantt-scroll-r{cursor:grab;}
+.gantt-scroll-r.dragging{cursor:grabbing;}
+.scurve-scroll::-webkit-scrollbar{display:none;}
+.gantt-scroll-r::-webkit-scrollbar{display:none;}
+.gantt-scroll-r{scrollbar-width:none;-ms-overflow-style:none;}
+.scurve-inner{height:100%;}
+.cal-scroll{width:100%;overflow-x:auto;}
+.cal-inner{}
+.scurve-axis{width:34px;flex-shrink:0;display:flex;flex-direction:column;justify-content:space-between;padding:4px 4px 20px 0;box-sizing:border-box;}
+.scurve-axis span{font-size:9px;color:#9ca3af;text-align:right;}
+.scurve-year-row{display:flex;margin-bottom:4px;}
+.scurve-year-scroll{overflow:hidden;flex:1;}
+.scurve-year{font-size:10px;font-weight:700;color:#1f2937;text-align:center;flex-shrink:0;}
+.gantt-year{font-size:10px;font-weight:700;color:#1f2937;text-align:center;flex-shrink:0;}
+.gantt-month{font-size:9px;color:#000;font-weight:700;text-align:center;flex-shrink:0;}
+.gantt-row{display:flex;align-items:center;height:28px;}
+.gantt-row-label{width:140px;flex-shrink:0;font-size:10px;color:#374151;font-weight:600;padding:0 8px 0 0;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:sticky;left:0;background:#ffffff;z-index:5;height:100%;display:flex;align-items:center;}
+.gantt-track{position:relative;height:14px;background:#f3f4f6;border-radius:4px;flex-shrink:0;}
+.gantt-bar-base{position:absolute;top:0;height:100%;background:#e53e3e;border-radius:4px 0 0 4px;}
+.gantt-bar-extra{position:absolute;top:0;height:100%;background:#7dc4f0;border-radius:0 4px 4px 0;}
+.gantt-scale-spacer{width:396px;flex-shrink:0;position:sticky;left:0;background:#fff;z-index:5;}
+.gantt-dates{display:flex;gap:14px;margin-left:16px;flex-shrink:0;position:sticky;left:140px;background:#fff;z-index:4;padding-right:12px;}
+.gantt-date-col{display:flex;flex-direction:column;min-width:52px;}
+.gantt-date-label{font-size:8px;color:#9ca3af;}
+.gantt-date-value{font-size:10px;color:#1f2937;font-weight:700;white-space:nowrap;}
+.gantt-year-line{position:absolute;top:0;bottom:0;width:1px;background:#000;z-index:1;}
+.cal-split-row{flex:0 0 auto;display:flex;}
+.cal-left{border-radius:12px 0 0 12px;border-right:none;box-shadow:-6px 0 18px rgba(0,0,0,0.12);}
+.cal-right{border-radius:0 12px 12px 0;border-left:none;box-shadow:6px 0 18px rgba(0,0,0,0.12);}
+.st-table{width:100%;}
+.st-row{display:flex;border-bottom:1px solid #eee;}
+.st-row:last-child{border-bottom:none;}
+.st-col{flex:1;padding:8px 6px;font-size:10px;color:#374151;font-weight:600;text-align:center;}
+.st-col-name{flex:1.6;text-align:left;padding-left:4px;}
+.st-head .st-col{font-size:9px;color:#9ca3af;font-weight:700;text-transform:uppercase;}
+.gantt-row-r{display:flex;align-items:center;height:33px;border-bottom:1px solid #eee;}
+.gantt-row-r .gantt-track{margin:0 4px;}
+.stage-modal-overlay{position:fixed;inset:0;background:rgba(10,20,40,0.5);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding-top:12px;}
+.stage-modal{background:#fff;width:calc(100vw - 40px);max-width:2600px;height:650px;max-height:98vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;transform:scale(0.1);opacity:0;transition:transform 0.4s cubic-bezier(0.22,1,0.36,1),opacity 0.3s ease;}.stage-modal.open{transform:scale(1);opacity:1;}.stage-modal-overlay{opacity:0;transition:opacity 0.3s ease;}.stage-modal-overlay.open{opacity:1;}
+.obj-modal-header{padding:16px 20px;border-bottom:1px solid #eee;font-size:16px;font-weight:700;color:#1f2937;}
+.obj-modal-body{flex:1;display:flex;min-height:0;}
+.obj-side-list-wrap{width:1500px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid #eee;overflow:auto;}
+.obj-side-header{padding:10px 14px;font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee;}
+.obj-side-list{flex:1;overflow-y:auto;}
+.obj-side-item{padding:6px 14px;font-size:10px;font-weight:600;color:#374151;border-bottom:1px solid #f3f4f6;cursor:pointer;}
+.obj-side-name{font-size:11px;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.obj-grid-row{display:grid;grid-template-columns:320px 90px 90px 90px 90px 90px 85px 85px 85px 75px 60px 60px 60px 100px;align-items:center;gap:0 6px;width:100%;box-sizing:border-box;height:36px;}
+.obj-side-bar-col{width:100px;}
+.obj-mini-bar{display:flex;width:100%;height:8px;border-radius:4px;overflow:hidden;}
+.obj-mini-seg{height:100%;}
+.team-wrap{display:flex;flex-direction:column;height:100%;}
+.team-header{flex-shrink:0;padding:0;border-bottom:1px solid #eee;display:flex;gap:16px;width:100%;box-sizing:border-box;align-items:stretch;}
+.team-body{flex:1;overflow-y:auto;padding:16px;}
+.bday-card{flex:0 0 auto;width:200px;background:#fff;border-radius:8px;padding:6px 14px 6px 34px;display:flex;align-items:center;gap:10px;box-shadow:0 3px 10px rgba(0,0,0,0.1);box-sizing:border-box;position:relative;margin-left:28px;}
+.bday-card-avatar{width:56px;height:56px;border-radius:50%;overflow:hidden;background:#4a9fd8;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;flex-shrink:0;position:absolute;left:0;top:50%;transform:translate(-50%,-50%);box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+.bday-card-avatar img{width:100%;height:100%;object-fit:cover;}
+.bday-card-info{min-width:0;overflow:hidden;flex:1;}
+.bday-card-name{font-size:12px;font-weight:700;color:#1f2937;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bday-card-date{font-size:10px;color:#9ca3af;}
+.bday-card-days{font-size:10px;font-weight:700;color:#4a9fd8;margin-top:2px;}
+.team-blue-top{width:100%;height:76px;background:#eaf3fb;border-radius:0 20px 0 0;align-self:flex-start;display:flex;align-items:center;gap:16px;padding:0 16px 0 16px;box-sizing:border-box;position:sticky;top:0;z-index:10;flex-shrink:0;}
+.team-emp-list{width:100%;padding:16px 24px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;}
+.emp-row{width:calc(100% - 28px);min-height:56px;background:#f7f9fb;border-radius:8px;padding:6px 16px 6px 34px;display:grid;grid-template-columns:180px 160px 160px 90px 100px 110px 1fr;align-items:center;gap:6px;box-sizing:border-box;position:relative;margin-left:28px;margin-right:28px;}
+.emp-row-avatar{width:56px;height:56px;border-radius:50%;overflow:hidden;background:#4a9fd8;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0;position:absolute;left:0;top:50%;transform:translate(-50%,-50%);box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+.emp-row-avatar img{width:100%;height:100%;object-fit:cover;}
+.emp-row-name{font-size:12px;font-weight:700;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.emp-row-dept{font-size:11px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.emp-row-pos{font-size:11px;color:#9ca3af;white-space:normal;overflow:hidden;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
+.emp-row-cell{font-size:11px;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.team-col-header{width:100%;height:40px;background:#eaf3fb;display:grid;grid-template-columns:62px 180px 160px 160px 90px 100px 110px 1fr;align-items:center;gap:6px;box-sizing:border-box;padding:0 16px 0 34px;position:sticky;top:76px;z-index:9;font-size:7.5px;font-weight:700;color:#4a9fd8;}
+.team-col-header > div{overflow:hidden;text-align:left;white-space:normal;line-height:1.1;font-size:11px;font-weight:400;color:#374151;text-transform:none;}
+.team-blue-panel{width:100%;height:90px;background:linear-gradient(180deg,#5BB0E5,#4a9fd8);position:absolute;top:0;left:0;}
+.obj-side-stat{display:flex;flex-direction:column;text-align:right;overflow:hidden;white-space:nowrap;font-size:10px;}
+.obj-side-item:hover{background:#f7f9fb;}
+.obj-main-area{flex:1;overflow:auto;}
+.stage-modal-header{display:flex;padding:16px 20px;border-bottom:1px solid #eee;font-size:16px;font-weight:700;color:#1f2937;box-sizing:border-box;width:100%;}
+.stage-modal-close{margin-left:auto;flex-shrink:0;background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;line-height:1;padding:0;}
+.stage-modal-body{padding:20px;}
+.obj-list{display:flex;flex-direction:column;}
+.obj-card{padding:12px 4px;border-bottom:1px solid #eee;}
+.obj-card:last-child{border-bottom:none;}
+.obj-name{font-size:12px;font-weight:700;color:#1f2937;margin-bottom:8px;}
+.obj-stats-row{display:flex;gap:20px;}
+.top-two-cards{display:flex;gap:16px;height:88px;flex-shrink:0;}
+.top-card{flex:1;display:flex;flex-direction:column;}
+.mini-row-inline{display:flex;gap:14px;}
+.top-card-header{font-size:9px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:6px;}
+.cal-month{font-size:9px;font-weight:600;color:#4a5568;background:#f7f9fb;border-radius:4px;padding:3px 6px;white-space:nowrap;}
+.progress-ring-wrap{position:relative;width:100px;height:100px;}
+.progress-ring-wrap svg{transform:rotate(0deg);transition:stroke-dasharray 0.6s ease;}
+.progress-ring-text{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#1f2937;}
+.ring-legend{display:flex;flex-direction:column;gap:4px;margin-top:8px;align-items:center;}
+.ring-legend-item{display:flex;align-items:center;gap:6px;font-size:9px;color:#374151;font-weight:600;}
+.ring-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.progress-section{margin-top:14px;}
+.progress-row{display:flex;justify-content:space-between;align-items:baseline;}
+.progress-label{font-size:10px;color:#374151;font-weight:600;}
+.progress-pct{font-size:10px;color:#1f2937;font-weight:700;}
+.progress-bar{width:100%;height:6px;background:#eef2f7;border-radius:3px;overflow:hidden;margin-top:3px;}
+.progress-fill{height:100%;border-radius:3px;transition:width 0.4s ease;}
+.pf-row{margin-top:12px;}
+.pf-bar{display:flex;width:100%;height:6px;border-radius:3px;overflow:hidden;}
+.pf-seg{height:100%;}
+.pf-bottom3{display:flex;justify-content:space-between;margin-top:4px;}
+.pf-plan{font-size:9px;color:#6b7280;font-weight:700;}
+.pf-fact{font-size:9px;color:#4a9fd8;font-weight:700;}
+.pf-diff{font-size:9px;font-weight:700;}
+.report-total-label{font-size:12px;color:#9ca3af;font-weight:600;margin-bottom:4px;}
+.report-total-value{font-size:16px;color:#1f2937;font-weight:700;margin-bottom:8px;}
+.report-mini-row{display:flex;gap:10px;}
+.report-mini-card{flex:1;background:#eaf3fb;border-radius:8px 0 0 8px;padding:10px;box-shadow:0 3px 10px rgba(74,159,216,0.18);cursor:pointer;}.prep-hover-group{transition:transform 0.3s ease;}.prep-hover-group:hover{transform:scale(1.03);}.prep-ring-hover{transition:transform 0.3s ease;}.prep-ring-hover:hover{transform:scale(1.08);}
+.mini-title{font-size:10px;color:#9ca3af;font-weight:400;margin-bottom:4px;}
+.mini-value{font-size:10px;color:#1f2937;font-weight:700;margin-bottom:4px;}
+.mini-sub{font-size:10px;}
+.mini-sub-label{color:#9ca3af;font-weight:400;}
+.mini-sub-value{color:#1f2937;font-weight:700;}
+.stage-list{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+.stage-card{width:100%;padding:12px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);border:1px solid #eee;cursor:pointer;transition:all 0.2s ease;box-sizing:border-box;}
+.stage-card:hover{box-shadow:0 6px 16px rgba(74,159,216,0.2);}
+.stage-card:hover{background:#eaf3fb;}
+.stage-name{font-size:10px;font-weight:700;color:#1f2937;text-align:left;margin-bottom:3px;}
+.stage-cost-label{font-size:9px;color:#9ca3af;}
+.stage-cost-value{font-size:10px;color:#1f2937;font-weight:700;margin-bottom:6px;}
+.stage-stats-row{display:flex;gap:6px;}
+.stage-col{flex:1;display:flex;flex-direction:column;}
+.stage-stat-label{font-size:9px;color:#9ca3af;margin-bottom:2px;}
+.stage-stat-value{font-size:11px;color:#1f2937;font-weight:700;}
+.proj-list{width:100%;display:flex;flex-direction:column;gap:12px;}
+.proj-card{background:#f7f9fb;border:1px solid #e5e9ef;border-radius:8px;padding:16px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all 0.2s ease;}
+.proj-card:hover{background:#eef4fa;border-color:#4a9fd8;}
+.proj-code{font-weight:700;color:#4a9fd8;font-size:13px;min-width:70px;}
+.proj-name{font-size:14px;color:#1f2937;font-weight:600;}
+.empty{text-align:center;color:#6b7280;}#prepDynamicsScroll::-webkit-scrollbar{display:none;}#prepObjectsList::-webkit-scrollbar{display:none;}.prep-objects-panel{transition:transform 0.3s ease;cursor:pointer;}.prep-objects-panel:hover{transform:scale(1.02);}.prep-mob-panel{transition:transform 0.3s ease;}.prep-mob-panel:hover{transform:scale(1.02);}.prep-dyn-panel{transition:transform 0.3s ease;}.prep-dyn-panel:hover{transform:scale(1.01);}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+<div class="sidebar-top">
+<div class="photo" id="avatar">О</div>
+<div class="username" id="username">...</div>
+</div>
+<div class="buttons">
+<div class="buttons-top">
+<button id="teamBtn"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="6.5" cy="8" r="2.3"/><circle cx="17.5" cy="8" r="2.3"/><circle cx="12" cy="7" r="2.8"/><path d="M2 18c0-2.6 2-4.5 4.5-4.5"/><path d="M22 18c0-2.6-2-4.5-4.5-4.5"/><path d="M6.5 19.5c0-3.3 2.5-6 5.5-6s5.5 2.7 5.5 6"/></svg></button>
+<button id="infoBtn"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v15a2 2 0 0 0 2 2h16"/><rect x="6.5" y="14" width="2.4" height="4.5" fill="currentColor" stroke="none"/><rect x="10.3" y="10.5" width="2.4" height="8" fill="currentColor" stroke="none"/><rect x="14.1" y="12.5" width="2.4" height="6" fill="currentColor" stroke="none"/><rect x="17.9" y="8.5" width="2.4" height="10" fill="currentColor" stroke="none"/><polyline points="5,11 8,7.5 11,9.5 14,6 17,7.5 20,4" stroke-width="1.4"/><polyline points="17,4 20,4 20,7" stroke-width="1.4"/></svg></button>
+<button id="structureBtn"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
+</div>
+<div class="buttons-bottom">
+<button id="settingsBtn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><path d="M12 2v4m0 12v4M4.22 4.22l2.83 2.83m6 6l2.83 2.83M2 12h4m12 0h4M4.22 19.78l2.83-2.83m6-6l2.83-2.83"/></svg></button>
+<button id="logoutBtn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6M6.5 12c0 3 2.2 5.5 5.5 5.5s5.5-2.5 5.5-5.5"/></svg></button>
+</div>
+</div>
+</aside>
+<main class="content">
+<div class="page active" id="page-home"><div class="empty"><h1>Добро пожаловать</h1><p>Выберите раздел</p></div></div>
+<div class="page" id="page-team" style="flex-direction:column;overflow-y:auto;justify-content:flex-start;align-items:stretch;"><div class="team-blue-top" id="teamHeader"></div><div class="team-col-header"><div></div><div class="emp-row-name">Имя и Фамилия</div><div class="emp-row-dept">Отдел</div><div class="emp-row-pos">Должность</div><div class="emp-row-cell">Дата</div><div class="emp-row-cell">Внутренний</div><div class="emp-row-cell">Мобильный</div><div class="emp-row-cell">Почта</div></div><div class="team-emp-list" id="teamEmpList"></div></div>
+<div class="page" id="page-info">
+<div class="info-wrap">
+<div class="info-topnav">
+<button class="info-nav-btn active" data-sub="general">Общее</button>
+<button class="info-nav-btn" data-sub="prep">Подготовительные работы</button>
+<div class="info-nav-wrap">
+<button class="info-nav-btn" data-sub="main">Основные проекты</button>
+<div class="info-dropdown" id="mainDropdown"></div>
+</div>
+<button class="info-nav-btn" data-sub="aux">Вспомогательные проекты</button>
+<button class="info-nav-btn" data-sub="schedule">График</button>
+</div>
+<div class="info-body">
+<div class="empty"><h1>Информация</h1><p>Раздел в разработке</p></div>
+</div>
+</div>
+</div>
+<div class="page" id="page-structure" style="flex-direction:column;overflow-y:auto;justify-content:flex-start;align-items:stretch;padding:24px;">
+<div id="structureHeader" style="font-size:16px;font-weight:700;color:#1f2937;margin-bottom:14px;">Структура проектов</div>
+<div id="structureBody"></div>
+</div>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script src="/projects.js"></script>
+<script src="/personnel.js"></script>
+<script>
+async function init(){
+const res=await fetch("/api/me");
+if(res.ok===false){window.location.href="/login.html";return;}
+const user=await res.json();
+document.getElementById("username").textContent=user.name||user.login;
+if(user.avatar){
+  document.getElementById("avatar").innerHTML='<img src="'+user.avatar+'" style="width:100%;height:100%;object-fit:cover;">';
+}else{
+  document.getElementById("avatar").textContent=(user.name||user.login).charAt(0).toUpperCase();
+}
+window.currentUserRole=user.role;
+if(user.role!=="admin"&&user.role!=="developer"){
+  const btn=document.getElementById("structureBtn");
+  if(btn) btn.style.display="none";
+}
+}
+function showPage(id,btn){document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".buttons button").forEach(b=>b.classList.remove("nav-active"));if(btn)btn.classList.add("nav-active");}
+function fmtDaysUntil(d){
+  if(d===0) return "Сегодня";
+  if(d===1) return "Завтра";
+  return "Через "+d+" дн.";
+}
+let teamLoaded=false;
+function loadTeamPage(){
+  if(teamLoaded) return;
+  teamLoaded=true;
+  const users=PERSONNEL;
+  const empListEl=document.getElementById("teamEmpList");
+  empListEl.innerHTML=users.map(u=>{
+    const avatarHtml=u.avatar?'<img src="'+u.avatar+'">':'<span>'+(u.name?u.name.charAt(0):"?")+'</span>';
+    return '<div class="emp-row"><div class="emp-row-avatar">'+avatarHtml+'</div><div class="emp-row-name">'+u.name+'</div><div class="emp-row-dept">'+(u.department||"")+'</div><div class="emp-row-pos">'+(u.position||"")+'</div><div class="emp-row-cell">'+(u.birthday||"")+'</div><div class="emp-row-cell">'+(u.internalPhone||"")+'</div><div class="emp-row-cell">'+(u.mobilePhone||"")+'</div><div class="emp-row-cell">'+(u.email||"")+'</div></div>';
+  }).join("");
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  const withDays=users.filter(u=>u.birthday).map(u=>{
+    const parts=u.birthday.split(".");
+    if(parts.length!==3) return null;
+    const day=parseInt(parts[0],10);
+    const month=parseInt(parts[1],10)-1;
+    let next=new Date(today.getFullYear(),month,day);
+    if(next<today) next=new Date(today.getFullYear()+1,month,day);
+    const daysUntil=Math.round((next-today)/86400000);
+    return {name:u.name,birthday:u.birthday,daysUntil:daysUntil,avatar:u.avatar||""};
+  }).filter(Boolean);
+  withDays.sort((a,b)=>a.daysUntil-b.daysUntil);
+  const upcoming=withDays.slice(0,3);
+  document.getElementById("teamHeader").innerHTML=upcoming.map(u=>{
+    const avatarHtml=u.avatar?'<img src="'+u.avatar+'">':'<span>'+u.name.charAt(0)+'</span>';
+    return '<div class="bday-card"><div class="bday-card-avatar">'+avatarHtml+'</div><div class="bday-card-info"><div class="bday-card-name">'+u.name+'</div><div class="bday-card-date">'+u.birthday+'</div><div class="bday-card-days">'+fmtDaysUntil(u.daysUntil)+'</div></div></div>';
+  }).join("");
+}
+document.getElementById("teamBtn").addEventListener("click",function(){showPage("page-team",this);loadTeamPage();});
+document.getElementById("infoBtn").addEventListener("click",function(){showPage("page-info",this);});
+document.getElementById("structureBtn").addEventListener("click",function(){showPage("page-structure",this);renderStructureLevel1();});
+function renderStructureLevel1(){
+  document.getElementById("structureHeader").textContent="Структура проектов";
+  const cats=["prep","main","aux"];
+  const body=document.getElementById("structureBody");
+  body.innerHTML=cats.map(key=>{
+    const cat=PROJECTS[key];
+    return '<div class="cat-card" data-key="'+key+'" style="background:#fff;border:1px solid #eee;border-radius:10px;margin-bottom:8px;padding:14px 18px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">'
+      +'<div style="font-size:13px;font-weight:700;color:#1f2937;">'+cat.title+'</div>'
+      +'<div style="font-size:11px;color:#9ca3af;">'+cat.items.length+' объектов</div>'
+      +'</div>';
+  }).join("");
+  body.querySelectorAll(".cat-card").forEach(card=>{
+    card.addEventListener("click",()=>{ renderStructureLevel2(card.dataset.key); });
+  });
+}
+function renderPrepStructureList(body){
+  body.innerHTML='<div class="empty" style="padding:20px;"><p>Загрузка...</p></div>';
+  fetch("/api/prep/objects").then(r=>r.json()).then(list=>{
+    const dataByCode={};
+    list.forEach(o=>{ dataByCode[o.code]=o; });
+    const groups={};
+    PROJECTS.prep.items.forEach(p=>{
+      const prefix=p.code.split("-")[0];
+      groups[prefix]=groups[prefix]||[];
+      groups[prefix].push(p);
+    });
+    const parentAll=PROJECTS.main.items.concat(PROJECTS.aux.items);
+    body.innerHTML=Object.keys(groups).map(prefix=>{
+      const parent=parentAll.find(pp=>pp.code===prefix);
+      const extraNames={"OPS01":"Внепроектные объекты"};
+      const parentName=parent?parent.name:(extraNames[prefix]||prefix);
+      const items=groups[prefix];
+      const groupTotalCost=items.reduce((s,p)=>s+((dataByCode[p.code]&&dataByCode[p.code].cost)||0),0);
+      const groupTotalDone=items.reduce((s,p)=>s+((dataByCode[p.code]&&dataByCode[p.code].done)||0),0);
+      const groupPlanWeighted=items.reduce((s,p)=>{ const o=dataByCode[p.code]; return s+(o?(o.planPct*o.cost):0); },0);
+      const groupPlanPct=groupTotalCost?Math.round(groupPlanWeighted/groupTotalCost):0;
+      const groupFactPct=groupTotalCost?Math.min(100,Math.round(groupTotalDone/groupTotalCost*100)):0;
+      return '<div class="cat-parent-card" style="background:#fff;border:1px solid #eee;border-radius:10px;margin-bottom:6px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">'
+        +'<div class="cat-item-card-head" style="padding:10px 18px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">'
+        +'<div style="display:flex;align-items:center;gap:10px;">'
+        +'<div style="font-size:10px;color:#9ca3af;min-width:60px;">'+prefix+'</div>'
+        +'<div style="font-size:12px;font-weight:700;color:#1f2937;">'+parentName+'</div>'
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:8px;">'
+        +'<div style="font-size:10px;font-weight:700;color:#1f2937;background:#f7f9fb;border-radius:6px;padding:4px 10px;width:120px;text-align:center;">'+(groupTotalCost?fmtMoney(groupTotalCost):"—")+'</div>'
+        +'<div style="font-size:10px;font-weight:700;color:#fff;background:#4a9fd8;border-radius:6px;padding:4px 10px;width:50px;text-align:center;">'+(groupTotalCost?groupPlanPct+"%":"—")+'</div>'
+        +'<div style="font-size:10px;font-weight:700;color:#fff;background:#38a169;border-radius:6px;padding:4px 10px;width:50px;text-align:center;">'+(groupTotalCost?groupFactPct+"%":"—")+'</div>'
+        +'<div style="font-size:10px;color:#9ca3af;min-width:70px;text-align:right;">'+items.length+' объектов</div>'
+        +'</div>'
+        +'</div>'
+        +'<div class="cat-item-card-body" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;">'
+        +'<div style="padding:0 18px 12px 18px;display:flex;flex-direction:column;gap:6px;">'
+        +items.map(p=>{
+          const o=dataByCode[p.code];
+          const badge=o?((o.internalCost>0&&o.externalCost>0)?"Смешанный":(o.internalCost>0?"Внутренний":(o.externalCost>0?"Внешний":"—"))):"—";
+          return renderStructItemCard(p.code,p.name,badge,o||null);
+        }).join("")
+        +'</div>'
+        +'</div>'
+        +'</div>';
+    }).join("");
+    body.querySelectorAll(".cat-item-card-head").forEach(head=>{
+      head.addEventListener("click",()=>{
+        const parentCard=head.closest(".cat-parent-card");
+        const bodyEl=parentCard.querySelector(".cat-item-card-body");
+        const isOpen=bodyEl.style.maxHeight&&bodyEl.style.maxHeight!=="0px";
+        body.querySelectorAll(".cat-item-card-body").forEach(b=>{ b.style.maxHeight="0px"; });
+        if(!isOpen) bodyEl.style.maxHeight=bodyEl.scrollHeight+"px";
+      });
+    });
+    wireStructItemButtons(body,true);
+  });
+}
+function renderStructItemCard(code,name,badge,o){
+  let updatedText="";
+  if(o&&o.updatedAt){
+    const d=new Date(o.updatedAt);
+    const dateStr=String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear();
+    updatedText=(o.updatedBy||"")+", "+dateStr;
+  }
+  return '<div class="cat-item-card" data-code="'+code+'" style="background:#eaf3fb;border:1px solid #d6e9f8;border-radius:8px;margin-bottom:1px;padding:4px 12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);display:flex;align-items:center;">'
+    +'<div style="font-size:10px;color:#9ca3af;min-width:60px;">'+code+'</div>'
+    +'<div style="font-size:12px;font-weight:700;color:#1f2937;">'+name+'</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-left:auto;">'
+    +'<div style="font-size:10px;font-weight:700;color:#1f2937;background:#fff;border-radius:6px;padding:4px 10px;width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;box-sizing:border-box;">'+(o?fmtMoney(o.cost):"—")+'</div>'
+    +'<div style="font-size:10px;font-weight:700;color:#fff;background:#4a9fd8;border-radius:6px;padding:4px 10px;width:50px;text-align:center;box-sizing:border-box;">'+(o?o.planPct+"%":"—")+'</div>'
+    +'<div style="font-size:10px;font-weight:700;color:#fff;background:#38a169;border-radius:6px;padding:4px 10px;width:50px;text-align:center;box-sizing:border-box;">'+(o?o.factPct+"%":"—")+'</div>'
+    +'<div style="font-size:10px;font-weight:600;color:#1f2937;background:#fff;border-radius:6px;padding:4px 10px;width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;box-sizing:border-box;">'+updatedText+'</div>'
+    +'<div class="struct-type-badge" style="font-size:10px;color:#9ca3af;background:#f7f9fb;border-radius:6px;padding:4px 10px;width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;box-sizing:border-box;">'+badge+'</div>'
+    +'<button type="button" class="struct-export-btn" data-code="'+code+'" style="width:auto;height:auto;background:#eaf3fb;border:none;color:#4a9fd8;font-size:10px;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer;">Экспорт</button>'
+    +'<button type="button" class="struct-import-btn" data-code="'+code+'" style="width:auto;height:auto;background:#eaf3fb;border:none;color:#4a9fd8;font-size:10px;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer;">Импорт</button>'
+    +'</div>'
+    +'</div>';
+}
+function showAppAlert(message){
+  const overlay=document.createElement("div");
+  overlay.style.cssText="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center;";
+  const box=document.createElement("div");
+  box.style.cssText="background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,0.3);padding:24px 28px;max-width:420px;width:90%;";
+  const text=document.createElement("div");
+  text.style.cssText="font-size:13px;color:#1f2937;white-space:pre-line;line-height:1.6;margin-bottom:20px;";
+  text.textContent=message;
+  const btn=document.createElement("button");
+  btn.textContent="OK";
+  btn.style.cssText="width:auto;height:auto;background:linear-gradient(160deg,#6a5ae0 0%,#4a90d9 45%,#1dd3b0 100%);color:#fff;border:none;padding:8px 24px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;display:block;margin-left:auto;";
+  btn.addEventListener("click",()=>{ overlay.remove(); });
+  overlay.addEventListener("click",(e)=>{ if(e.target===overlay) overlay.remove(); });
+  box.appendChild(text);
+  box.appendChild(btn);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+function doPrepImportUpload(file,onDone){
+  const fd=new FormData();
+  fd.append("file",file);
+  fetch("/api/prep/import",{method:"POST",body:fd}).then(r=>r.json()).then(data=>{
+    const summary=(data.results||[]).map(r=>r.code+": "+r.status).join("\n");
+    showAppAlert("Импорт завершён:\n"+summary);
+    if(onDone) onDone();
+  }).catch(err=>{ showAppAlert("Ошибка импорта: "+err.message); });
+}
+function wireStructItemButtons(body,isPrep){
+  body.querySelectorAll(".struct-export-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{ window.location.href="/api/prep/export?code="+btn.dataset.code; });
+  });
+  const inp=document.createElement("input");
+  inp.type="file"; inp.accept=".xlsx"; inp.style.display="none";
+  document.body.appendChild(inp);
+  let activeCode=null;
+  body.querySelectorAll(".struct-import-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{ activeCode=btn.dataset.code; inp.value=""; inp.click(); });
+  });
+  inp.addEventListener("change",()=>{
+    if(inp.files.length===0||activeCode===null) return;
+    doPrepImportUpload(inp.files[0],()=>{ if(isPrep) renderPrepStructureList(body); });
+  });
+  body.querySelectorAll(".cat-item-card").forEach(card=>{
+    card.addEventListener("dragover",(e)=>{ e.preventDefault(); card.style.outline="2px dashed #4a9fd8"; });
+    card.addEventListener("dragleave",()=>{ card.style.outline="none"; });
+    card.addEventListener("drop",(e)=>{
+      e.preventDefault();
+      card.style.outline="none";
+      const file=e.dataTransfer.files[0];
+      if(!file) return;
+      doPrepImportUpload(file,()=>{ if(isPrep) renderPrepStructureList(body); });
+    });
+  });
+}
+function renderStructureLevel2(key){
+  const cat=PROJECTS[key];
+  document.getElementById("structureHeader").innerHTML='<span id="structureBackBtn" style="cursor:pointer;margin-right:10px;">&larr;</span>'+cat.title;
+  document.getElementById("structureBackBtn").addEventListener("click",()=>{ renderStructureLevel1(); });
+  const body=document.getElementById("structureBody");
+  if(key==="prep"){ renderPrepStructureList(body); return; }
+  renderMainAuxStructureList(body,cat);
+}
+function renderMainAuxStructureList(body,cat){
+  body.innerHTML='<div class="empty" style="padding:20px;"><p>Загрузка...</p></div>';
+  Promise.all(cat.items.map(p=>fetch("/api/reports/"+p.code+"/summary").then(r=>r.json()).then(sum=>({code:p.code,sum:sum})))).then(results=>{
+    const sumByCode={};
+    results.forEach(r=>{ sumByCode[r.code]=r.sum; });
+    body.innerHTML=cat.items.map(p=>{
+      const sum=sumByCode[p.code];
+      const stagesHtml=renderStageRows(p.code,sum.stages);
+      return '<div class="cat-parent-card" style="background:#fff;border:1px solid #eee;border-radius:10px;margin-bottom:6px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">'
+        +'<div class="stage-expand-head" data-code="'+p.code+'" style="padding:10px 18px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">'
+        +'<div style="display:flex;align-items:center;gap:10px;">'
+        +'<div style="font-size:10px;color:#9ca3af;min-width:60px;">'+p.code+'</div>'
+        +'<div style="font-size:12px;font-weight:700;color:#1f2937;">'+p.name+'</div>'
+        +'</div>'
+        +'<div style="font-size:10px;color:#9ca3af;">'+sum.stages.length+' этапов</div>'
+        +'</div>'
+        +'<div class="stage-expand-body" data-code="'+p.code+'" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;">'+stagesHtml+'</div>'
+        +'</div>';
+    }).join("");
+    wireStageButtons(body);
+    body.querySelectorAll(".stage-expand-head").forEach(head=>{
+      head.addEventListener("click",()=>{
+        const code=head.dataset.code;
+        const bodyEl=body.querySelector('.stage-expand-body[data-code="'+code+'"]');
+        const isOpen=bodyEl.style.maxHeight&&bodyEl.style.maxHeight!=="0px";
+        body.querySelectorAll(".stage-expand-body").forEach(b=>{ b.style.maxHeight="0px"; });
+        if(!isOpen) bodyEl.style.maxHeight=bodyEl.scrollHeight+"px";
+      });
+    });
+  });
+}
+function renderStageRows(code,stages){
+  return '<div style="padding:0 18px 12px 18px;display:flex;flex-direction:column;gap:6px;">'
+    +stages.map(st=>{
+      return '<div class="stage-row" data-code="'+code+'" data-stage="'+st.name+'" style="background:#eaf3fb;border:1px solid #d6e9f8;border-radius:8px;padding:6px 14px;display:flex;align-items:center;gap:10px;">'
+        +'<div style="font-size:11px;font-weight:600;color:#1f2937;min-width:220px;">'+st.name+'</div>'
+        +'<div style="display:flex;align-items:center;gap:8px;margin-left:auto;">'
+        +'<div style="font-size:10px;font-weight:700;color:#1f2937;background:#fff;border-radius:6px;padding:4px 10px;width:120px;text-align:center;">'+(st.cost?fmtMoney(st.cost):"—")+'</div>'
+        +'<div style="font-size:10px;font-weight:700;color:#fff;background:#4a9fd8;border-radius:6px;padding:4px 10px;width:50px;text-align:center;">'+(st.cost?st.planPct+"%":"—")+'</div>'
+        +'<div style="font-size:10px;font-weight:700;color:#fff;background:#38a169;border-radius:6px;padding:4px 10px;width:50px;text-align:center;">'+(st.cost?Math.min(100,Math.round(st.done/st.cost*100))+"%":"—")+'</div>'
+        +'<button type="button" class="stage-export-btn" data-code="'+code+'" data-stage="'+st.name+'" style="width:auto;height:auto;background:#fff;border:none;color:#4a9fd8;font-size:10px;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer;">Экспорт</button>'
+        +'<button type="button" class="stage-import-btn" data-code="'+code+'" data-stage="'+st.name+'" style="width:auto;height:auto;background:#fff;border:none;color:#4a9fd8;font-size:10px;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer;">Импорт</button>'
+        +'</div>'
+        +'</div>';
+    }).join("")
+    +'</div>';
+}
+function wireStageButtons(container){
+  container.querySelectorAll(".stage-export-btn").forEach(btn=>{
+    btn.addEventListener("click",(e)=>{
+      e.stopPropagation();
+      window.location.href="/api/prep/export?code="+btn.dataset.code+"&stage="+encodeURIComponent(btn.dataset.stage);
+    });
+  });
+  const stageFileInput=document.createElement("input");
+  stageFileInput.type="file";
+  stageFileInput.accept=".xlsx";
+  stageFileInput.style.display="none";
+  document.body.appendChild(stageFileInput);
+  let activeStageCode=null,activeStageName=null,activeBodyEl=null;
+  container.querySelectorAll(".stage-import-btn").forEach(btn=>{
+    btn.addEventListener("click",(e)=>{
+      e.stopPropagation();
+      activeStageCode=btn.dataset.code;
+      activeStageName=btn.dataset.stage;
+      activeBodyEl=container.querySelector('.stage-expand-body[data-code="'+activeStageCode+'"]');
+      stageFileInput.value="";
+      stageFileInput.click();
+    });
+  });
+  stageFileInput.addEventListener("change",()=>{
+    if(stageFileInput.files.length===0||activeStageCode===null) return;
+    const fd=new FormData();
+    fd.append("file",stageFileInput.files[0]);
+    fetch("/api/prep/import?stage="+encodeURIComponent(activeStageName),{method:"POST",body:fd}).then(r=>r.json()).then(data=>{
+      const summary=(data.results||[]).map(r=>r.code+": "+r.status).join("\n");
+      showAppAlert("Импорт завершён:\n"+summary);
+      fetch("/api/reports/"+activeStageCode+"/summary").then(r=>r.json()).then(sum=>{
+        activeBodyEl.innerHTML=renderStageRows(activeStageCode,sum.stages);
+        wireStageButtons(activeBodyEl);
+        activeBodyEl.style.maxHeight=activeBodyEl.scrollHeight+"px";
+      });
+    }).catch(err=>{ showAppAlert("Ошибка импорта: "+err.message); });
+  });
+}
+function loadStages(code,bodyEl){
+  bodyEl.innerHTML='<div class="empty" style="padding:12px;"><p>Загрузка...</p></div>';
+  bodyEl.style.maxHeight="60px";
+  fetch("/api/reports/"+code+"/summary").then(r=>r.json()).then(sum=>{
+    const countLabel=document.querySelector('.stage-count-label[data-code="'+code+'"]');
+    if(countLabel) countLabel.textContent=sum.stages.length+" этапов";
+    bodyEl.innerHTML='<div style="padding:0 18px 12px 18px;display:flex;flex-direction:column;gap:6px;">'
+      +sum.stages.map(st=>{
+        return '<div class="stage-row" data-code="'+code+'" data-stage="'+st.name+'" style="background:#eaf3fb;border:1px solid #d6e9f8;border-radius:8px;padding:6px 14px;display:flex;align-items:center;gap:10px;">'
+          +'<div style="font-size:11px;font-weight:600;color:#1f2937;min-width:220px;">'+st.name+'</div>'
+          +'<div style="display:flex;align-items:center;gap:8px;margin-left:auto;">'
+          +'<div style="font-size:10px;font-weight:700;color:#1f2937;background:#fff;border-radius:6px;padding:4px 10px;width:120px;text-align:center;">'+(st.cost?fmtMoney(st.cost):"—")+'</div>'
+          +'<div style="font-size:10px;font-weight:700;color:#fff;background:#4a9fd8;border-radius:6px;padding:4px 10px;width:50px;text-align:center;">'+(st.cost?st.planPct+"%":"—")+'</div>'
+          +'<div style="font-size:10px;font-weight:700;color:#fff;background:#38a169;border-radius:6px;padding:4px 10px;width:50px;text-align:center;">'+(st.cost?Math.min(100,Math.round(st.done/st.cost*100))+"%":"—")+'</div>'
+          +'<button type="button" class="stage-export-btn" data-code="'+code+'" data-stage="'+st.name+'" style="width:auto;height:auto;background:#fff;border:none;color:#4a9fd8;font-size:10px;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer;">Экспорт</button>'
+          +'<button type="button" class="stage-import-btn" data-code="'+code+'" data-stage="'+st.name+'" style="width:auto;height:auto;background:#fff;border:none;color:#4a9fd8;font-size:10px;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer;">Импорт</button>'
+          +'</div>'
+          +'</div>';
+      }).join("")
+      +'</div>';
+    bodyEl.style.maxHeight=bodyEl.scrollHeight+"px";
+    bodyEl.querySelectorAll(".stage-export-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        window.location.href="/api/prep/export?code="+btn.dataset.code+"&stage="+encodeURIComponent(btn.dataset.stage);
+      });
+    });
+    const stageFileInput=document.createElement("input");
+    stageFileInput.type="file";
+    stageFileInput.accept=".xlsx";
+    stageFileInput.style.display="none";
+    document.body.appendChild(stageFileInput);
+    let activeStageCode=null,activeStageName=null;
+    bodyEl.querySelectorAll(".stage-import-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        activeStageCode=btn.dataset.code;
+        activeStageName=btn.dataset.stage;
+        stageFileInput.value="";
+        stageFileInput.click();
+      });
+    });
+    stageFileInput.addEventListener("change",()=>{
+      if(stageFileInput.files.length===0||activeStageCode===null) return;
+      const fd=new FormData();
+      fd.append("file",stageFileInput.files[0]);
+      fetch("/api/prep/import?stage="+encodeURIComponent(activeStageName),{method:"POST",body:fd}).then(r=>r.json()).then(data=>{
+        const summary=(data.results||[]).map(r=>r.code+": "+r.status).join("\n");
+        showAppAlert("Импорт завершён:\n"+summary);
+        loadStages(activeStageCode,bodyEl);
+      }).catch(err=>{ showAppAlert("Ошибка импорта: "+err.message); });
+    });
+  });
+}
+document.getElementById("logoutBtn").addEventListener("click",async()=>{await fetch("/api/logout",{method:"POST"});window.location.href="/login.html";});
+document.getElementById("settingsBtn").addEventListener("click",()=>{showAppAlert("Настройки в разработке");});
+const mainDropdown=document.getElementById("mainDropdown");
+mainDropdown.innerHTML=PROJECTS.main.items.map(p=>
+  '<div class="proj-card" data-code="'+p.code+'"><div class="proj-name">'+p.name+'</div></div>'
+).join("");
+mainDropdown.querySelectorAll(".proj-card").forEach(card=>{
+  card.addEventListener("click",function(e){
+    e.stopPropagation();
+    mainDropdown.classList.remove("open");
+    renderProjectReport(this.dataset.code);
+  });
+});
+function openStageModal(stageName,code){
+  const overlay=document.createElement("div");
+  overlay.className="stage-modal-overlay";
+  overlay.innerHTML='<div class="stage-modal"><div class="obj-modal-header">'+stageName+'</div><div class="obj-modal-body"><div class="obj-side-list-wrap"><div class="obj-side-header obj-grid-row"><div class="obj-side-name">'+(stageName==="Изготовление"||stageName==="Логистика"?"Оборудование":"Объект")+'</div><div class="obj-side-stat">Стоимость</div><div class="obj-side-stat">Выполнено</div><div class="obj-side-stat">Остаток</div><div class="obj-side-stat">Оплачено</div><div class="obj-side-stat">Остаток</div><div class="obj-side-stat">Начало</div><div class="obj-side-stat">Окончание</div><div class="obj-side-stat">Прогноз</div><div class="obj-side-stat">Отклонение</div><div class="obj-side-stat">План</div><div class="obj-side-stat">Факт</div><div class="obj-side-stat">Разница</div><div class="obj-side-bar-col">Прогресс</div></div><div class="obj-side-list" id="objSideList"><div class="empty" style="padding:20px;"><p>Загрузка...</p></div></div></div><div class="obj-main-area"></div></div></div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener("click",(e)=>{ if(e.target===overlay) overlay.remove(); });
+  fetch("/api/reports/"+code+"/stage-objects?stage="+encodeURIComponent(stageName)).then(r=>r.json()).then(objs=>{
+    const list=document.getElementById("objSideList");
+    if(!objs.length){ list.innerHTML='<div class="empty" style="padding:20px;"><p>Нет объектов</p></div>'; return; }
+    list.innerHTML=objs.map(o=>{
+      const remDone=o.cost-o.done;
+      const remPaid=o.cost-o.paid;
+      const factPctBar=o.cost?Math.min(100,Math.round(o.done/o.cost*100)):0;
+      const blueW=factPctBar;
+      const redW=Math.max(0,o.planPct-factPctBar);
+      const grayW=Math.max(0,100-Math.max(o.planPct,factPctBar));
+      const barHtml='<div class="obj-side-bar-col"><div class="obj-mini-bar">'
+        +(blueW>0?'<div class="obj-mini-seg" style="width:'+blueW+'%;background:#4a9fd8;"></div>':'')
+        +(redW>0?'<div class="obj-mini-seg" style="width:'+redW+'%;background:#e53e3e;"></div>':'')
+        +(grayW>0?'<div class="obj-mini-seg" style="width:'+grayW+'%;background:#e5e9ef;"></div>':'')
+        +'</div></div>';
+      return '<div class="obj-side-item obj-grid-row">'
+        +'<div class="obj-side-name">'+o.obj+'</div>'
+        +'<div class="obj-side-stat">'+fmtMoneyOrDash(o.cost)+'</div>'
+        +'<div class="obj-side-stat">'+fmtMoneyOrDash(o.done)+'</div>'
+        +'<div class="obj-side-stat">'+fmtMoneyOrDash(remDone)+'</div>'
+        +'<div class="obj-side-stat">'+fmtMoneyOrDash(o.paid)+'</div>'
+        +'<div class="obj-side-stat">'+fmtMoneyOrDash(remPaid)+'</div>'
+        +'<div class="obj-side-stat">'+fmtDate(o.start)+'</div>'
+        +'<div class="obj-side-stat">'+fmtDate(o.end)+'</div>'
+        +'<div class="obj-side-stat">'+fmtDate(o.forecastEnd)+'</div>'
+        +'<div class="obj-side-stat">'+(o.deltaDays==null?"—":(o.deltaDays>0?"+"+o.deltaDays+" дн":(o.deltaDays<0?o.deltaDays+" дн":"в срок")))+'</div>'
+        +'<div class="obj-side-stat">'+o.planPct+'%</div>'
+        +'<div class="obj-side-stat">'+factPctBar+'%</div>'
+        +'<div class="obj-side-stat">'+(factPctBar-o.planPct)+'%</div>'
+        +barHtml
+        +'</div>';
+    }).join("");
+  });
+}
+function openCategoriesModal(clickEvent){
+  const overlay=document.createElement("div");
+  overlay.className="stage-modal-overlay";
+  const originX=clickEvent?clickEvent.clientX:window.innerWidth/2;
+  const originY=clickEvent?clickEvent.clientY:window.innerHeight/2;
+  overlay.innerHTML='<div class="stage-modal" style="transform-origin:'+originX+'px '+originY+'px;height:70vh;"><div class="obj-modal-header">Структура проектов</div><div class="obj-modal-body" style="display:block;overflow-y:auto;padding:16px;"><div id="categoriesList"></div></div></div>';
+  document.body.appendChild(overlay);
+  requestAnimationFrame(()=>{ overlay.classList.add("open"); overlay.querySelector(".stage-modal").classList.add("open"); });
+  function closeModal(){
+    overlay.classList.remove("open");
+    overlay.querySelector(".stage-modal").classList.remove("open");
+    setTimeout(()=>overlay.remove(),400);
+  }
+  overlay.addEventListener("click",(e)=>{ if(e.target===overlay) closeModal(); });
+  const el=document.getElementById("categoriesList");
+  const cats=["prep","main","aux"];
+  el.innerHTML=cats.map(key=>{
+    const cat=PROJECTS[key];
+    return '<div class="cat-card" data-key="'+key+'" style="background:#fff;border:1px solid #eee;border-radius:10px;margin-bottom:8px;padding:14px 18px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">'
+      +'<div style="font-size:13px;font-weight:700;color:#1f2937;">'+cat.title+'</div>'
+      +'<div style="font-size:11px;color:#9ca3af;">'+cat.items.length+' объектов</div>'
+      +'</div>';
+  }).join("");
+  el.querySelectorAll(".cat-card").forEach(card=>{
+    card.addEventListener("click",()=>{
+      renderCategoryItems(card.dataset.key);
+    });
+  });
+  function renderCategoryItems(key){
+    const cat=PROJECTS[key];
+    document.querySelector(".obj-modal-header").innerHTML='<span id="catBackBtn" style="cursor:pointer;margin-right:8px;">&larr;</span>'+cat.title;
+    document.getElementById("catBackBtn").addEventListener("click",(e)=>{ e.stopPropagation(); backToList(); });
+    el.innerHTML=cat.items.map(p=>{
+      return '<div class="cat-item-card" data-code="'+p.code+'" style="background:#fff;border:1px solid #eee;border-radius:10px;margin-bottom:6px;padding:10px 18px;box-shadow:0 3px 10px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">'
+        +'<div style="font-size:12px;font-weight:700;color:#1f2937;">'+p.name+'</div>'
+        +'<div style="font-size:10px;color:#9ca3af;">'+p.code+'</div>'
+        +'</div>';
+    }).join("");
+  }
+  function backToList(){
+    document.querySelector(".obj-modal-header").textContent="Структура проектов";
+    el.innerHTML=cats.map(key=>{
+      const cat=PROJECTS[key];
+      return '<div class="cat-card" data-key="'+key+'" style="background:#fff;border:1px solid #eee;border-radius:10px;margin-bottom:8px;padding:14px 18px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">'
+        +'<div style="font-size:13px;font-weight:700;color:#1f2937;">'+cat.title+'</div>'
+        +'<div style="font-size:11px;color:#9ca3af;">'+cat.items.length+' объектов</div>'
+        +'</div>';
+    }).join("");
+    el.querySelectorAll(".cat-card").forEach(card=>{
+      card.addEventListener("click",()=>{ renderCategoryItems(card.dataset.key); });
+    });
+  }
+}
+function openPrepAllObjectsModal(clickEvent,projectPrefix){
+  const overlay=document.createElement("div");
+  overlay.className="stage-modal-overlay";
+  const originX=clickEvent?clickEvent.clientX:window.innerWidth/2;
+  const originY=clickEvent?clickEvent.clientY:window.innerHeight/2;
+  overlay.innerHTML='<div class="stage-modal" style="transform-origin:'+originX+'px '+originY+'px;height:95vh;width:calc(100vw - 20px);max-width:2800px;"><div class="obj-modal-header" id="prepAllObjModalHeader" style="display:flex;align-items:center;justify-content:space-between;">Объекты</div><div class="obj-modal-body" style="display:block;overflow-y:auto;padding:16px;"><div id="prepAllObjList"><div class="empty" style="padding:20px;"><p>Загрузка...</p></div></div></div></div>';
+  document.body.appendChild(overlay);
+  requestAnimationFrame(()=>{ overlay.classList.add("open"); overlay.querySelector(".stage-modal").classList.add("open"); });
+  function closeModal(){
+    overlay.classList.remove("open");
+    overlay.querySelector(".stage-modal").classList.remove("open");
+    setTimeout(()=>overlay.remove(),400);
+  }
+  overlay.addEventListener("click",(e)=>{ if(e.target===overlay) closeModal(); });
+  function escHandler(e){ if(e.key==="Escape"){ closeModal(); document.removeEventListener("keydown",escHandler); } }
+  document.addEventListener("keydown",escHandler);
+  fetch("/api/prep/objects").then(r=>r.json()).then(list=>{
+    if(window.prepActiveFilter==="Внутренний") list=list.filter(o=>o.internalCost>0);
+    if(window.prepActiveFilter==="Внешний") list=list.filter(o=>o.externalCost>0);
+    if(projectPrefix) list=list.filter(o=>o.code.indexOf(projectPrefix+"-")===0);
+    const el=document.getElementById("prepAllObjList");
+    if(!el) return;
+    const hEl=document.getElementById("prepAllObjModalHeader");
+    const parentAllForModal=[].concat(PROJECTS.main.items,PROJECTS.aux.items);
+    const modalExtraNames={"OPS01":"Внепроектные объекты"};
+    const modalParent=projectPrefix?parentAllForModal.find(pp=>pp.code===projectPrefix):null;
+    const modalTitle=projectPrefix?(modalParent?modalParent.name:(modalExtraNames[projectPrefix]||projectPrefix)):"Объекты";
+    if(hEl&&list.length){
+      const sTotalCost=list.reduce((s,o)=>s+(o.cost||0),0);
+      const sTotalDone=list.reduce((s,o)=>s+(o.done||0),0);
+      const sTotalRem=sTotalCost-sTotalDone;
+      const sPlanWeighted=list.reduce((s,o)=>s+((o.planPct||0)*(o.cost||0)),0);
+      const sPlanPct=sTotalCost?Math.round(sPlanWeighted/sTotalCost):0;
+      const sFactPct=sTotalCost?Math.min(100,Math.round(sTotalDone/sTotalCost*100)):0;
+      const sDelta=sFactPct-sPlanPct;
+      const sDeltaColor=sDelta<0?"#e53e3e":"#38a169";
+      const sDeltaText=sDelta>0?("+"+sDelta+"%"):(sDelta+"%");
+      const starts=list.map(o=>o.start).filter(Boolean).sort((a,b)=>new Date(a)-new Date(b));
+      const planEnds=list.map(o=>o.planEnd).filter(Boolean).sort((a,b)=>new Date(a)-new Date(b));
+      const forecastEnds=list.map(o=>o.forecastEnd).filter(Boolean).sort((a,b)=>new Date(a)-new Date(b));
+      const sStart=starts.length?starts[0]:null;
+      const sPlanEnd=planEnds.length?planEnds[planEnds.length-1]:null;
+      const sForecastEnd=forecastEnds.length?forecastEnds[forecastEnds.length-1]:null;
+      let sDeltaDays=null;
+      if(sPlanEnd&&sForecastEnd) sDeltaDays=Math.round((new Date(sForecastEnd)-new Date(sPlanEnd))/86400000);
+      const sDeltaDaysColor=sDeltaDays>0?"#e53e3e":(sDeltaDays<0?"#38a169":"#1f2937");
+      const sDeltaDaysText=sDeltaDays==null?"—":(sDeltaDays>0?"+"+sDeltaDays+" дн":(sDeltaDays<0?sDeltaDays+" дн":"в срок"));
+      hEl.innerHTML='<div>'+modalTitle+'</div>'
+        +'<div style="display:flex;gap:10px;align-items:center;">'
+        +'<div style="background:#f7f9fb;border-radius:8px;padding:8px 14px;display:flex;gap:14px;">'
+        +'<div><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Стоимость</div><div style="font-size:11px;font-weight:700;color:#1f2937;">'+fmtMoney(sTotalCost)+'</div></div>'
+        +'<div><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Освоено</div><div style="font-size:11px;font-weight:700;color:#1f2937;">'+fmtMoney(sTotalDone)+'</div></div>'
+        +'<div><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Остаток</div><div style="font-size:11px;font-weight:700;color:#1f2937;">'+fmtMoney(sTotalRem)+'</div></div>'
+        +'</div>'
+        +'<div style="background:#f7f9fb;border-radius:8px;padding:8px 14px;display:flex;gap:10px;align-items:center;">'
+        +'<span style="font-size:11px;font-weight:700;color:#fff;background:#4a9fd8;border-radius:20px;padding:3px 0;width:44px;text-align:center;display:inline-block;box-sizing:border-box;">'+sPlanPct+'%</span>'
+        +'<span style="font-size:11px;font-weight:700;color:#fff;background:#38a169;border-radius:20px;padding:3px 0;width:44px;text-align:center;display:inline-block;box-sizing:border-box;">'+sFactPct+'%</span>'
+        +'<span style="font-size:11px;font-weight:700;color:'+sDeltaColor+';">'+sDeltaText+'</span>'
+        +'</div>'
+        +'<div style="background:#f7f9fb;border-radius:8px;padding:8px 14px;display:flex;gap:14px;">'
+        +'<div><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Начало</div><div style="font-size:11px;font-weight:700;color:#1f2937;">'+fmtDate(sStart)+'</div></div>'
+        +'<div><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Окончание</div><div style="font-size:11px;font-weight:700;color:#1f2937;">'+fmtDate(sPlanEnd)+'</div></div>'
+        +'<div><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Прогноз</div><div style="font-size:11px;font-weight:700;color:#1f2937;">'+fmtDate(sForecastEnd)+'</div></div>'
+        +'<div><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Срок</div><div style="font-size:11px;font-weight:700;color:'+sDeltaDaysColor+';">'+sDeltaDaysText+'</div></div>'
+        +'</div>'
+        +'<div style="width:32px;"></div>'
+        +'</div>';
+    }
+    if(!list.length){ el.innerHTML='<div class="empty" style="padding:20px;"><p>Нет данных</p></div>'; return; }
+    el.innerHTML=list.map((o,i)=>{
+      const name=window.prepObjectsNameMap[o.code]||o.code;
+      const deltaColor=o.delta<0?"#e53e3e":"#38a169";
+      const deltaText=o.delta>0?("+"+o.delta+"%"):(o.delta+"%");
+      const rowDeltaDaysColor=o.deltaDays>0?"#e53e3e":(o.deltaDays<0?"#38a169":"#1f2937");
+      const rowDeltaDaysText=o.deltaDays==null?"—":(o.deltaDays>0?"+"+o.deltaDays+" дн":(o.deltaDays<0?o.deltaDays+" дн":"в срок"));
+      return '<div class="prep-obj-card" data-code="'+o.code+'" style="background:#fff;border:1px solid #eee;border-radius:10px;margin-bottom:4px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">'
+        +'<div class="prep-obj-card-head" style="padding:10px 18px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">'
+        +'<div style="font-size:12px;font-weight:700;color:#1f2937;">'+name+'</div>'
+        +'<div style="display:flex;gap:10px;align-items:center;">'
+        +'<div style="background:#f7f9fb;border-radius:8px;padding:4px 14px;display:flex;gap:14px;">'
+        +'<div style="width:90px;"><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Стоимость</div><div style="font-size:11px;font-weight:700;color:#1f2937;">'+fmtMoney(o.cost)+'</div></div>'
+        +'<div style="width:90px;"><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Освоено</div><div style="font-size:11px;font-weight:700;color:#1f2937;">'+(o.done?fmtMoney(o.done):"—")+'</div></div>'
+        +'<div style="width:90px;"><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Остаток</div><div style="font-size:11px;font-weight:700;color:#1f2937;">'+(o.remDone?fmtMoney(o.remDone):"—")+'</div></div>'
+        +'</div>'
+        +'<div style="background:#f7f9fb;border-radius:8px;padding:4px 14px;display:flex;gap:10px;align-items:center;">'
+        +'<span style="font-size:11px;font-weight:700;color:#fff;background:#4a9fd8;border-radius:20px;padding:3px 0;width:44px;text-align:center;display:inline-block;box-sizing:border-box;">'+o.planPct+'%</span>'
+        +'<span style="font-size:11px;font-weight:700;color:#fff;background:#38a169;border-radius:20px;padding:3px 0;width:44px;text-align:center;display:inline-block;box-sizing:border-box;">'+o.factPct+'%</span>'
+        +'<span style="font-size:11px;font-weight:700;color:'+deltaColor+';display:inline-block;width:46px;text-align:left;">'+deltaText+'</span>'
+        +'</div>'
+        +'<div style="background:#f7f9fb;border-radius:8px;padding:4px 14px;display:flex;gap:14px;">'
+        +'<div style="width:64px;"><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Начало</div><div style="font-size:11px;font-weight:700;color:#1f2937;">'+fmtDate(o.start)+'</div></div>'
+        +'<div style="width:64px;"><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Окончание</div><div style="font-size:11px;font-weight:700;color:#1f2937;">'+fmtDate(o.planEnd)+'</div></div>'
+        +'<div style="width:64px;"><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Прогноз</div><div style="font-size:11px;font-weight:700;color:#1f2937;">'+fmtDate(o.forecastEnd)+'</div></div>'
+        +'<div style="width:64px;"><div style="font-size:8px;color:#1f2937;margin-bottom:1px;">Срок</div><div style="font-size:11px;font-weight:700;color:'+rowDeltaDaysColor+';">'+rowDeltaDaysText+'</div></div>'
+        +'</div>'
+        +'<div class="prep-obj-menu-wrap" style="position:relative;">'
+        +'<button type="button" class="prep-obj-menu-btn" data-code="'+o.code+'" style="background:none;border:none;font-size:12px;color:#9ca3af;cursor:pointer;padding:0 4px;line-height:1;height:16px;display:flex;align-items:center;position:relative;top:2px;">&bull;&bull;&bull;</button>'
+        +'<div class="prep-obj-menu" style="display:none;position:absolute;right:0;top:22px;background:#fff;border:1px solid #eee;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,0.12);z-index:20;min-width:140px;">'
+        +'<a href="/api/prep/export?code='+o.code+'" class="prep-obj-menu-item" style="display:block;padding:8px 14px;font-size:11px;color:#1f2937;text-decoration:none;">Экспорт</a>'
+        +'<div class="prep-obj-menu-item prep-obj-import-btn" data-code="'+o.code+'" style="padding:8px 14px;font-size:11px;color:#1f2937;cursor:pointer;">Импорт</div>'
+        +'</div>'
+        +'</div>'
+        +'</div></div>'
+        +'<div class="prep-obj-card-body" style="max-height:0;overflow:hidden;transition:max-height 0.5s ease;"><div style="padding:0 18px 16px 18px;" id="prepObjDetail_'+i+'"></div></div>'
+        +'</div>';
+    }).join("");
+    el.querySelectorAll(".prep-obj-card-head").forEach((head,i)=>{
+      head.addEventListener("click",()=>{
+        const card=head.closest(".prep-obj-card");
+        const body=card.querySelector(".prep-obj-card-body");
+        const isOpen=body.style.maxHeight&&body.style.maxHeight!=="0px";
+        el.querySelectorAll(".prep-obj-card-body").forEach(b=>{ b.style.maxHeight="0px"; });
+        if(isOpen) return;
+        const o=list[i];
+        const detailEl=document.getElementById("prepObjDetail_"+i);
+        const deltaColor=o.deltaDays>0?"#e53e3e":(o.deltaDays<0?"#38a169":"#1f2937");
+        const deltaText=o.deltaDays==null?"—":(o.deltaDays>0?"+"+o.deltaDays+" дн":(o.deltaDays<0?o.deltaDays+" дн":"в срок"));
+        let updatedText="—";
+        if(o.updatedAt){
+          const ud=new Date(o.updatedAt);
+          const dateStr=String(ud.getDate()).padStart(2,"0")+"."+String(ud.getMonth()+1).padStart(2,"0")+"."+ud.getFullYear();
+          updatedText=(o.updatedBy||"—")+", "+dateStr;
+        }
+        detailEl.innerHTML='<div style="display:flex;gap:14px;align-items:stretch;flex-wrap:wrap;">'
+          +'<div style="flex:1;min-width:300px;display:flex;flex-direction:column;gap:6px;">'
+          +'<div>'
+          +'<div style="font-size:12px;font-weight:700;color:#1f2937;margin-bottom:6px;">S-кривая</div>'
+          +'<div style="background:#fff;border-radius:10px;padding:16px 16px 20px 16px;box-shadow:0 4px 14px rgba(0,0,0,0.08);box-sizing:border-box;height:200px;overflow:hidden;margin-top:6px;"><div class="chart-drag-scroll" id="prepObjChartScroll_'+i+'" style="width:100%;height:100%;"><div id="prepObjChartInner_'+i+'" style="height:100%;"><canvas id="prepObjChart_'+i+'"></canvas></div></div></div>'
+          +'</div>'
+          +'<div>'
+          +'<div style="font-size:12px;font-weight:700;color:#1f2937;margin-bottom:6px;">Мобилизация</div>'
+          +'<div style="background:#fff;border-radius:10px;padding:16px;box-shadow:0 4px 14px rgba(0,0,0,0.08);box-sizing:border-box;height:170px;margin-top:6px;"><canvas id="prepObjMobChart_'+i+'"></canvas></div>'
+          +'</div>'
+          +'<div>'
+          
+          +'<div style="background:#fff;border-radius:10px;padding:16px;box-shadow:0 4px 14px rgba(0,0,0,0.08);box-sizing:border-box;height:150px;margin-top:6px;"><textarea placeholder="Причины остановки и т.д." '+((window.currentUserRole==="admin"||window.currentUserRole==="developer")?"":"readonly")+' style="width:100%;height:100%;border:none;outline:none;resize:none;font-size:11px;color:#1f2937;font-family:inherit;background:'+((window.currentUserRole==="admin"||window.currentUserRole==="developer")?"#fff":"#f7f9fb")+';"></textarea></div>'
+          +'</div>'
+          +'</div>'
+          +'<div style="flex:1;min-width:300px;">'
+          +'<div style="font-size:12px;font-weight:700;color:#1f2937;margin-bottom:6px;">Информация по видам работ</div>'
+          +'<div style="background:#fff;border-radius:10px;padding:10px 24px 28px 24px;box-shadow:0 4px 14px rgba(0,0,0,0.08);margin-top:6px;">'
+          +'<div id="prepObjWorklist_'+i+'"></div>'
+          +'</div>'
+          +'</div>'
+          +'</div>';
+        fetch("/api/prep/mobilization?code="+o.code).then(r=>r.json()).then(mc=>{
+          const mobCanvas=document.getElementById("prepObjMobChart_"+i);
+          if(!mobCanvas) return;
+          const mobBarLabelPlugin={
+            id:"mobBarLabel",
+            afterDatasetsDraw(chart){
+              const ctx=chart.ctx;
+              ctx.save();
+              ctx.font="bold 8px Arial";
+              ctx.fillStyle="#1f2937";
+              ctx.textAlign="center";
+              ctx.textBaseline="bottom";
+              chart.data.datasets.forEach((ds,dsIndex)=>{
+                const meta=chart.getDatasetMeta(dsIndex);
+                meta.data.forEach((bar,idx)=>{
+                  const val=ds.data[idx];
+                  if(val===null||val===undefined||val===0) return;
+                  ctx.fillText(String(val),bar.x,bar.y-2);
+                });
+              });
+              ctx.restore();
+            }
+          };
+          const mobFullLabels=mc.labels.map((m,idx)=>(mc.years[idx]||"")+"-"+m);
+          new Chart(mobCanvas,{
+            plugins:[mobBarLabelPlugin,yearCenterLabelPlugin],
+            type:"bar",
+            data:{
+              labels:mobFullLabels,
+              datasets:[
+                {label:"План",data:mc.plan,backgroundColor:"#cfe4f5"},
+                {label:"Факт",data:mc.fact,backgroundColor:"#b7e4c7"}
+              ]
+            },
+            options:{
+              responsive:true,maintainAspectRatio:false,
+              layout:{padding:{top:20,bottom:16}},
+              plugins:{legend:{display:false}},
+              scales:{
+                y:{ticks:{display:false},grid:{display:false}},
+                x:{ticks:{font:{size:9},color:"#9ca3af",callback:function(value,index){ return mc.labels[index]; }},grid:{display:false}}
+              }
+            }
+          });
+        });
+        fetch("/api/prep/object/"+o.code+"/worklist").then(r=>r.json()).then(list=>{
+          const wlEl=document.getElementById("prepObjWorklist_"+i);
+          if(!wlEl) return;
+          if(!list.length){ wlEl.innerHTML='<div style="font-size:11px;color:#9ca3af;">Нет данных</div>'; return; }
+          function fmtQty(n){ return (n||0).toFixed(2).replace(".",","); }
+          const headerHtml='<div style="display:flex;align-items:center;gap:2px;padding:4px 0;">'
+            +'<div style="flex:1;font-size:9px;color:#9ca3af;">Виды работы</div>'
+            +'<div style="font-size:9px;color:#9ca3af;width:45px;text-align:right;">Ед. изм.</div>'
+            +'<div style="font-size:9px;color:#9ca3af;width:55px;text-align:right;">Общее</div>'
+            +'<div style="font-size:9px;color:#9ca3af;width:55px;text-align:right;">План</div>'
+            +'<div style="font-size:9px;color:#9ca3af;width:70px;text-align:right;">Факт</div>'
+            +'<div style="font-size:9px;color:#9ca3af;width:50px;text-align:right;margin-right:16px;">Разница</div>'
+            +'<div style="font-size:9px;color:#9ca3af;width:40px;text-align:center;">План%</div>'
+            +'<div style="font-size:9px;color:#9ca3af;width:40px;text-align:center;">Факт%</div>'
+            +'<div style="font-size:9px;color:#9ca3af;width:44px;text-align:center;">Разн.%</div>'
+            +'</div>';
+          const rowsHtml=list.map(w=>{
+            const diffQty=(w.actualQuantity||0)-(w.quantity||0);
+            const diffColor=diffQty<0?"#e53e3e":(diffQty>0?"#38a169":"#1f2937");
+            const planPct=100;
+            const factPctQty=w.quantity?Math.round((w.actualQuantity||0)/w.quantity*100):0;
+            const diffPct=factPctQty-planPct;
+            const diffPctColor=diffPct<0?"#e53e3e":(diffPct>0?"#38a169":"#1f2937");
+            return '<div style="display:flex;align-items:center;gap:2px;padding:6px 0;border-bottom:1px solid #f0f0f0;">'
+              +'<div style="flex:1;font-size:11px;font-weight:600;color:#1f2937;">'+w.item+'</div>'
+              +'<div style="font-size:10px;color:#9ca3af;width:45px;text-align:right;">'+(w.uom||"—")+'</div>'
+              +'<div style="font-size:10px;color:#1f2937;width:55px;text-align:right;">'+fmtQty(w.quantity)+'</div>'
+              +'<div style="font-size:10px;color:#1f2937;width:55px;text-align:right;">'+fmtQty(w.quantity)+'</div>'
+              +'<div style="font-size:10px;color:#1f2937;width:70px;text-align:right;">'+fmtQty(w.actualQuantity)+'</div>'
+              +'<div style="font-size:10px;font-weight:700;color:'+diffColor+';width:50px;text-align:right;margin-right:16px;">'+(diffQty>0?"+"+fmtQty(diffQty):fmtQty(diffQty))+'</div>'
+              +'<div style="font-size:9px;font-weight:700;color:#fff;background:#4a9fd8;border-radius:10px;padding:2px 0;width:40px;text-align:center;">'+planPct+'%</div>'
+              +'<div style="font-size:9px;font-weight:700;color:#fff;background:#38a169;border-radius:10px;padding:2px 0;width:40px;text-align:center;">'+factPctQty+'%</div>'
+              +'<div style="font-size:9px;font-weight:700;color:'+diffPctColor+';width:44px;text-align:center;">'+(diffPct>0?"+"+diffPct:diffPct)+'%</div>'
+              +'</div>';
+          }).join("");
+          wlEl.innerHTML=headerHtml+'<div class="chart-drag-scroll-y" id="prepObjWorklistScroll_'+i+'" style="height:500px;">'+rowsHtml+'</div>';
+          const wlScrollEl=document.getElementById("prepObjWorklistScroll_"+i);
+          if(wlScrollEl) enableDragScrollY(wlScrollEl);
+          if(body.style.maxHeight&&body.style.maxHeight!=="0px") body.style.maxHeight=body.scrollHeight+"px";
+        });
+        fetch("/api/prep/scurve?code="+o.code).then(r=>r.json()).then(sc=>{
+          const chartCanvas=document.getElementById("prepObjChart_"+i);
+          const minObjChartWidth=Math.max(300,(sc.labels?sc.labels.length:0)*30);
+          const objChartInner=document.getElementById("prepObjChartInner_"+i);
+          if(objChartInner) objChartInner.style.width=minObjChartWidth+"px";
+          if(!chartCanvas) return;
+          new Chart(chartCanvas,{
+            plugins:[yearCenterLabelPlugin],
+            data:{
+              labels:sc.labels,
+              datasets:[
+                {type:"line",label:"План накопительно",data:sc.planCum,borderColor:"#7dc4f0",borderWidth:2,pointRadius:0,tension:0.3},
+                {type:"line",label:"Факт накопительно",data:sc.factCum,borderColor:"#38a169",borderWidth:2,pointRadius:0,tension:0.3},
+                {type:"bar",label:"План/мес",data:sc.planPer,backgroundColor:"#cfe4f5",yAxisID:"y1"},
+                {type:"bar",label:"Факт/мес",data:sc.factPer,backgroundColor:"#b7e4c7",yAxisID:"y1"}
+              ]
+            },
+            options:{
+              responsive:true,maintainAspectRatio:false,
+              layout:{padding:{bottom:16}},
+              plugins:{legend:{display:false}},
+              scales:{
+                y:{min:0,max:100,ticks:{display:false},grid:{display:false}},
+                y1:{display:false},
+                x:{ticks:{font:{size:9},color:"#9ca3af",autoSkip:false,callback:function(value,index){ return String(this.getLabelForValue(index)).slice(5,7); }},grid:{display:false}}
+              }
+            }
+          });
+          const objScrollEl=document.getElementById("prepObjChartScroll_"+i);
+          if(objScrollEl){
+            enableDragScroll(objScrollEl);
+            objScrollEl.scrollLeft=objScrollEl.scrollWidth;
+          }
+        });
+        body.style.maxHeight=body.scrollHeight+"px";
+      });
+    });
+    el.querySelectorAll(".prep-obj-menu-btn").forEach(btn=>{
+      btn.addEventListener("click",(e)=>{
+        e.stopPropagation();
+        const menu=btn.nextElementSibling;
+        const isOpen=menu.style.display==="block";
+        el.querySelectorAll(".prep-obj-menu").forEach(m=>{ m.style.display="none"; });
+        menu.style.display=isOpen?"none":"block";
+      });
+    });
+    document.addEventListener("click",()=>{
+      el.querySelectorAll(".prep-obj-menu").forEach(m=>{ m.style.display="none"; });
+    });
+    el.querySelectorAll(".prep-obj-menu-item a").forEach(a=>{
+      a.addEventListener("click",(e)=>{ e.stopPropagation(); });
+    });
+    const prepObjFileInput=document.createElement("input");
+    prepObjFileInput.type="file";
+    prepObjFileInput.accept=".xlsx";
+    prepObjFileInput.style.display="none";
+    document.body.appendChild(prepObjFileInput);
+    let prepObjImportCode=null;
+    el.querySelectorAll(".prep-obj-import-btn").forEach(btn=>{
+      btn.addEventListener("click",(e)=>{
+        e.stopPropagation();
+        prepObjImportCode=btn.getAttribute("data-code");
+        prepObjFileInput.value="";
+        prepObjFileInput.click();
+      });
+    });
+    prepObjFileInput.addEventListener("change",()=>{
+      if(prepObjFileInput.files.length===0 || prepObjImportCode===null) return;
+      const formData=new FormData();
+      formData.append("file",prepObjFileInput.files[0]);
+      fetch("/api/prep/import",{method:"POST",body:formData}).then(r=>r.json()).then(data=>{
+        const summary=(data.results||[]).map(r=>r.code+": "+r.status).join("\n");
+        showAppAlert("Импорт завершён:\n"+summary);
+        openPrepAllObjectsModal();
+        closeModal();
+      }).catch(err=>{
+        showAppAlert("Ошибка импорта: "+err.message);
+      });
+    });
+  });
+}
+function openPrepObjectModal(code,name,clickEvent){
+  const overlay=document.createElement("div");
+  overlay.className="stage-modal-overlay";
+  const originX=clickEvent?clickEvent.clientX:window.innerWidth/2;
+  const originY=clickEvent?clickEvent.clientY:window.innerHeight/2;
+  overlay.innerHTML='<div class="stage-modal" style="transform-origin:'+originX+'px '+originY+'px;"><div class="obj-modal-header">'+name+'</div><div class="obj-modal-body"><div class="obj-side-list-wrap"><div class="obj-side-header obj-grid-row"><div class="obj-side-name">Позиция</div><div class="obj-side-stat">Стоимость</div><div class="obj-side-stat">Выполнено</div><div class="obj-side-stat">Остаток</div><div class="obj-side-stat">Оплачено</div><div class="obj-side-stat">Остаток</div><div class="obj-side-stat">Начало</div><div class="obj-side-stat">Окончание</div><div class="obj-side-stat">Прогноз</div><div class="obj-side-stat">Отклонение</div><div class="obj-side-stat">План</div><div class="obj-side-stat">Факт</div><div class="obj-side-stat">Разница</div><div class="obj-side-bar-col">Прогресс</div></div><div class="obj-side-list" id="prepObjRowsList"><div class="empty" style="padding:20px;"><p>Загрузка...</p></div></div></div><div class="obj-main-area"></div></div></div>';
+  document.body.appendChild(overlay);
+  requestAnimationFrame(()=>{ overlay.classList.add("open"); overlay.querySelector(".stage-modal").classList.add("open"); });
+  function closeModal(){
+    overlay.classList.remove("open");
+    overlay.querySelector(".stage-modal").classList.remove("open");
+    setTimeout(()=>overlay.remove(),400);
+  }
+  overlay.addEventListener("click",(e)=>{ if(e.target===overlay) closeModal(); });
+  fetch("/api/prep/object/"+code+"/rows").then(r=>r.json()).then(rows=>{
+    const list=document.getElementById("prepObjRowsList");
+    if(!rows.length){ list.innerHTML='<div class="empty" style="padding:20px;"><p>Нет данных</p></div>'; return; }
+    list.innerHTML=rows.map(o=>{
+      const blueW=o.factPct;
+      const redW=Math.max(0,o.planPct-o.factPct);
+      const grayW=Math.max(0,100-Math.max(o.planPct,o.factPct));
+      const barHtml='<div class="obj-side-bar-col"><div class="obj-mini-bar">'
+        +(blueW>0?'<div class="obj-mini-seg" style="width:'+blueW+'%;background:#4a9fd8;"></div>':'')
+        +(redW>0?'<div class="obj-mini-seg" style="width:'+redW+'%;background:#e53e3e;"></div>':'')
+        +(grayW>0?'<div class="obj-mini-seg" style="width:'+grayW+'%;background:#e5e9ef;"></div>':'')
+        +'</div></div>';
+      return '<div class="obj-side-item obj-grid-row">'
+        +'<div class="obj-side-name">'+(o.item||"—")+'</div>'
+        +'<div class="obj-side-stat">'+fmtMoneyOrDash(o.cost)+'</div>'
+        +'<div class="obj-side-stat">'+fmtMoneyOrDash(o.done)+'</div>'
+        +'<div class="obj-side-stat">'+fmtMoneyOrDash(o.remDone)+'</div>'
+        +'<div class="obj-side-stat">'+fmtMoneyOrDash(o.paid)+'</div>'
+        +'<div class="obj-side-stat">'+fmtMoneyOrDash(o.remPaid)+'</div>'
+        +'<div class="obj-side-stat">'+fmtDate(o.start)+'</div>'
+        +'<div class="obj-side-stat">'+fmtDate(o.end)+'</div>'
+        +'<div class="obj-side-stat">'+fmtDate(o.forecastEnd)+'</div>'
+        +'<div class="obj-side-stat">'+(o.deltaDays==null?"—":(o.deltaDays>0?"+"+o.deltaDays+" дн":(o.deltaDays<0?o.deltaDays+" дн":"в срок")))+'</div>'
+        +'<div class="obj-side-stat">'+o.planPct+'%</div>'
+        +'<div class="obj-side-stat">'+o.factPct+'%</div>'
+        +'<div class="obj-side-stat">'+(o.factPct-o.planPct)+'%</div>'
+        +barHtml
+        +'</div>';
+    }).join("");
+  });
+}
+function enableDragScrollY(el){
+  if(!el) return;
+  let isDown=false, startY=0, startScroll=0;
+  el.addEventListener("mousedown",(e)=>{
+    isDown=true;
+    el.classList.add("dragging");
+    startY=e.pageY;
+    startScroll=el.scrollTop;
+  });
+  window.addEventListener("mouseup",()=>{ isDown=false; el.classList.remove("dragging"); });
+  window.addEventListener("mousemove",(e)=>{
+    if(!isDown) return;
+    e.preventDefault();
+    el.scrollTop=startScroll-(e.pageY-startY);
+  });
+  el.addEventListener("contextmenu",(e)=>{ e.preventDefault(); });
+  el.addEventListener("wheel",(e)=>{
+    e.preventDefault();
+    el.scrollTop+=e.deltaY;
+  },{passive:false});
+}
+function enableDragScroll(el){
+  if(!el) return;
+  let isDown=false, startX=0, startScroll=0;
+  el.addEventListener("mousedown",(e)=>{
+    isDown=true;
+    el.classList.add("dragging");
+    startX=e.pageX;
+    startScroll=el.scrollLeft;
+  });
+  window.addEventListener("mouseup",()=>{ isDown=false; el.classList.remove("dragging"); });
+  window.addEventListener("mousemove",(e)=>{
+    if(!isDown) return;
+    e.preventDefault();
+    el.scrollLeft=startScroll-(e.pageX-startX);
+  });
+  el.addEventListener("wheel",(e)=>{
+    if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){
+      e.preventDefault();
+      el.scrollLeft+=e.deltaY;
+    }
+  },{passive:false});
+}
+function fmtMoney(n){
+  return new Intl.NumberFormat("ru-RU",{maximumFractionDigits:0}).format(n);
+}
+function fmtMoneyOrDash(n){
+  return n?fmtMoney(n):"—";
+}
+const yearCenterLabelPlugin={
+  id:"yearCenterLabel",
+  afterDraw(chart){
+    const ctx=chart.ctx;
+    const xScale=chart.scales.x;
+    const labels=chart.data.labels;
+    const yearGroups={};
+    labels.forEach((lab,idx)=>{
+      const year=String(lab).slice(0,4);
+      yearGroups[year]=yearGroups[year]||[];
+      yearGroups[year].push(idx);
+    });
+    ctx.save();
+    ctx.font="bold 10px Arial";
+    ctx.fillStyle="#1f2937";
+    ctx.textAlign="center";
+    ctx.textBaseline="top";
+    const y=xScale.bottom+4;
+    Object.keys(yearGroups).forEach(year=>{
+      const idxs=yearGroups[year];
+      const xs=idxs.map(idx=>xScale.getPixelForTick(idx)).filter(v=>v!=null&&!isNaN(v));
+      if(!xs.length) return;
+      const avgX=xs.reduce((a,b)=>a+b,0)/xs.length;
+      ctx.fillText(year,avgX,y);
+    });
+    ctx.restore();
+  }
+};
+function fmtDate(d){
+  if(!d) return "—";
+  const dt=new Date(d);
+  return String(dt.getDate()).padStart(2,"0")+"."+String(dt.getMonth()+1).padStart(2,"0")+"."+dt.getFullYear();
+}
+function buildGantt(stages){
+  const panel=document.getElementById("calendarPanel");
+  const items=stages||[];
+  const withDates=items.filter(s=>s.start&&s.end);
+  if(!withDates.length){ panel.innerHTML='<div class="empty" style="padding:20px;"><p>Нет данных</p></div>'; return; }
+  const allDates=[];
+  withDates.forEach(s=>{ allDates.push(new Date(s.start)); allDates.push(new Date(s.end)); if(s.forecastEnd) allDates.push(new Date(s.forecastEnd)); });
+  const minD=new Date(Math.min(...allDates));
+  const maxD=new Date(Math.max(...allDates));
+  const bufStart=new Date(minD.getFullYear(),minD.getMonth()-1,1);
+  const bufEnd=new Date(maxD.getFullYear(),maxD.getMonth()+2,1);
+  const months=[];
+  const cur=new Date(bufStart);
+  while(cur<bufEnd){ months.push({y:cur.getFullYear(),m:cur.getMonth()+1}); cur.setMonth(cur.getMonth()+1); }
+  const monthW=16;
+  const totalW=months.length*monthW;
+  const t0=bufStart.getTime(), t1=bufEnd.getTime();
+  const pos=d=>(new Date(d).getTime()-t0)/(t1-t0)*totalW;
+  const yearGroups=[];
+  months.forEach(mo=>{ if(!yearGroups.length||yearGroups[yearGroups.length-1].year!==mo.y) yearGroups.push({year:mo.y,count:1}); else yearGroups[yearGroups.length-1].count++; });
+  const yearBoundaries=[];
+  months.forEach((mo,i)=>{
+    if(mo.m===1&&i>0) yearBoundaries.push(i*monthW);
+  });
+  const yearRowHtml=yearGroups.map(g=>'<span class="gantt-year" style="width:'+(g.count*monthW)+'px;">'+g.year+'</span>').join("");
+  const monthRowHtml=months.map(mo=>'<span class="gantt-month" style="width:'+monthW+'px;">'+String(mo.m).padStart(2,"0")+'</span>').join("");
+  const yearLinesHtml=yearBoundaries.map(x=>'<div class="gantt-year-line" style="left:'+x+'px;"></div>').join("");
+  function ganttDatesHtml(s){
+    const deltaColor=s.deltaDays>0?"#e53e3e":(s.deltaDays<0?"#38a169":"#1f2937");
+    const deltaText=s.deltaDays==null?"—":(s.deltaDays>0?"+"+s.deltaDays+" дн":(s.deltaDays<0?s.deltaDays+" дн":"в срок"));
+    return '<div class="gantt-dates">'
+      +'<div class="gantt-date-col"><span class="gantt-date-label">Начало</span><span class="gantt-date-value">'+fmtDate(s.start)+'</span></div>'
+      +'<div class="gantt-date-col"><span class="gantt-date-label">Окончание</span><span class="gantt-date-value">'+fmtDate(s.end)+'</span></div>'
+      +'<div class="gantt-date-col"><span class="gantt-date-label">Прогноз</span><span class="gantt-date-value">'+fmtDate(s.forecastEnd)+'</span></div>'
+      +'<div class="gantt-date-col"><span class="gantt-date-label">Отклонение</span><span class="gantt-date-value" style="color:'+deltaColor+';">'+deltaText+'</span></div>'
+      +'</div>';
+  }
+  const rowsHtml=items.map(s=>{
+    if(!s.start||!s.end){
+      return '<div class="gantt-row"><div class="gantt-row-label">'+s.name+'</div>'+ganttDatesHtml(s)+'<div class="gantt-track" style="width:'+totalW+'px;">'+yearLinesHtml+'</div></div>';
+    }
+    const left=pos(s.start);
+    const endW=Math.max(2,pos(s.end)-left);
+    let extraHtml="";
+    if(s.forecastEnd && new Date(s.forecastEnd)>new Date(s.end)){
+      const extraW=pos(s.forecastEnd)-pos(s.end);
+      extraHtml='<div class="gantt-bar-extra" style="left:'+(left+endW)+'px;width:'+extraW+'px;"></div>';
+    }
+    return '<div class="gantt-row">'
+      +'<div class="gantt-row-label">'+s.name+'</div>'
+      +ganttDatesHtml(s)
+      +'<div class="gantt-track" style="width:'+totalW+'px;">'
+      +yearLinesHtml
+      +'<div class="gantt-bar-base" style="left:'+left+'px;width:'+endW+'px;"></div>'
+      +extraHtml
+      +'</div>'
+      +'</div>';
+  }).join("");
+  panel.innerHTML='<div class="gantt-scroll" id="ganttScroll" style="overflow-x:auto;flex:1;">'
+    +'<div style="width:'+(totalW+140)+'px;">'
+    +'<div class="gantt-scale-year" style="display:flex;"><div class="gantt-scale-spacer"></div>'+yearRowHtml+'</div>'
+    +'<div class="gantt-scale-month" style="display:flex;margin-bottom:6px;"><div class="gantt-scale-spacer"></div>'+monthRowHtml+'</div>'
+    +rowsHtml
+    +'</div></div>';
+}
+function buildGanttRight(stages){
+  const panel=document.getElementById("ganttRightPanel");
+  const items=stages||[];
+  const withDates=items.filter(s=>s.start&&s.end);
+  if(!withDates.length){ panel.innerHTML='<div class="empty" style="padding:20px;"><p>Нет данных</p></div>'; return; }
+  const allDates=[];
+  withDates.forEach(s=>{ allDates.push(new Date(s.start)); allDates.push(new Date(s.end)); if(s.forecastEnd) allDates.push(new Date(s.forecastEnd)); });
+  const minD=new Date(Math.min(...allDates));
+  const maxD=new Date(Math.max(...allDates));
+  const bufStart=new Date(minD.getFullYear(),minD.getMonth()-1,1);
+  const bufEnd=new Date(maxD.getFullYear(),maxD.getMonth()+2,1);
+  const months=[];
+  const cur=new Date(bufStart);
+  while(cur<bufEnd){ months.push({y:cur.getFullYear(),m:cur.getMonth()+1}); cur.setMonth(cur.getMonth()+1); }
+  const monthW=20;
+  const totalW=months.length*monthW;
+  const t0=bufStart.getTime(), t1=bufEnd.getTime();
+  const pos=d=>(new Date(d).getTime()-t0)/(t1-t0)*totalW;
+  const yearGroups=[];
+  months.forEach(mo=>{ if(!yearGroups.length||yearGroups[yearGroups.length-1].year!==mo.y) yearGroups.push({year:mo.y,count:1}); else yearGroups[yearGroups.length-1].count++; });
+  const yearRowHtml=yearGroups.map(g=>'<span class="gantt-year" style="width:'+(g.count*monthW)+'px;">'+g.year+'</span>').join("");
+  const monthRowHtml=months.map(mo=>'<span class="gantt-month" style="width:'+monthW+'px;">'+String(mo.m).padStart(2,"0")+'</span>').join("");
+  const yearBoundaries=[];
+  months.forEach((mo,i)=>{ if(mo.m===1&&i>0) yearBoundaries.push(i*monthW); });
+  const yearLinesHtml=yearBoundaries.map(x=>'<div class="gantt-year-line" style="left:'+x+'px;"></div>').join("");
+  const rowsHtml=items.map(s=>{
+    if(!s.start||!s.end){
+      return '<div class="gantt-row-r"><div class="gantt-track" style="width:'+totalW+'px;">'+yearLinesHtml+'</div></div>';
+    }
+    const left=pos(s.start);
+    const endW=Math.max(2,pos(s.end)-left);
+    const donePct=s.cost?Math.min(100,s.done/s.cost*100):0;
+    const greenW=endW*donePct/100;
+    const blueW=endW-greenW;
+    let extraHtml="";
+    if(s.forecastEnd && new Date(s.forecastEnd)>new Date(s.end)){
+      const extraW=pos(s.forecastEnd)-pos(s.end);
+      extraHtml='<div class="gantt-bar-extra" style="left:'+(left+endW)+'px;width:'+extraW+'px;background:#e53e3e;"></div>';
+    }
+    return '<div class="gantt-row-r"><div class="gantt-track" style="width:'+totalW+'px;">'+yearLinesHtml
+      +'<div class="gantt-bar-base" style="left:'+left+'px;width:'+greenW+'px;background:#38a169;border-radius:4px 0 0 4px;"></div>'
+      +'<div class="gantt-bar-base" style="left:'+(left+greenW)+'px;width:'+blueW+'px;background:#4a9fd8;border-radius:0;"></div>'
+      +extraHtml+'</div></div>';
+  }).join("");
+  panel.innerHTML='<div class="gantt-scroll-r" id="ganttScrollR" style="overflow-x:auto;height:100%;">'
+    +'<div style="width:'+totalW+'px;">'
+    +'<div class="gantt-scale-year" style="display:flex;">'+yearRowHtml+'</div>'
+    +'<div class="gantt-scale-month" style="display:flex;margin-bottom:6px;">'+monthRowHtml+'</div>'
+    +rowsHtml
+    +'</div></div>';
+  enableDragScroll(document.getElementById("ganttScrollR"));
+}
+function buildPlanFactBar(label,planPct,factPct){
+  const diff=factPct-planPct;
+  const green=Math.min(100,factPct);
+  const red=Math.max(0,planPct-factPct);
+  const gray=Math.max(0,100-Math.max(planPct,factPct));
+  const diffColor=diff<0?"#e53e3e":"#38a169";
+  const diffText=diff>0?("+"+diff+"%"):(diff+"%");
+  return '<div class="pf-row">'
+    +'<div class="progress-label" style="margin-bottom:4px;">'+label+'</div>'
+    +'<div class="pf-bar">'
+    +(green>0?'<div class="pf-seg" style="width:'+green+'%;background:#4a9fd8;"></div>':'')
+    +(red>0?'<div class="pf-seg" style="width:'+red+'%;background:#e53e3e;"></div>':'')
+    +(gray>0?'<div class="pf-seg" style="width:'+gray+'%;background:#e5e9ef;"></div>':'')
+    +'</div>'
+    +'<div class="pf-bottom3"><span class="pf-plan">План: '+planPct+'%</span><span class="pf-diff" style="color:'+diffColor+';">'+diffText+'</span><span class="pf-fact">Факт: '+factPct+'%</span></div>'
+    +'</div>';
+}
+async function renderProjectReport(code){
+  const body=document.querySelector(".info-body");
+  body.innerHTML='<div class="report-wrap"><div class="report-box"><div class="report-total-label">Общая стоимость</div><div class="report-total-value">Загрузка...</div></div></div>';
+  try{
+    const res=await fetch("/api/reports/"+code+"/summary");
+    const data=await res.json();
+    const remDone=data.totalCost-data.done;
+    const remPaid=data.totalCost-data.paid;
+    const pct=data.totalCost?Math.min(100,Math.round(data.done/data.totalCost*100)):0;
+    const circ=2*Math.PI*40;
+    const stageColors=["#4a9fd8","#9b59f6","#2dd4bf","#f6ad55","#f56565","#48bb78"];
+    const nonEmptyStages=(data.stages||[]).filter(st=>st.cost>0);
+    let cumulative=0;
+    const segmentsHtml=nonEmptyStages.map((st,i)=>{
+      const frac=st.cost/data.totalCost;
+      const len=circ*frac;
+      const offset=circ-cumulative;
+      cumulative+=len;
+      return '<circle cx="50" cy="50" r="40" fill="none" stroke="'+stageColors[i%stageColors.length]+'" stroke-width="8" stroke-dasharray="'+len+' '+circ+'" stroke-dashoffset="'+offset+'" transform="rotate(-90 50 50)"/>';
+    }).join("");
+    const ringHtml='<div class="progress-ring-wrap">'
+      +'<svg width="100" height="100" viewBox="0 0 100 100">'
+      +'<circle cx="50" cy="50" r="40" fill="none" stroke="#eef2f7" stroke-width="8"/>'
+      +segmentsHtml
+      +'</svg>'
+      +'<div class="progress-ring-text">'+pct+'%</div>'
+      +'</div>';
+    const frontHtml='<button class="stages-toggle-btn" id="stagesToggleBtn">Этапы</button>'
+      +'<div class="report-total-label">Общая стоимость</div>'
+      +'<div class="report-total-value">'+fmtMoney(data.totalCost)+'</div>'
+      +'<div class="progress-section">'
+      +buildPlanFactBar("Общий прогресс",data.planPct,pct)
+      +(data.stages||[]).map(st=>{
+        const stPct=st.cost?Math.min(100,Math.round(st.done/st.cost*100)):0;
+        return buildPlanFactBar(st.name,st.planPct,stPct);
+      }).join("")
+      +'</div>';
+    const backHtml='<button class="stages-toggle-btn" id="stagesBackBtn">Назад</button>'
+      +'<div class="stage-list">'
+      +(data.stages||[]).map(st=>{
+        const stRemDone=st.cost-st.done;
+        const stRemPaid=st.cost-st.paid;
+        return '<div class="stage-card" data-stage="'+st.name+'"><div class="stage-name">'+st.name+'</div>'
+        +'<div class="stage-col" style="margin-bottom:8px;flex-direction:row;gap:6px;align-items:baseline;"><span class="stage-stat-label">Стоимость:</span><span class="stage-stat-value">'+fmtMoney(st.cost)+'</span></div>'
+        +'<div class="stage-stats-row">'
+        +'<div class="stage-col"><span class="stage-stat-label">Выполнено</span><span class="stage-stat-value">'+fmtMoney(st.done)+'</span><span class="stage-stat-label" style="margin-top:6px;">Остаток</span><span class="stage-stat-value">'+fmtMoney(stRemDone)+'</span></div>'
+        +'<div class="stage-col"><span class="stage-stat-label">Оплачено</span><span class="stage-stat-value">'+fmtMoney(st.paid)+'</span><span class="stage-stat-label" style="margin-top:6px;">Остаток</span><span class="stage-stat-value">'+fmtMoney(stRemPaid)+'</span></div>'
+        +'</div>'
+        +'</div>';
+      }).join("")
+      +'</div>';
+    const projInfo=PROJECTS.main.items.find(p=>p.code===code)||{code:code,name:""};
+    document.querySelector(".info-body").innerHTML='<div class="report-wrap" style="display:flex;gap:16px;">'
+      +'<div class="flip-scene"><div class="flip-inner" id="flipInner">'
+      +'<div class="flip-face flip-front">'+frontHtml+'</div>'
+      +'<div class="flip-face flip-back">'+backHtml+'</div>'
+      +'</div></div>'
+      +'<div class="side-panel-col">'
+      +'<div class="side-panel-header" style="justify-content:space-between;"><div style="display:flex;align-items:center;gap:10px;"><span class="proj-code-badge">'+projInfo.code+'</span><span class="proj-name-title">'+projInfo.name+'</span></div><div style="position:relative;"><button id="dataBtn" style="height:20px;line-height:20px;padding:0 14px;font-size:11px;font-weight:600;color:#4a9fd8;background:#eaf3fb;border:none;border-radius:6px;cursor:pointer;">Данные</button><div id="dataDropdown" style="display:none;position:absolute;top:100%;right:0;background:#fff;border:1px solid #e5e9ef;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,0.15);z-index:20;margin-top:4px;min-width:120px;"><div style="padding:8px 14px;font-size:12px;color:#374151;cursor:pointer;">Импорт</div><div style="padding:8px 14px;font-size:12px;color:#374151;cursor:pointer;border-top:1px solid #eee;">Экспорт</div></div></div></div>'
+      +'<div class="side-panel-row"><div class="top-two-cards"><div class="side-panel top-card" id="topCardLeft"></div><div class="side-panel top-card" id="topCardRight"></div></div><div class="side-panel" id="scurvePanel" style="display:flex;flex-direction:column;"><div style="display:flex;flex:1;min-height:0;"><div class="scurve-axis" id="scurveAxis"></div><div class="scurve-scroll" id="scurveScroll"><div class="scurve-inner" id="scurveInner"><canvas id="scurveChart"></canvas></div></div></div><div class="scurve-year-row" id="scurveYearRow"></div></div><div class="cal-split-row"><div class="side-panel cal-left" id="stagesTablePanel"></div><div class="side-panel cal-right" id="ganttRightPanel"></div></div></div>'
+      +'</div>'
+      +'</div>';
+    const stTable=document.getElementById("stagesTablePanel");
+    stTable.innerHTML='<div class="st-table">'
+      +'<div class="st-row st-head"><div class="st-col st-col-name">Наименование этапов</div><div class="st-col">Начало</div><div class="st-col">Окончание</div><div class="st-col">Прогноз</div><div class="st-col">Отклонение</div></div>'
+      +(data.stages||[]).map(s=>{
+        const dColor=s.deltaDays>0?"#e53e3e":(s.deltaDays<0?"#38a169":"#1f2937");
+        const dText=s.deltaDays==null?"—":(s.deltaDays>0?"+"+s.deltaDays+" дн":(s.deltaDays<0?s.deltaDays+" дн":"в срок"));
+        return '<div class="st-row"><div class="st-col st-col-name">'+s.name+'</div><div class="st-col">'+fmtDate(s.start)+'</div><div class="st-col">'+fmtDate(s.end)+'</div><div class="st-col">'+fmtDate(s.forecastEnd)+'</div><div class="st-col" style="color:'+dColor+';">'+dText+'</div></div>';
+      }).join("")
+      +'</div>';
+    buildGanttRight(data.stages);
+    document.getElementById("topCardLeft").innerHTML='<div class="top-card-header">Финансы</div><div class="report-mini-row" style="flex:1;">'
+      +'<div class="report-mini-card"><div class="mini-row-inline"><div class="stage-col"><span class="stage-stat-label">Выполнено</span><span class="stage-stat-value">'+fmtMoney(data.done)+'</span></div><div class="stage-col"><span class="stage-stat-label">Остаток</span><span class="stage-stat-value">'+fmtMoney(remDone)+'</span></div></div></div>'
+      +'<div class="report-mini-card"><div class="mini-row-inline"><div class="stage-col"><span class="stage-stat-label">Оплачено</span><span class="stage-stat-value">'+fmtMoney(data.paid)+'</span></div><div class="stage-col"><span class="stage-stat-label">Остаток</span><span class="stage-stat-value">'+fmtMoney(remPaid)+'</span></div></div></div>'
+      +'</div>';
+    const gDeltaColor=data.deltaDays>0?"#e53e3e":(data.deltaDays<0?"#38a169":"#1f2937");
+    const gDeltaText=data.deltaDays==null?"—":(data.deltaDays>0?"+"+data.deltaDays+" дн":(data.deltaDays<0?data.deltaDays+" дн":"в срок"));
+    document.getElementById("topCardRight").innerHTML='<div class="top-card-header">Сроки</div><div class="report-mini-row" style="flex:1;">'
+      +'<div class="report-mini-card"><div class="mini-row-inline"><div class="stage-col"><span class="stage-stat-label">Начало</span><span class="stage-stat-value">'+fmtDate(data.start)+'</span></div><div class="stage-col"><span class="stage-stat-label">Окончание</span><span class="stage-stat-value">'+fmtDate(data.end)+'</span></div></div></div>'
+      +'<div class="report-mini-card"><div class="mini-row-inline"><div class="stage-col"><span class="stage-stat-label">Прогноз</span><span class="stage-stat-value">'+fmtDate(data.forecastEnd)+'</span></div><div class="stage-col"><span class="stage-stat-label">Отклонение</span><span class="stage-stat-value" style="color:'+gDeltaColor+';">'+gDeltaText+'</span></div></div></div>'
+      +'</div>';
+    const flipInner=document.getElementById("flipInner");
+    document.getElementById("stagesToggleBtn").addEventListener("click",()=>flipInner.classList.add("flipped"));
+    document.getElementById("stagesBackBtn").addEventListener("click",()=>flipInner.classList.remove("flipped"));
+    document.querySelectorAll(".stage-card").forEach(card=>{
+      card.addEventListener("click",()=>openStageModal(card.dataset.stage,code));
+    });
+    fetch("/api/reports/"+code+"/scurve").then(r=>r.json()).then(sc=>{
+      const monthLabels=sc.labels.map(k=>k.slice(5,7));
+      const endLabelPlugin={
+        id:"endLabels",
+        afterDatasetsDraw(chart){
+          const ctx=chart.ctx;
+          const dsPlan=chart.data.datasets[0];
+          const dsFact=chart.data.datasets[1];
+          let todayIdx=-1;
+          for(let i=dsFact.data.length-1;i>=0;i--){ if(dsFact.data[i]!==null&&dsFact.data[i]!==undefined){ todayIdx=i; break; } }
+          function pointAt(dsIndex,data,idx){
+            if(idx<0) return null;
+            const meta=chart.getDatasetMeta(dsIndex);
+            const pt=meta.data[idx];
+            if(!pt) return null;
+            return {x:pt.x,y:pt.y,value:data[idx]};
+          }
+          const planPt=pointAt(0,dsPlan.data,todayIdx);
+          const factPt=pointAt(1,dsFact.data,todayIdx);
+          function drawBadge(pt,color,offsetY){
+            if(!pt) return;
+            const text=pt.value+"%";
+            ctx.font="bold 13px Arial";
+            const w=ctx.measureText(text).width+12;
+            const h=18;
+            const x=pt.x-w/2, y=pt.y+offsetY-h/2;
+            ctx.fillStyle=color;
+            ctx.beginPath();
+            ctx.roundRect ? ctx.roundRect(x,y,w,h,9) : ctx.rect(x,y,w,h);
+            ctx.fill();
+            ctx.fillStyle="#fff";
+            ctx.textAlign="center";
+            ctx.textBaseline="middle";
+            ctx.fillText(text,pt.x,y+h/2);
+          }
+          if(planPt) drawBadge(planPt,"#4a9fd8",-16);
+          if(factPt) drawBadge(factPt,"#38a169",16);
+          if(planPt&&factPt){
+            const diff=Math.abs(planPt.value-factPt.value);
+            ctx.strokeStyle="#e53e3e";
+            ctx.lineWidth=2;
+            ctx.setLineDash([3,3]);
+            ctx.beginPath();
+            ctx.moveTo(planPt.x,planPt.y);
+            ctx.lineTo(factPt.x,factPt.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.font="bold 13px Arial";
+            ctx.fillStyle="#e53e3e";
+            ctx.textAlign="left";
+            ctx.textBaseline="middle";
+            ctx.fillText(diff+"%",Math.max(planPt.x,factPt.x)+8,(planPt.y+factPt.y)/2);
+          }
+        }
+      };
+      new Chart(document.getElementById("scurveChart"),{
+        plugins:[endLabelPlugin],
+        data:{
+          labels:monthLabels,
+          datasets:[
+            {type:"line",label:"План накопительно",data:sc.planCum,borderColor:"#4a9fd8",borderWidth:2,pointRadius:0,tension:0.3},
+            {type:"line",label:"Факт накопительно",data:sc.factCum,borderColor:"#38a169",borderWidth:2,pointRadius:0,tension:0.3},
+            {type:"bar",label:"План/мес",data:sc.planPer,backgroundColor:"#cfe4f5",yAxisID:"y1"},
+            {type:"bar",label:"Факт/мес",data:sc.factPer,backgroundColor:"#b7e4c7",yAxisID:"y1"}
+          ]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{
+            y:{min:0,max:100,ticks:{display:false},grid:{display:false}},
+            y1:{display:false},
+            x:{ticks:{display:false},grid:{display:true,color:"#f0f0f0"}}
+          }
+        }
+      });
+      const minWidth=Math.max(600,sc.labels.length*28);
+      document.getElementById("scurveInner").style.width=minWidth+"px";
+      const scurveH=document.getElementById("scurveScroll").clientHeight;
+      document.getElementById("scurveInner").style.height=scurveH+"px";
+
+      const yearGroups=[];
+      sc.labels.forEach(k=>{
+        const y=k.slice(0,4);
+        if(!yearGroups.length||yearGroups[yearGroups.length-1].year!==y) yearGroups.push({year:y,count:1});
+        else yearGroups[yearGroups.length-1].count++;
+      });
+      const yearRowHtml=yearGroups.map(g=>'<span class="scurve-year" style="width:'+(g.count*28)+'px;">'+g.year+'</span>').join("");
+      const scMonthRowHtml=sc.labels.map(k=>'<span class="gantt-month" style="width:28px;">'+k.slice(5,7)+'</span>').join("");
+      document.getElementById("scurveYearRow").innerHTML='<div style="width:34px;flex-shrink:0;"></div><div class="scurve-year-scroll" id="scurveYearScroll"><div style="display:flex;flex-direction:column;width:'+minWidth+'px;"><div style="display:flex;">'+scMonthRowHtml+'</div><div style="display:flex;margin-top:2px;">'+yearRowHtml+'</div></div></div>';
+
+      const axisEl=document.getElementById("scurveAxis");
+      axisEl.innerHTML=[100,80,60,40,20,0].map(v=>'<span>'+v+'%</span>').join("");
+
+      const scurveScroll=document.getElementById("scurveScroll");
+      const yearScroll=document.getElementById("scurveYearScroll");
+      let syncing=false;
+      scurveScroll.addEventListener("scroll",()=>{ if(syncing)return; syncing=true; yearScroll.scrollLeft=scurveScroll.scrollLeft; syncing=false; });
+      enableDragScroll(scurveScroll);
+
+
+    });
+  }catch(e){
+    document.querySelector(".info-body").innerHTML='<div class="empty"><p>Ошибка загрузки данных</p></div>';
+  }
+}
+document.addEventListener("click",function(e){
+  const btn=document.getElementById("dataBtn");
+  const dd=document.getElementById("dataDropdown");
+  if(btn===null || dd===null) return;
+  if(e.target===btn){ dd.style.display = dd.style.display==="block"?"none":"block"; e.stopPropagation(); return; }
+  if(dd.style.display==="block" && dd.contains(e.target)===false){ dd.style.display="none"; }
+});
+const mainBtn=document.querySelector('.info-nav-btn[data-sub="main"]');
+document.querySelectorAll(".info-nav-btn").forEach(btn=>{
+  btn.addEventListener("click",function(e){
+    if(this.dataset.sub==="main"){
+      e.stopPropagation();
+      const willOpen=!mainDropdown.classList.contains("open");
+      mainDropdown.classList.toggle("open",willOpen);
+      document.querySelectorAll(".info-nav-btn").forEach(b=>b.classList.remove("active"));
+      if(willOpen) this.classList.add("active");
+      return;
+    }
+    document.querySelectorAll(".info-nav-btn").forEach(b=>b.classList.remove("active"));
+    this.classList.add("active");
+    mainDropdown.classList.remove("open");
+    renderSub(this.dataset.sub);
+  });
+});
+document.addEventListener("click",()=>{mainDropdown.classList.remove("open");mainBtn.classList.remove("active");});
+function renderSub(sub){
+  const body=document.querySelector(".info-body");
+  if(sub==="prep"){
+    body.innerHTML='<div style="position:relative;width:100%;"><div class="report-wrap" style="width:100%;"><div class="report-box" style="width:100%;min-height:0;height:120px;display:flex;align-items:center;gap:56px;margin-top:8px;"><div style="align-self:flex-start;"><div class="report-total-label">Общая стоимость</div><div class="report-total-value" id="prepTotal">—</div><div style="margin-top:10px;display:flex;flex-direction:column;gap:4px;"><div><span style="font-size:11px;color:#9ca3af;">Освоено: </span><span style="font-size:12px;color:#1f2937;font-weight:700;" id="prepDone">—</span></div><div><span style="font-size:11px;color:#9ca3af;">Остаток: </span><span style="font-size:12px;color:#1f2937;font-weight:700;" id="prepRemaining">—</span></div></div></div><div style="display:flex;gap:16px;align-self:flex-start;margin-top:-6px;margin-left:auto;"><div style="display:flex;align-items:center;"><div class="prep-ring-hover" style="width:110px;height:90px;margin-right:10px;display:flex;align-items:center;justify-content:center;position:relative;"><svg width="90" height="90" viewBox="0 0 90 90"><circle cx="45" cy="45" r="36" fill="none" stroke="#e5e9ef" stroke-width="8"/><circle id="prepInternalPlanRing" cx="45" cy="45" r="36" fill="none" stroke="#4a9fd8" stroke-width="8" stroke-dasharray="0 226" stroke-linecap="round" transform="rotate(-90 45 45)"/><circle id="prepInternalRing" cx="45" cy="45" r="36" fill="none" stroke="#38a169" stroke-width="8" stroke-dasharray="0 226" stroke-linecap="round" transform="rotate(-90 45 45)"/></svg><div id="prepInternalPlanText" style="position:absolute;font-size:11px;font-weight:700;color:#fff;background:#4a9fd8;padding:2px 5px;border-radius:8px;">0%</div><div id="prepInternalRingText" style="position:absolute;font-size:13px;font-weight:700;color:#1f2937;">0%</div></div><div class="prep-hover-group" id="prepInternalGroup" style="display:flex;align-items:center;cursor:pointer;position:relative;"><div id="prepInternalCheck" style="display:none;position:absolute;top:-6px;left:-6px;width:18px;height:18px;background:#38a169;border-radius:50%;color:#fff;font-size:11px;align-items:center;justify-content:center;z-index:5;">✓</div><div class="report-mini-card" style="min-width:288px;padding:12px 8px;"><div style="display:flex;align-items:baseline;gap:10px;"><div class="mini-title" style="font-size:11px;color:#1f2937;font-weight:700;">Внутренний (ТОМК)</div><div class="mini-value" style="font-size:16px;" id="prepInternal">—</div></div><div style="margin-top:4px;display:flex;flex-direction:column;gap:4px;"><div><span style="font-size:11px;color:#9ca3af;">Освоено: </span><span style="font-size:12px;color:#1f2937;font-weight:700;" id="prepInternalDone">—</span></div><div><span style="font-size:11px;color:#9ca3af;">Остаток: </span><span style="font-size:12px;color:#1f2937;font-weight:700;" id="prepInternalRemaining">—</span></div></div></div><div style="width:192px;height:90px;background:#eaf3fb;border-radius:0 8px 8px 0;box-shadow:6px 3px 10px rgba(74,159,216,0.18);padding:6px;box-sizing:border-box;position:relative;"><div id="prepProgressInternal" style="position:absolute;top:4px;left:8px;font-size:9px;font-weight:700;z-index:2;"></div><canvas id="prepChartInternal"></canvas></div></div></div><div class="prep-hover-group" id="prepExternalGroup" style="display:flex;align-items:center;cursor:pointer;position:relative;"><div id="prepExternalCheck" style="display:none;position:absolute;top:-6px;left:-6px;width:18px;height:18px;background:#38a169;border-radius:50%;color:#fff;font-size:11px;align-items:center;justify-content:center;z-index:5;">✓</div><div class="report-mini-card" style="min-width:288px;padding:12px 8px;"><div style="display:flex;align-items:baseline;gap:10px;"><div class="mini-title" style="font-size:11px;color:#1f2937;font-weight:700;">Внешний</div><div class="mini-value" style="font-size:16px;" id="prepExternal">—</div></div><div style="margin-top:4px;display:flex;flex-direction:column;gap:4px;"><div><span style="font-size:11px;color:#9ca3af;">Освоено: </span><span style="font-size:12px;color:#1f2937;font-weight:700;" id="prepExternalDone">—</span></div><div><span style="font-size:11px;color:#9ca3af;">Остаток: </span><span style="font-size:12px;color:#1f2937;font-weight:700;" id="prepExternalRemaining">—</span></div></div></div><div style="width:192px;height:90px;background:#eaf3fb;border-radius:0 8px 8px 0;box-shadow:6px 3px 10px rgba(74,159,216,0.18);padding:6px;box-sizing:border-box;position:relative;"><div id="prepProgressExternal" style="position:absolute;top:4px;left:8px;font-size:9px;font-weight:700;z-index:2;"></div><canvas id="prepChartExternal"></canvas></div></div></div></div><div style="display:flex;gap:16px;margin-top:18px;"><div style="flex:1;"><div id="prepObjectsHeader" style="font-size:12px;font-weight:700;color:#1f2937;margin-bottom:8px;cursor:pointer;">Объекты</div><div class="side-panel prep-objects-panel" style="height:240px;overflow-y:auto;padding:8px;scrollbar-width:none;-ms-overflow-style:none;" id="prepObjectsList"></div></div><div style="flex:2;"><div style="font-size:12px;font-weight:700;color:#1f2937;margin-bottom:8px;">Мобилизация — рабочая сила</div><div class="side-panel prep-mob-panel" style="height:240px;padding:12px;box-sizing:border-box;"><canvas id="prepMobChart"></canvas></div></div></div><div style="font-size:12px;font-weight:700;color:#1f2937;margin-top:10px;margin-bottom:8px;">Динамика по стоимости</div><div class="side-panel prep-dyn-panel" style="overflow:hidden;"><div id="prepDynamicsScroll" style="height:260px;overflow-x:auto;cursor:grab;scrollbar-width:none;-ms-overflow-style:none;"><div id="prepDynamicsInner" style="height:100%;"><canvas id="prepDynamicsChart"></canvas></div></div></div></div></div>';
+    fetch("/api/prep/summary").then(r=>r.json()).then(d=>{
+      document.getElementById("prepTotal").textContent=fmtMoney(d.totalCost);
+      document.getElementById("prepInternal").textContent=fmtMoney(d.internal);
+      document.getElementById("prepExternal").textContent=fmtMoney(d.external);
+      document.getElementById("prepDone").textContent=fmtMoney(d.done);
+      document.getElementById("prepRemaining").textContent=fmtMoney(d.remaining);
+      document.getElementById("prepInternalDone").textContent=fmtMoney(d.internalDone);
+      document.getElementById("prepInternalRemaining").textContent=fmtMoney(d.internalRemaining);
+      document.getElementById("prepExternalDone").textContent=fmtMoney(d.externalDone);
+      document.getElementById("prepExternalRemaining").textContent=fmtMoney(d.externalRemaining);
+      const internalFactPct=d.internal?Math.round(d.internalDone/d.internal*100):0;
+      const internalDiff=internalFactPct-d.internalPlanPct;
+      const internalDiffColor=internalDiff<0?"#e53e3e":"#38a169";
+      const internalDiffText=internalDiff>0?("+"+internalDiff+"%"):(internalDiff+"%");
+      document.getElementById("prepProgressInternal").innerHTML='<span style="background:#4a9fd8;color:#fff;padding:3px 8px;border-radius:10px;margin-right:4px;font-size:11px;font-weight:700;">'+d.internalPlanPct+'%</span><span style="background:#38a169;color:#fff;padding:3px 8px;border-radius:10px;margin-right:4px;font-size:11px;font-weight:700;">'+internalFactPct+'%</span><span style="background:'+internalDiffColor+';color:#fff;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700;">'+internalDiffText+'</span>';
+      const externalFactPct=d.external?Math.round(d.externalDone/d.external*100):0;
+      const externalDiff=externalFactPct-d.externalPlanPct;
+      const externalDiffColor=externalDiff<0?"#e53e3e":"#38a169";
+      const externalDiffText=externalDiff>0?("+"+externalDiff+"%"):(externalDiff+"%");
+      document.getElementById("prepProgressExternal").innerHTML='<span style="background:#4a9fd8;color:#fff;padding:3px 8px;border-radius:10px;margin-right:4px;font-size:11px;font-weight:700;">'+d.externalPlanPct+'%</span><span style="background:#38a169;color:#fff;padding:3px 8px;border-radius:10px;margin-right:4px;font-size:11px;font-weight:700;">'+externalFactPct+'%</span><span style="background:'+externalDiffColor+';color:#fff;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700;">'+externalDiffText+'</span>';
+      const factPct=d.totalCost?Math.round(d.done/d.totalCost*100):0;
+      const circ=2*Math.PI*36;
+      document.getElementById("prepInternalRing").setAttribute("stroke-dasharray",(circ*factPct/100)+" "+circ);
+      document.getElementById("prepInternalRingText").textContent=factPct+"%";
+      document.getElementById("prepInternalPlanRing").setAttribute("stroke-dasharray",(circ*d.planPct/100)+" "+circ);
+      const planAngleDeg=(d.planPct/100)*360-90;
+      const planAngleRad=planAngleDeg*Math.PI/180;
+      const planLabel=document.getElementById("prepInternalPlanText");
+      planLabel.textContent=d.planPct+"%";
+      planLabel.style.left=(45+42*Math.cos(planAngleRad))+"px";
+      planLabel.style.top=(45+42*Math.sin(planAngleRad))+"px";
+      planLabel.style.transform="translate(-50%,-50%)";
+    });
+    const prepDynEndLabelPlugin={
+      id:"prepDynEndLabels",
+      afterDatasetsDraw(chart){
+        const ctx=chart.ctx;
+        const dsPlan=chart.data.datasets[0];
+        const dsFact=chart.data.datasets[1];
+        let todayIdx=-1;
+        for(let i=dsFact.data.length-1;i>=0;i--){ if(dsFact.data[i]!==null&&dsFact.data[i]!==undefined){ todayIdx=i; break; } }
+        function pointAt(dsIndex,data,idx){
+          if(idx<0) return null;
+          const meta=chart.getDatasetMeta(dsIndex);
+          const pt=meta.data[idx];
+          if(!pt) return null;
+          return {x:pt.x,y:pt.y,value:data[idx]};
+        }
+        const planPt=pointAt(0,dsPlan.data,todayIdx);
+        const factPt=pointAt(1,dsFact.data,todayIdx);
+        function drawBadge(pt,color,offsetY){
+          if(!pt) return;
+          const text=pt.value+"%";
+          ctx.font="bold 11px Arial";
+          const w=ctx.measureText(text).width+10;
+          const h=15;
+          const x=pt.x-w/2, y=pt.y+offsetY-h/2;
+          ctx.fillStyle=color;
+          ctx.beginPath();
+          ctx.roundRect ? ctx.roundRect(x,y,w,h,8) : ctx.rect(x,y,w,h);
+          ctx.fill();
+          ctx.fillStyle="#fff";
+          ctx.textAlign="center";
+          ctx.textBaseline="middle";
+          ctx.fillText(text,pt.x,y+h/2);
+        }
+        if(planPt) drawBadge(planPt,"#4a9fd8",-14);
+        if(factPt) drawBadge(factPt,"#38a169",14);
+        if(planPt&&factPt){
+          const diff=Math.abs(planPt.value-factPt.value);
+          ctx.strokeStyle="#e53e3e";
+          ctx.lineWidth=2;
+          ctx.setLineDash([3,3]);
+          ctx.beginPath();
+          ctx.moveTo(planPt.x,planPt.y);
+          ctx.lineTo(factPt.x,factPt.y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.font="bold 11px Arial";
+          ctx.fillStyle="#e53e3e";
+          ctx.textAlign="left";
+          ctx.textBaseline="middle";
+          ctx.fillText(diff+"%",Math.max(planPt.x,factPt.x)+8,(planPt.y+factPt.y)/2);
+        }
+      }
+    };
+    let prepDynamicsChartInstance=null;
+    function loadPrepDynamicsChart(){
+      const url=window.prepActiveFilter?("/api/prep/scurve?contractor="+encodeURIComponent(window.prepActiveFilter)):"/api/prep/scurve";
+      fetch(url).then(r=>r.json()).then(sc=>{
+        const minChartWidth=Math.max(600,sc.labels.length*30);
+        document.getElementById("prepDynamicsInner").style.width=minChartWidth+"px";
+        enableDragScroll(document.getElementById("prepDynamicsScroll"));
+        if(prepDynamicsChartInstance) prepDynamicsChartInstance.destroy();
+        prepDynamicsChartInstance=new Chart(document.getElementById("prepDynamicsChart"),{
+          plugins:[prepDynEndLabelPlugin,yearCenterLabelPlugin],
+          data:{
+            labels:sc.labels,
+            datasets:[
+              {type:"line",label:"План накопительно",data:sc.planCum,borderColor:"#7dc4f0",borderWidth:2,pointRadius:0,tension:0.3},
+              {type:"line",label:"Факт накопительно",data:sc.factCum,borderColor:"#38a169",borderWidth:2,pointRadius:0,tension:0.3},
+              {type:"bar",label:"План/мес",data:sc.planPer,backgroundColor:"#cfe4f5",yAxisID:"y1"},
+              {type:"bar",label:"Факт/мес",data:sc.factPer,backgroundColor:"#b7e4c7",yAxisID:"y1"}
+            ]
+          },
+          options:{
+            responsive:true,maintainAspectRatio:false,
+            layout:{padding:{top:20,right:60,bottom:20}},
+            plugins:{legend:{display:false}},
+            scales:{
+              y:{min:0,max:100,ticks:{display:false},grid:{display:false}},
+              y1:{display:false},
+              x:{ticks:{font:{size:10,weight:"bold"},color:"#1f2937",autoSkip:false,callback:function(value,index){ return String(this.getLabelForValue(index)).slice(5,7); }},grid:{display:false}}
+            }
+          }
+        });
+        const prepScrollEl=document.getElementById("prepDynamicsScroll");
+        prepScrollEl.scrollLeft=prepScrollEl.scrollWidth;
+      });
+    }
+    loadPrepDynamicsChart();
+    window.loadPrepDynamicsChart=loadPrepDynamicsChart;
+    
+    document.addEventListener("click",function(e){
+      const btn2=document.getElementById("prepObjDataBtn");
+      const dd2=document.getElementById("prepObjDataDropdown");
+      if(btn2===null || dd2===null) return;
+      if(e.target===btn2){ dd2.style.display = dd2.style.display==="block"?"none":"block"; e.stopPropagation(); return; }
+      if(dd2.style.display==="block" && dd2.contains(e.target)===false){ dd2.style.display="none"; }
+    });
+    let prepObjectsData=[];
+    window.prepObjectsNameMap={};
+    window.prepActiveFilter=null;
+    function renderPrepObjectsList(){
+      const list_el=document.getElementById("prepObjectsList");
+      let list=prepObjectsData;
+      if(window.prepActiveFilter==="Внутренний") list=prepObjectsData.filter(o=>o.internalCost>0);
+      if(window.prepActiveFilter==="Внешний") list=prepObjectsData.filter(o=>o.externalCost>0);
+      const headHtml='';
+      const groups={};
+      list.forEach(o=>{
+        const prefix=o.code.split("-")[0];
+        groups[prefix]=groups[prefix]||{cost:0,done:0,planWeighted:0};
+        groups[prefix].cost+=o.cost||0;
+        groups[prefix].done+=o.done||0;
+        groups[prefix].planWeighted+=(o.planPct||0)*(o.cost||0);
+      });
+      const parentAll=[].concat(PROJECTS.main.items,PROJECTS.aux.items);
+      const extraNames={"OPS01":"Внепроектные объекты"};
+      const rowsHtml=Object.keys(groups).map(prefix=>{
+        const g=groups[prefix];
+        const parent=parentAll.find(pp=>pp.code===prefix);
+        const name=parent?parent.name:(extraNames[prefix]||prefix);
+        const planPct=g.cost?Math.round(g.planWeighted/g.cost):0;
+        const factPct=g.cost?Math.min(100,Math.round(g.done/g.cost*100)):0;
+        const delta=factPct-planPct;
+        const deltaColor=delta<0?"#e53e3e":(delta>0?"#38a169":"#1f2937");
+        const deltaText=delta>0?("+"+delta+"%"):(delta+"%");
+        return '<div class="st-row" style="cursor:pointer;display:flex;align-items:center;gap:1px;padding:3px 5px;" data-code="'+prefix+'" data-name="'+name+'">'
+          +'<div class="st-col st-col-name" style="flex:1;font-size:10px;font-weight:600;color:#1f2937;padding:2px 4px;">'+name+'</div>'
+          +'<div style="font-size:9px;font-weight:700;color:#fff;background:#4a9fd8;border-radius:20px;padding:2px 0;width:36px;text-align:center;box-sizing:border-box;">'+planPct+'%</div>'
+          +'<div style="font-size:9px;font-weight:700;color:#fff;background:#38a169;border-radius:20px;padding:2px 0;width:36px;text-align:center;box-sizing:border-box;">'+factPct+'%</div>'
+          +'<div style="font-size:9px;font-weight:700;color:'+deltaColor+';background:#fff;border:1px solid #eee;border-radius:20px;padding:2px 0;width:36px;text-align:center;box-sizing:border-box;">'+deltaText+'</div>'
+          +'</div>';
+      }).join("");
+      list_el.innerHTML='<div class="st-table">'+headHtml+rowsHtml+'</div>';
+      list_el.querySelectorAll(".st-row[data-code]").forEach(row=>{
+        row.addEventListener("click",(e)=>{
+          openPrepAllObjectsModal(e,row.dataset.code);
+        });
+      });
+    }
+    let prepMobChartInstance=null;
+    function loadPrepMobChart(){
+      const url=window.prepActiveFilter?("/api/prep/mobilization?contractor="+encodeURIComponent(window.prepActiveFilter)):"/api/prep/mobilization";
+      fetch(url).then(r=>r.json()).then(m=>{
+        const barValuePlugin={
+          id:"mobBarValues",
+          afterDatasetsDraw(chart){
+            const ctx=chart.ctx;
+            ctx.font="bold 10px Arial";
+            ctx.fillStyle="#1f2937";
+            ctx.textAlign="center";
+            chart.data.datasets.forEach((ds,dsIndex)=>{
+              const meta=chart.getDatasetMeta(dsIndex);
+              meta.data.forEach((bar,i)=>{
+                const val=ds.data[i];
+                if(val===null||val===undefined||val===0) return;
+                ctx.fillText(val,bar.x,bar.y-6);
+              });
+            });
+          }
+        };
+        if(prepMobChartInstance) prepMobChartInstance.destroy();
+        const mobLabels=m.labels.map((mon,i)=>(i===0||mon==="01")?[mon,m.years[i]]:[mon]);
+        prepMobChartInstance=new Chart(document.getElementById("prepMobChart"),{
+          type:"bar",
+          plugins:[barValuePlugin],
+          data:{
+            labels:mobLabels,
+            datasets:[
+              {label:"План",data:m.plan,backgroundColor:"#7dc4f0",borderRadius:4},
+              {label:"Факт",data:m.fact,backgroundColor:"#38a169",borderRadius:4}
+            ]
+          },
+          options:{
+            responsive:true,maintainAspectRatio:false,
+            layout:{padding:{top:24}},
+            plugins:{legend:{display:false}},
+            scales:{
+              y:{display:false,beginAtZero:true,suggestedMax:Math.max(...m.plan,...m.fact)*1.25},
+              x:{grid:{display:false},ticks:{font:{size:10,weight:"bold"},color:"#1f2937"}}
+            }
+          }
+        });
+      });
+    }
+    loadPrepMobChart();
+    window.loadPrepMobChart=loadPrepMobChart;
+    fetch("/api/prep/objects").then(r=>r.json()).then(list=>{
+      const allItems=[].concat(PROJECTS.prep.items, ...Object.values(PROJECTS).filter(v=>v.items).map(v=>v.items));
+      allItems.forEach(it=>{ window.prepObjectsNameMap[it.code]=it.name; });
+      prepObjectsData=list;
+      renderPrepObjectsList();
+    });
+    function togglePrepFilter(name){
+      window.prepActiveFilter = window.prepActiveFilter===name ? null : name;
+      document.getElementById("prepInternalCheck").style.display = window.prepActiveFilter==="Внутренний" ? "flex" : "none";
+      document.getElementById("prepExternalCheck").style.display = window.prepActiveFilter==="Внешний" ? "flex" : "none";
+      renderPrepObjectsList();
+      if(window.loadPrepMobChart) window.loadPrepMobChart();
+      if(window.loadPrepDynamicsChart) window.loadPrepDynamicsChart();
+    }
+    document.getElementById("prepInternalGroup").addEventListener("click",()=>togglePrepFilter("Внутренний"));
+    document.getElementById("prepExternalGroup").addEventListener("click",()=>togglePrepFilter("Внешний"));
+    
+    const prepEndLabelPlugin={
+      id:"prepEndLabels",
+      afterDatasetsDraw(chart){
+        const ctx=chart.ctx;
+        const dsPlan=chart.data.datasets[0];
+        const dsFact=chart.data.datasets[1];
+        let todayIdx=-1;
+        for(let i=dsFact.data.length-1;i>=0;i--){ if(dsFact.data[i]!==null&&dsFact.data[i]!==undefined){ todayIdx=i; break; } }
+        function pointAt(dsIndex,data,idx){
+          if(idx<0) return null;
+          const meta=chart.getDatasetMeta(dsIndex);
+          const pt=meta.data[idx];
+          if(!pt) return null;
+          return {x:pt.x,y:pt.y,value:data[idx]};
+        }
+        const planPt=pointAt(0,dsPlan.data,todayIdx);
+        const factPt=pointAt(1,dsFact.data,todayIdx);
+        const area=chart.chartArea;
+        function drawBadge(text,color,x,y){
+          ctx.font="bold 13px Arial";
+          const w=ctx.measureText(text).width+12;
+          const h=18;
+          const bx=x, by=y;
+          ctx.fillStyle=color;
+          ctx.beginPath();
+          ctx.roundRect ? ctx.roundRect(bx,by,w,h,9) : ctx.rect(bx,by,w,h);
+          ctx.fill();
+          ctx.fillStyle="#fff";
+          ctx.textAlign="center";
+          ctx.textBaseline="middle";
+          ctx.fillText(text,bx+w/2,by+h/2);
+          return w;
+        }
+        let bx=area.left;
+        if(planPt!=null){ bx+=drawBadge(planPt.value+"%","#4a9fd8",bx,area.top-19)+4; }
+        if(factPt!=null){ bx+=drawBadge(factPt.value+"%","#38a169",bx,area.top-19)+4; }
+        if(planPt!=null&&factPt!=null){
+          const diff=factPt.value-planPt.value;
+          const diffText=diff>0?("+"+diff+"%"):(diff+"%");
+          const diffColor=diff<0?"#e53e3e":"#38a169";
+          drawBadge(diffText,diffColor,bx,area.top-19);
+        }
+        if(chart.canvas.id==="prepChartInternal"&&factPt!=null){
+          const ring=document.getElementById("prepInternalRing");
+          const circ=2*Math.PI*36;
+          ring.setAttribute("stroke-dasharray",(circ*factPt.value/100)+" "+circ);
+          document.getElementById("prepInternalRingText").textContent=factPt.value+"%";
+          if(planPt!=null){
+            document.getElementById("prepInternalPlanRing").setAttribute("stroke-dasharray",(circ*planPt.value/100)+" "+circ);
+            const planLabel=document.getElementById("prepInternalPlanText");
+            planLabel.textContent=planPt.value+"%";
+            const angleDeg=(planPt.value/100)*360-90;
+            const angleRad=angleDeg*Math.PI/180;
+            const rx=45+42*Math.cos(angleRad);
+            const ry=45+42*Math.sin(angleRad);
+            planLabel.style.left=rx+"px";
+            planLabel.style.top=ry+"px";
+            planLabel.style.transform="translate(-50%,-50%)";
+          }
+        }
+      }
+    };
+    function loadMiniPrepChart(canvasId,contractor,progressId){
+      fetch("/api/prep/scurve?contractor="+encodeURIComponent(contractor)).then(r=>r.json()).then(sc=>{
+        const existingChart=Chart.getChart(canvasId);
+        if(existingChart) existingChart.destroy();
+        const ctx=document.getElementById(canvasId).getContext("2d");
+        const g1="rgba(56,161,105,0.3)";
+        const g2="rgba(74,159,216,0.3)";
+        new Chart(ctx,{
+          type:"line",
+          data:{labels:sc.labels,datasets:[
+            {label:"План",data:sc.planCum,borderColor:"#4a9fd8",backgroundColor:g2,borderWidth:2,pointRadius:0,tension:0.6,fill:true},
+            {label:"Факт",data:sc.factCum,borderColor:"#38a169",backgroundColor:g1,borderWidth:2,pointRadius:0,tension:0.6,fill:true}
+          ]},
+          options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:20,bottom:0}},plugins:{legend:{display:false}},scales:{y:{display:false,min:0,max:100},x:{display:false}}}
+        });
+      });
+    }
+    loadMiniPrepChart("prepChartInternal","Внутренний","prepProgressInternal");
+    loadMiniPrepChart("prepChartExternal","Внешний","prepProgressExternal");
+    return;
+  }
+  body.innerHTML='<div class="empty"><h1>'+sub+'</h1><p>Раздел в разработке</p></div>';
+}
+init();
+</script>
+</body>
+</html>
