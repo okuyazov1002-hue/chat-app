@@ -74,6 +74,47 @@ function calcPlanPct(rows, totalCost) {
   });
   return Math.min(100, Math.round(planNow / totalCost * 100));
 }
+function nowMonthKey() {
+  const now = new Date();
+  return now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+}
+function costCurveTodayPct(value) {
+  if (!value || !value.labels || !value.labels.length) return null;
+  const planPer = value.planPer || [];
+  const factPer = value.factPer || [];
+  const total = planPer.reduce((s, x) => s + (x || 0), 0);
+  if (!total) return null;
+  const nowKey = nowMonthKey();
+  let cp = 0, cf = 0;
+  value.labels.forEach((k, i) => {
+    if (k <= nowKey) { cp += planPer[i] || 0; cf += factPer[i] || 0; }
+  });
+  return { planPct: Math.min(100, Math.round(cp / total * 100)), factPct: Math.min(100, Math.round(cf / total * 100)) };
+}
+function aggCostCurvePct(docs) {
+  const byMonth = {};
+  let total = 0;
+  docs.forEach(doc => {
+    const v = doc.value || {};
+    const labels = v.labels || [];
+    const planPer = v.planPer || [];
+    const factPer = v.factPer || [];
+    labels.forEach((k, i) => {
+      byMonth[k] = byMonth[k] || { plan: 0, fact: 0 };
+      byMonth[k].plan += planPer[i] || 0;
+      byMonth[k].fact += factPer[i] || 0;
+    });
+    total += (planPer.reduce((s, x) => s + (x || 0), 0));
+  });
+  if (!total) return { planPct: 0, factPct: 0 };
+  const nowKey = nowMonthKey();
+  const keys = Object.keys(byMonth).sort();
+  let cp = 0, cf = 0;
+  keys.forEach(k => {
+    if (k <= nowKey) { cp += byMonth[k].plan; cf += byMonth[k].fact; }
+  });
+  return { planPct: Math.min(100, Math.round(cp / total * 100)), factPct: Math.min(100, Math.round(cf / total * 100)) };
+}
 
 app.get("/api/reports/list", async (req, res) => {
   try {
@@ -693,6 +734,335 @@ app.get("/api/reports/:code/stage-objects", async (req, res) => {
       return a.obj.localeCompare(b.obj);
     });
     res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
+app.get("/api/reports/:code/worktype-summary", async (req, res) => {
+  try {
+    const stage = req.query.stage;
+    const report = await mongoose.connection.db.collection("reports").findOne({ code: req.params.code });
+    if (!report || !report.rows) return res.json({ total: 0, items: [] });
+    const stageRows = report.rows.filter(r => r.stage === stage);
+    const equipSet = new Set();
+    stageRows.forEach(r => {
+      const v = (r.obj || "").trim();
+      if (v) equipSet.add(v);
+    });
+    const total = equipSet.size;
+    const now = new Date();
+    const byWt = {};
+    const byWtPlan = {};
+    stageRows.forEach(r => {
+      const wt = (r.workType || "").trim();
+      if (!wt) return;
+      if (!byWt[wt]) byWt[wt] = new Set();
+      if (!byWtPlan[wt]) byWtPlan[wt] = new Set();
+      const v = (r.obj || "").trim();
+      if ((r.status || "").trim() === "Завершено" && v) byWt[wt].add(v);
+      if (v && r.planEnd && new Date(r.planEnd) <= now) byWtPlan[wt].add(v);
+    });
+    const items = Object.keys(byWt).map(wt => ({ workType: wt, done: byWt[wt].size, plan: (byWtPlan[wt] ? byWtPlan[wt].size : 0) }));
+    res.json({ total, items });
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
+app.get("/api/reports/:code/worktype-equipment", async (req, res) => {
+  try {
+    const stage = req.query.stage;
+    const workType = req.query.workType;
+    const report = await mongoose.connection.db.collection("reports").findOne({ code: req.params.code });
+    if (!report || !report.rows) return res.json([]);
+    const now = new Date();
+    const rows = report.rows.filter(r => r.stage === stage && (r.workType || "").trim() === workType);
+    const done = new Set();
+    rows.forEach(r => {
+      const v = (r.obj || "").trim();
+      if (v && (r.status || "").trim() === "Завершено") done.add(v);
+    });
+    const result = Array.from(done).sort();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
+app.get("/api/reports/:code/stage-work-links", async (req, res) => {
+  try {
+    const stage = req.query.stage;
+    const report = await mongoose.connection.db.collection("reports").findOne({ code: req.params.code });
+    if (!report || !report.rows) return res.json([]);
+    const rows = report.rows.filter(r => r.stage === stage);
+    const seen = new Set();
+    const result = [];
+    rows.forEach(r => {
+      const obj = (r.obj || "").trim();
+      const wt = (r.workType || "").trim();
+      if (!obj || !wt) return;
+      const key = obj + "|||" + wt;
+      if (seen.has(key)) return;
+      seen.add(key);
+      result.push({ obj: obj, workType: wt });
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
+app.get("/api/reports/:code/stage-worktype-table", async (req, res) => {
+  try {
+    const stage = req.query.stage;
+    const report = await mongoose.connection.db.collection("reports").findOne({ code: req.params.code });
+    if (!report || !report.rows) return res.json([]);
+    const rows = report.rows.filter(r => r.stage === stage && (r.workType || "").trim());
+    const byWt = {};
+    rows.forEach(r => {
+      const key = r.workType.trim();
+      if (!byWt[key]) byWt[key] = [];
+      byWt[key].push(r);
+    });
+    const result = Object.keys(byWt).map(workType => {
+      const wtRows = byWt[workType];
+      const cost = wtRows.reduce((s, r) => s + (r.cost || 0), 0);
+      const done = wtRows.reduce((s, r) => s + (r.done || 0), 0);
+      const planPct = calcPlanPct(wtRows, cost);
+      const factPct = cost ? Math.min(100, Math.round((done / cost) * 100)) : 0;
+      return { workType, planPct, factPct };
+    });
+    result.sort((a, b) => a.workType.localeCompare(b.workType));
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
+app.get("/api/reports/:code/stage-object-worktype-table", async (req, res) => {
+  try {
+    const stage = req.query.stage;
+    const obj = (req.query.obj || "").trim();
+    const report = await mongoose.connection.db.collection("reports").findOne({ code: req.params.code });
+    if (!report || !report.rows) return res.json([]);
+    const rows = report.rows.filter(r => r.stage === stage && (r.obj || "").trim() === obj && (r.workType || "").trim());
+    const byWt = {};
+    rows.forEach(r => {
+      const key = r.workType.trim();
+      if (!byWt[key]) byWt[key] = [];
+      byWt[key].push(r);
+    });
+    const result = Object.keys(byWt).map(workType => {
+      const wtRows = byWt[workType];
+      const cost = wtRows.reduce((s, r) => s + (r.cost || 0), 0);
+      const done = wtRows.reduce((s, r) => s + (r.done || 0), 0);
+      const planPct = calcPlanPct(wtRows, cost);
+      const factPct = cost ? Math.min(100, Math.round((done / cost) * 100)) : 0;
+      return { workType, planPct, factPct };
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
+app.get("/api/reports/:code/stage-detail-matrix", async (req, res) => {
+  try {
+    const stage = req.query.stage;
+    const useEquip = stage === "Изготовление" || stage === "Логистика";
+    const groupField = useEquip ? "equip" : "obj";
+    const report = await mongoose.connection.db.collection("reports").findOne({ code: req.params.code });
+    if (!report || !report.rows) return res.json({ byObj: {}, byWork: {} });
+    const rows = report.rows.filter(r => r.stage === stage && (r[groupField] || "").trim() && (r.workType || "").trim());
+    const pairMap = {};
+    rows.forEach(r => {
+      const obj = r[groupField].trim();
+      const wt = r.workType.trim();
+      const key = obj + "|||" + wt;
+      if (!pairMap[key]) pairMap[key] = [];
+      pairMap[key].push(r);
+    });
+    const byObj = {};
+    const byWork = {};
+    Object.keys(pairMap).forEach(key => {
+      const idx = key.indexOf("|||");
+      const obj = key.slice(0, idx);
+      const wt = key.slice(idx + 3);
+      const groupRows = pairMap[key];
+      const cost = groupRows.reduce((s, r) => s + (r.cost || 0), 0);
+      const done = groupRows.reduce((s, r) => s + (r.done || 0), 0);
+      const paid = groupRows.reduce((s, r) => s + (r.costFact || 0), 0);
+      const planPct = calcPlanPct(groupRows, cost);
+      const dates = calcStageDates(groupRows, cost, done, planPct);
+      const factPct = cost ? Math.min(100, Math.round((done / cost) * 100)) : 0;
+      const entry = { obj, workType: wt, cost, done, paid, planPct, factPct, start: dates.start, end: dates.end, forecastEnd: dates.forecastEnd, deltaDays: dates.deltaDays };
+      if (!byObj[obj]) byObj[obj] = [];
+      byObj[obj].push(entry);
+      if (!byWork[wt]) byWork[wt] = [];
+      byWork[wt].push(entry);
+    });
+    res.json({ byObj, byWork });
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
+app.get("/api/reports/:code/stage-objects-by-worktype", async (req, res) => {
+  try {
+    const stage = req.query.stage;
+    const workType = (req.query.workType || "").trim();
+    const useEquip = stage === "Изготовление" || stage === "Логистика";
+    const groupField = useEquip ? "equip" : "obj";
+    const report = await mongoose.connection.db.collection("reports").findOne({ code: req.params.code });
+    if (!report || !report.rows) return res.json([]);
+    const rows = report.rows.filter(r => r.stage === stage && (r.workType || "").trim() === workType && (r[groupField] || "").trim());
+    const byObj = {};
+    rows.forEach(r => {
+      const key = r[groupField].trim();
+      if (!byObj[key]) byObj[key] = [];
+      byObj[key].push(r);
+    });
+    const result = Object.keys(byObj).map(obj => {
+      const objRows = byObj[obj];
+      const cost = objRows.reduce((s, r) => s + (r.cost || 0), 0);
+      const done = objRows.reduce((s, r) => s + (r.done || 0), 0);
+      const paid = objRows.reduce((s, r) => s + (r.costFact || 0), 0);
+      const planPct = calcPlanPct(objRows, cost);
+      const dates = calcStageDates(objRows, cost, done, planPct);
+      return { obj, cost, done, paid, planPct, start: dates.start, end: dates.end, forecastEnd: dates.forecastEnd, deltaDays: dates.deltaDays };
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
+app.post("/api/reports/import", upload.single("file"), async (req, res) => {
+  try {
+    if (req.file == null) return res.status(400).json({ message: "Файл не найден" });
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(req.file.buffer);
+    const basicSheet = wb.getWorksheet("Basic");
+    if (basicSheet == null) return res.status(400).json({ message: "Лист Basic не найден" });
+    const byCode = {};
+    basicSheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return;
+      const code = row.getCell(1).value;
+      if (code == null || code === "") return;
+      byCode[code] = byCode[code] || [];
+      const stageValRaw = row.getCell(3).value;
+      const stageVal = (typeof stageValRaw === "object" && stageValRaw != null && stageValRaw.richText)
+        ? stageValRaw.richText.map(function(t){ return t.text; }).join("")
+        : (stageValRaw || "");
+      const stageValTrim = String(stageVal).trim();
+      const obj = row.getCell(4).value || "";
+      const discipline = row.getCell(5).value || "";
+      const workType = row.getCell(6).value || "";
+      const isEquipStage = stageValTrim === "Изготовление" || stageValTrim === "Логистика";
+      const objVal = isEquipStage ? (discipline || obj) : obj;
+      byCode[code].push({
+        stage: stageValTrim,
+        item: [discipline, workType].filter(Boolean).join(" - ") || obj || "",
+        obj: objVal,
+        equip: objVal,
+        workType: workType,
+        contractor: "",
+        currency: row.getCell(11).value || "",
+        planStart: row.getCell(7).value || null,
+        planEnd: row.getCell(8).value || null,
+        factStart: row.getCell(9).value || null,
+        factEnd: row.getCell(10).value || null,
+        forecastEnd: null,
+        cost: cellNum(row.getCell(12)),
+        costVat: 0,
+        costFact: 0,
+        done: cellNum(row.getCell(13)),
+        status: row.getCell(14).value || "",
+        mhPlan: 0,
+        mhFact: 0,
+        eqPlan: 0,
+        eqFact: 0
+      });
+    });
+    const cashSheet = wb.getWorksheet("Cash");
+    if (cashSheet != null) {
+      const cashByCodeStage = {};
+      cashSheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return;
+        const code = row.getCell(2).value;
+        if (code == null || code === "") return;
+        const stage = row.getCell(4).value || "";
+        const key = code + "||" + stage;
+        cashByCodeStage[key] = (cashByCodeStage[key] || 0) + cellNum(row.getCell(9));
+      });
+      Object.keys(cashByCodeStage).forEach(key => {
+        const parts = key.split("||");
+        const code = parts[0], stage = parts[1];
+        byCode[code] = byCode[code] || [];
+        byCode[code].push({
+          stage: stage,
+          item: "Оплата",
+          obj: "",
+          equip: "",
+          contractor: "",
+          currency: "Euro",
+          planStart: null,
+          planEnd: null,
+          factStart: null,
+          factEnd: null,
+          forecastEnd: null,
+          cost: 0,
+          costVat: 0,
+          costFact: cashByCodeStage[key],
+          done: 0,
+          status: "",
+          mhPlan: 0,
+          mhFact: 0,
+          eqPlan: 0,
+          eqFact: 0
+        });
+      });
+    }
+    const results = [];
+    for (const code of Object.keys(byCode)) {
+      await mongoose.connection.db.collection("reports").updateOne(
+        { code },
+        { $set: { code, rows: byCode[code], updatedAt: new Date(), updatedBy: "О. Курязов" } },
+        { upsert: true }
+      );
+      results.push({ code, status: "обновлено (" + byCode[code].length + " строк)" });
+    }
+    res.json({ results });
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+
+app.get("/api/reports/export", async (req, res) => {
+  try {
+    const filter = req.query.code ? { code: req.query.code } : {};
+    const reports = await mongoose.connection.db.collection("reports").find(filter).toArray();
+    const wb = new ExcelJS.Workbook();
+    const basic = wb.addWorksheet("Basic");
+    basic.addRow(["Code", "Project", "Stage", "Object", "Discipline", "Work Type", "Planned Start", "Planned Finish", "Actual Start", "Actual Finish", "Currency", "Cost", "Completed", "Status"]);
+    reports.forEach(r => {
+      (r.rows || []).filter(row => row.item !== "Оплата").forEach(row => {
+        basic.addRow([r.code, "", row.stage || "", row.obj || "", "", row.item || "", row.planStart ? new Date(row.planStart) : "", row.planEnd ? new Date(row.planEnd) : "", row.factStart ? new Date(row.factStart) : "", row.factEnd ? new Date(row.factEnd) : "", row.currency || "", row.cost || 0, row.done || 0, row.status || ""]);
+      });
+    });
+    const cash = wb.addWorksheet("Cash");
+    cash.addRow(["Package", "Code", "Project", "Stage", "Contractor", "Purpose of Payment", "Invoice No.", "Date", "Euro", "Dollar"]);
+    reports.forEach(r => {
+      (r.rows || []).filter(row => row.item === "Оплата").forEach(row => {
+        cash.addRow(["", r.code, "", row.stage || "", "", "", "", "", row.costFact || 0, 0]);
+      });
+    });
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    const exportFileName = req.query.code ? (req.query.code + ".xlsx") : "Основные_проекты.xlsx";
+    res.setHeader("Content-Disposition", "attachment; filename=reports_export.xlsx; filename*=UTF-8''" + encodeURIComponent(exportFileName));
+    await wb.xlsx.write(res);
+    res.end();
   } catch (err) {
     res.status(500).json({ message: "Ошибка сервера: " + err.message });
   }
