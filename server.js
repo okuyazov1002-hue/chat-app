@@ -12,26 +12,41 @@ mongoose.connect(process.env.MONGODB_URI)
   .catch(err => console.error("❌ Ошибка MongoDB:", err.message));
 
 app.use(express.json());
+const session=require('express-session');
+const cm=require('connect-mongo');const MongoStore=cm.MongoStore||cm.default||cm;
+const bcrypt=require('bcryptjs');
+app.set('trust proxy',1);
+app.use(session({secret:process.env.SESSION_SECRET,resave:false,saveUninitialized:false,store:MongoStore.create({mongoUrl:process.env.MONGODB_URI}),cookie:{httpOnly:true,sameSite:'lax',secure:'auto',maxAge:1000*60*60*12}}));
+app.use('/api',(req,res,next)=>{
+  if(req.path=='/login'||req.path=='/logout') return next();
+  if(req.session.user==null) return res.status(401).json({error:'unauthorized'});
+  next();
+});
 app.use(express.static("public"));
 
-app.post("/api/login", (req, res) => {
-  res.json({ message: "OK" });
-});
-
-app.get("/api/me", async (req, res) => {
+app.post('/api/login', async (req, res) => {
   try {
-    const user = await mongoose.connection.db.collection("users").findOne({ username: "o.kuryazov" });
-    if (user) {
-      return res.json({ name: user.name, login: user.username, avatar: user.avatar || "", role: user.role || "user" });
-    }
-    res.json({ name: "О. Курязов", login: "o.kuryazov", avatar: "", role: "user" });
-  } catch (err) {
-    res.json({ name: "О. Курязов", login: "o.kuryazov", avatar: "" });
-  }
+    const u = String((req.body && req.body.username) || '').trim();
+    const pw = String((req.body && req.body.password) || '');
+    const user = await mongoose.connection.db.collection('users').findOne({ username: u });
+    const ok = user ? await bcrypt.compare(pw, user.password) : false;
+    if (ok == false) return res.status(401).json({ error: 'bad credentials' });
+    req.session.user = user.username;
+    res.json({ message: 'OK' });
+  } catch (err) { res.status(500).json({ error: 'server' }); }
 });
 
-app.post("/api/logout", (req, res) => {
-  res.json({ message: "OK" });
+app.get('/api/me', async (req, res) => {
+  try {
+    if (req.session.user == null) return res.status(401).json({ error: 'unauthorized' });
+    const user = await mongoose.connection.db.collection('users').findOne({ username: req.session.user });
+    if (user == null) return res.status(401).json({ error: 'unauthorized' });
+    res.json({ name: user.name, login: user.username, avatar: user.avatar || '', role: user.role || 'user' });
+  } catch (err) { res.status(500).json({ error: 'server' }); }
+});
+
+app.post('/api/logout', (req, res) => {
+  req.session.destroy(() => { res.clearCookie('connect.sid'); res.json({ message: 'OK' }); });
 });
 
 // Сводка по проекту: общая стоимость, выполнено, оплачено
