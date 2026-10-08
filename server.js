@@ -1130,4 +1130,85 @@ app.get("/api/users/list", async (req, res) => {
   }
 });
 
+async function meUser(req){return mongoose.connection.db.collection('users').findOne({ username: req.session.user });}
+function canManageUsers(me){return me!=null&&(me.role=='admin'||me.role=='developer');}
+
+app.post('/api/users', async (req, res) => {
+  try {
+    const me = await meUser(req);
+    if (canManageUsers(me)==false) return res.status(403).json({ error: 'forbidden' });
+    const b = req.body || {};
+    const username = String(b.username || '').trim();
+    const name = String(b.name || '').trim();
+    const pw = String(b.password || '');
+    if (username == '' || name == '' || pw == '') return res.status(400).json({ error: 'bad data' });
+    const col = mongoose.connection.db.collection('users');
+    const dup = await col.findOne({ username: username });
+    if (dup) return res.status(409).json({ error: 'exists' });
+    const doc = { username: username, name: name, password: await bcrypt.hash(pw, 10), role: 'user', department: '', position: '', email: '', internalPhone: '', mobilePhone: '', birthday: '', avatar: '', createdAt: new Date() };
+    await col.insertOne(doc);
+    delete doc.password;
+    res.json(doc);
+  } catch (err) { res.status(500).json({ error: 'server' }); }
+});
+
+app.delete('/api/users/:username', async (req, res) => {
+  try {
+    const me = await meUser(req);
+    if (canManageUsers(me)==false) return res.status(403).json({ error: 'forbidden' });
+    const col = mongoose.connection.db.collection('users');
+    const target = await col.findOne({ username: req.params.username });
+    if (target == null) return res.status(404).json({ error: 'not found' });
+    if (target.username == me.username) return res.status(400).json({ error: 'self' });
+    if (target.role == 'developer' && (me.role == 'developer')==false) return res.status(403).json({ error: 'forbidden' });
+    await col.deleteOne({ username: target.username });
+    res.json({ message: 'OK' });
+  } catch (err) { res.status(500).json({ error: 'server' }); }
+});
+
+app.put('/api/users/:username/role', async (req, res) => {
+  try {
+    const me = await meUser(req);
+    if (canManageUsers(me)==false) return res.status(403).json({ error: 'forbidden' });
+    const role = String((req.body || {}).role || '');
+    if (['user', 'admin', 'developer'].indexOf(role) < 0) return res.status(400).json({ error: 'bad role' });
+    if (role == 'developer' && (me.role == 'developer')==false) return res.status(403).json({ error: 'forbidden' });
+    const col = mongoose.connection.db.collection('users');
+    const target = await col.findOne({ username: req.params.username });
+    if (target == null) return res.status(404).json({ error: 'not found' });
+    if (target.role == 'developer' && (me.role == 'developer')==false) return res.status(403).json({ error: 'forbidden' });
+    await col.updateOne({ username: target.username }, { $set: { role: role } });
+    res.json({ message: 'OK' });
+  } catch (err) { res.status(500).json({ error: 'server' }); }
+});
+
+app.put('/api/me/profile', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const clean = function (v) { return String(v == null ? '' : v).trim().slice(0, 200); };
+    const set = { name: clean(b.name), department: clean(b.department), position: clean(b.position), birthday: clean(b.birthday), internalPhone: clean(b.internalPhone), mobilePhone: clean(b.mobilePhone), email: clean(b.email) };
+    if (set.name == '') return res.status(400).json({ error: 'name required' });
+    const col = mongoose.connection.db.collection('users');
+    await col.updateOne({ username: req.session.user }, { $set: set });
+    const u = await col.findOne({ username: req.session.user }, { projection: { password: 0 } });
+    res.json(u);
+  } catch (err) { res.status(500).json({ error: 'server' }); }
+});
+
+app.put('/api/me/password', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const oldPw = String(b.oldPassword || '');
+    const newPw = String(b.newPassword || '');
+    if (newPw.length < 6) return res.status(400).json({ error: 'short' });
+    const col = mongoose.connection.db.collection('users');
+    const u = await col.findOne({ username: req.session.user });
+    if (u == null) return res.status(401).json({ error: 'unauthorized' });
+    const ok = await bcrypt.compare(oldPw, u.password);
+    if (ok == false) return res.status(403).json({ error: 'wrong password' });
+    await col.updateOne({ username: u.username }, { $set: { password: await bcrypt.hash(newPw, 10) } });
+    res.json({ message: 'OK' });
+  } catch (err) { res.status(500).json({ error: 'server' }); }
+});
+
 app.listen(PORT, () => console.log(`🚀 Port ${PORT}`));

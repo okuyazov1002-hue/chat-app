@@ -6,7 +6,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:Arial;display:flex;background:#f5f7fa;height:100vh;overflow:hidden;}
-.sidebar{width:88px;background:linear-gradient(160deg,#6a5ae0 0%,#4a90d9 45%,#1dd3b0 100%);display:flex;flex-direction:column;align-items:center;padding:20px 0;margin:16px 0 16px 16px;border-radius:20px;height:calc(100vh - 32px);position:relative;z-index:1;box-shadow:0 -6px 22px -4px rgba(124,92,255,0.5),0 8px 22px -4px rgba(0,160,255,0.5),-6px 0 18px -6px rgba(110,110,240,0.35),6px 0 18px -6px rgba(60,150,250,0.35);}
+.sidebar{width:88px;background:linear-gradient(160deg,#6a5ae0 0%,#4a90d9 45%,#1dd3b0 100%);display:flex;flex-direction:column;align-items:center;padding:20px 0;margin:16px 0 16px 16px;border-radius:20px 0 0 20px;height:calc(100vh - 32px);position:relative;z-index:1;box-shadow:0 -6px 22px -4px rgba(124,92,255,0.5),0 8px 22px -4px rgba(0,160,255,0.5),-6px 0 18px -6px rgba(110,110,240,0.35),6px 0 18px -6px rgba(60,150,250,0.35);}
 .sidebar-top{display:flex;flex-direction:column;align-items:center;width:100%;margin-bottom:60px;}
 .photo{width:60px;height:60px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:8px;color:#666;font-size:24px;font-weight:700;overflow:hidden;}
 img{width:100%;height:100%;object-fit:cover;}
@@ -267,6 +267,8 @@ if(user.avatar){
   document.getElementById("avatar").textContent=(user.name||user.login).charAt(0).toUpperCase();
 }
 window.currentUserRole=user.role;
+window.currentLogin=user.login;
+fetch("/api/users/list").then(function(r){return r.ok?r.json():null;}).then(function(l){if(l&&l.length){PERSONNEL.length=0;l.forEach(function(x){PERSONNEL.push(x);});}});
 if(user.role!=="admin"&&user.role!=="developer"){
   const btn=document.getElementById("structureBtn");
   if(btn) btn.style.display="none";
@@ -833,7 +835,7 @@ function openSettingsModal(){
     const u=PERSONNEL[idx];
     if(!u) return;
     showSettingsConfirm('Вы действительно хотите удалить пользователя '+u.name+'?',function(){
-      PERSONNEL.splice(idx,1);
+      fetch("/api/users/"+encodeURIComponent(u.username),{method:"DELETE"}).then(function(r){if(r.ok){PERSONNEL.splice(idx,1);}renderSettingsUsersList();});
       renderSettingsUsersList();
     });
   });
@@ -872,7 +874,7 @@ function openSettingsModal(){
       if(!opt) return;
       const i=parseInt(opt.getAttribute("data-idx"),10);
       const newRole=opt.getAttribute("data-role");
-      if(PERSONNEL[i]) PERSONNEL[i].role=newRole;
+      if(PERSONNEL[i]){var un=PERSONNEL[i].username;fetch("/api/users/"+encodeURIComponent(un)+"/role",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({role:newRole})}).then(function(r){if(r.ok&&PERSONNEL[i]) PERSONNEL[i].role=newRole;renderSettingsUsersList();});}
       closeRoleDropdown();
       renderSettingsUsersList();
     });
@@ -906,11 +908,16 @@ function openSettingsModal(){
       if(!nameVal){ setFieldError(newNameEl); hasError=true; } else { clearFieldError(newNameEl); }
       if(!passwordVal){ setFieldError(newPasswordEl); hasError=true; } else { clearFieldError(newPasswordEl); }
       if(hasError) return;
-      PERSONNEL.push({username:loginVal,name:nameVal,password:passwordVal,role:"user",department:"",position:"",email:"",internalPhone:"",mobilePhone:"",birthday:"",avatar:""});
-      newLoginEl.value="";
-      newNameEl.value="";
-      newPasswordEl.value="";
-      renderSettingsUsersList();
+      fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:loginVal,name:nameVal,password:passwordVal})}).then(function(r){
+        if(r.status===409){ setFieldError(newLoginEl); return null; }
+        if(r.ok===false) return null;
+        return r.json();
+      }).then(function(u){
+        if(u==null) return;
+        PERSONNEL.push(u);
+        newLoginEl.value="";newNameEl.value="";newPasswordEl.value="";
+        renderSettingsUsersList();
+      });
     });
   } else {
     settingsFooterEl.style.display="none";
@@ -922,15 +929,113 @@ function openSettingsModal(){
     settingsBtnEl.classList.remove("nav-active");
     setTimeout(()=>overlay.remove(),400);
   }
-  overlay.addEventListener("click",(e)=>{ if(e.target===overlay) closeModal(); });
+  overlay.style.pointerEvents="none";overlay.querySelector(".stage-modal").style.pointerEvents="auto";
   function escHandler(e){ if(e.key==="Escape"){ closeModal(); document.removeEventListener("keydown",escHandler); } }
   document.addEventListener("keydown",escHandler);
 }
 document.getElementById("settingsBtn").addEventListener("click",function(e){
   const existing=document.querySelector(".settings-modal-overlay");
   if(existing){ existing.classList.remove("open"); existing.querySelector(".stage-modal").classList.remove("open"); this.classList.remove("nav-active"); setTimeout(()=>existing.remove(),400); return; }
+  var pf=document.querySelector(".profile-modal-overlay");if(pf){ pf.remove(); }
   openSettingsModal();
 });
+function closeProfileModal(){
+  const ex=document.querySelector(".profile-modal-overlay");
+  if(ex==null) return;
+  ex.classList.remove("open");
+  ex.querySelector(".stage-modal").classList.remove("open");
+  setTimeout(function(){ ex.remove(); },400);
+}
+function buildProfileForm(){
+  const body=document.querySelector(".profile-modal-overlay .obj-modal-body");
+  if(body==null) return;
+  body.style.overflowY="auto";
+  const fst="width:100%;height:34px;border:1px solid #e5e9ef;border-radius:8px;padding:0 12px;font-size:12px;outline:none;box-sizing:border-box;background:#f7f9fb;color:#1f2937;";
+  const lst="font-size:11px;color:#6b7280;margin:10px 0 4px 2px;";
+  const bst="height:30px;padding:0 16px;background:#4a9fd8;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;";
+  const fields=[["name","Имя и Фамилия"],["department","Отдел"],["position","Должность"],["birthday","Дата (дд.мм.гггг)"],["internalPhone","Внутренний"],["mobilePhone","Мобильный"],["email","Почта"]];
+  let h='<style>.profile-modal-overlay .obj-modal-body::-webkit-scrollbar{display:none;}.profile-modal-overlay .obj-modal-body{scrollbar-width:none;}</style>';
+  fields.forEach(function(f){ h+='<div style="'+lst+'">'+f[1]+'</div><input id="pf_'+f[0]+'" type="text" style="'+fst+'">'; });
+  
+  h+='<div style="border-top:1px solid #eee;margin-top:22px;padding-top:12px;font-size:12px;font-weight:700;color:#1f2937;">Смена пароля</div>';
+  h+='<div style="'+lst+'">Текущий пароль</div><input id="pf_old" type="password" autocomplete="new-password" style="'+fst+'">';
+  h+='<div style="'+lst+'">Новый пароль</div><input id="pf_new" type="password" autocomplete="new-password" style="'+fst+'">';
+  h+='<div style="'+lst+'">Повторите новый пароль</div><input id="pf_new2" type="password" autocomplete="new-password" style="'+fst+'">';
+  h+='<div style="display:flex;align-items:center;gap:12px;margin-top:16px;"><button id="pfSave" style="'+bst+'">Сохранить</button><span id="pfMsg" style="font-size:11px;"></span></div>';
+  body.innerHTML=h;
+  fetch("/api/users/list").then(function(r){ return r.json(); }).then(function(l){
+    const me=l.find(function(x){ return x.username===window.currentLogin; });
+    if(me==null) return;
+    fields.forEach(function(f){ document.getElementById("pf_"+f[0]).value=me[f[0]]||""; });
+  });
+  const oldEl=document.getElementById("pf_old"),newEl=document.getElementById("pf_new"),new2El=document.getElementById("pf_new2");
+  function pfErr(el){ el.style.border="1px solid #d94f4f"; el.style.background="#fdecec"; }
+  function pfOk(el){ el.style.border="1px solid #e5e9ef"; el.style.background="#f7f9fb"; }
+  function pfBad(t){ const m=document.getElementById("pfMsg"); m.style.color="#d94f4f"; m.textContent=t; }
+  function pfCheck(){
+    const m=document.getElementById("pfMsg");
+    if(new2El.value==="" || newEl.value===new2El.value){
+      pfOk(newEl); pfOk(new2El);
+      if(m.textContent==="Пароли не совпадают") m.textContent="";
+    } else {
+      pfErr(newEl); pfErr(new2El); pfBad("Пароли не совпадают");
+    }
+  }
+  newEl.addEventListener("input",pfCheck);
+  new2El.addEventListener("input",pfCheck);
+  oldEl.addEventListener("input",function(){ pfOk(oldEl); });
+  document.getElementById("pfSave").addEventListener("click",function(){
+    const msg=document.getElementById("pfMsg");
+    msg.textContent="";
+    const data={};
+    fields.forEach(function(f){ data[f[0]]=document.getElementById("pf_"+f[0]).value; });
+    if(data.name.trim()===""){ pfBad("Укажите имя и фамилию"); return; }
+    const o=oldEl.value,n1=newEl.value,n2=new2El.value;
+    const wantPw=(n1===""&&n2==="")?false:true;
+    if(wantPw){
+      if(n1===n2){ } else { pfErr(newEl); pfErr(new2El); pfBad("Пароли не совпадают"); return; }
+      if(n1===""){ pfErr(newEl); pfErr(new2El); pfBad("Введите новый пароль"); return; }
+      if(n1.length<6){ pfErr(newEl); pfErr(new2El); pfBad("Пароль минимум 6 символов"); return; }
+      if(o===""){ pfErr(oldEl); pfBad("Введите текущий пароль"); return; }
+    }
+    fetch("/api/me/profile",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)}).then(function(r){ return r.ok?r.json():null; }).then(function(u){
+      if(u==null){ pfBad("Ошибка сохранения"); return; }
+      const i=PERSONNEL.findIndex(function(x){ return x.username===u.username; });
+      if(i>=0) Object.assign(PERSONNEL[i],u);
+      document.getElementById("username").textContent=u.name;
+      if(u.avatar==null||u.avatar===""){ document.getElementById("avatar").textContent=u.name.charAt(0).toUpperCase(); }
+      if(wantPw===false){ msg.style.color="#16a34a"; msg.textContent="Сохранено"; return; }
+      return fetch("/api/me/password",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({oldPassword:o,newPassword:n1})}).then(function(r){
+        if(r.status===403){ pfErr(oldEl); pfBad("Данные сохранены, но текущий пароль неверный"); return; }
+        if(r.ok===false){ pfBad("Данные сохранены, пароль не изменён"); return; }
+        oldEl.value="";newEl.value="";new2El.value="";
+        msg.style.color="#16a34a"; msg.textContent="Сохранено, пароль изменён";
+      });
+    });
+  });
+}
+function openProfileModal(){
+  setTimeout(function(){ buildProfileForm(); },0);
+  const st=document.querySelector(".settings-modal-overlay");
+  if(st){ st.remove(); document.getElementById("settingsBtn").classList.remove("nav-active"); }
+  const overlay=document.createElement("div");
+  overlay.className="stage-modal-overlay profile-modal-overlay";
+  overlay.style.display="block";
+  overlay.style.padding="0";
+  overlay.style.background="transparent";
+  overlay.style.pointerEvents="none";
+  overlay.innerHTML='<div class="stage-modal" style="position:fixed;left:104px;top:16px;bottom:16px;height:calc(100vh - 32px);width:520px;max-width:calc(100vw - 140px);border-radius:0 20px 20px 0;transform-origin:left center;box-shadow:16px -10px 16px rgba(0,0,0,0.08),20px 0 20px rgba(0,0,0,0.10),16px 10px 16px rgba(0,0,0,0.08);pointer-events:auto;"><div class="obj-modal-header">Профиль</div><div class="obj-modal-body" style="flex:1;display:flex;flex-direction:column;overflow:hidden;padding:16px;"></div></div>';
+  document.body.appendChild(overlay);
+  requestAnimationFrame(function(){ overlay.classList.add("open"); overlay.querySelector(".stage-modal").classList.add("open"); });
+}
+const avatarEl=document.getElementById("avatar");
+avatarEl.style.cursor="pointer";
+avatarEl.title="Профиль";
+avatarEl.addEventListener("click",function(){
+  if(document.querySelector(".profile-modal-overlay")){ closeProfileModal(); return; }
+  openProfileModal();
+});
+document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeProfileModal(); });
 const mainDropdown=document.getElementById("mainDropdown");
 mainDropdown.innerHTML=PROJECTS.main.items.map(p=>
   '<div class="proj-card" data-code="'+p.code+'"><div class="proj-name">'+p.name+'</div></div>'
