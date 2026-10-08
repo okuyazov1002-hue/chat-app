@@ -45,6 +45,22 @@ app.get('/api/me', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'server' }); }
 });
 
+app.get('/api/map-status', async (req, res) => {
+  try {
+    const list = await mongoose.connection.db.collection('reports').find({}, { projection: { code: 1, rows: 1 } }).toArray();
+    const out = {};
+    list.forEach(function (r) {
+      let cost = 0, done = 0, run = 0;
+      (r.rows || []).forEach(function (w) { cost += w.cost || 0; done += w.done || 0; if (w.status == 'Выполняется') run++; });
+      let st = 'none';
+      if (cost > 0 && done >= cost * 0.999) st = 'done';
+      else if (done > 0 || run > 0) st = 'active';
+      out[r.code] = { status: st, pct: cost > 0 ? Math.round(done / cost * 1000) / 10 : 0 };
+    });
+    res.json(out);
+  } catch (err) { res.status(500).json({ error: 'server' }); }
+});
+
 app.post('/api/logout', (req, res) => {
   req.session.destroy(() => { res.clearCookie('connect.sid'); res.json({ message: 'OK' }); });
 });

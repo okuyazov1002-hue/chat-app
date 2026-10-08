@@ -6,7 +6,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:Arial;display:flex;background:#f5f7fa;height:100vh;overflow:hidden;}
-.sidebar{width:88px;background:linear-gradient(160deg,#6a5ae0 0%,#4a90d9 45%,#1dd3b0 100%);display:flex;flex-direction:column;align-items:center;padding:20px 0;margin:16px 0 16px 16px;border-radius:20px 0 0 20px;height:calc(100vh - 32px);position:relative;z-index:1;}
+.sidebar{width:88px;background:linear-gradient(160deg,#6a5ae0 0%,#4a90d9 45%,#1dd3b0 100%);display:flex;flex-direction:column;align-items:center;padding:20px 0;margin:16px 0 16px 16px;border-radius:20px;height:calc(100vh - 32px);position:relative;z-index:1;box-shadow:0 -6px 22px -4px rgba(124,92,255,0.5),0 8px 22px -4px rgba(0,160,255,0.5),-6px 0 18px -6px rgba(110,110,240,0.35),6px 0 18px -6px rgba(60,150,250,0.35);}
 .sidebar-top{display:flex;flex-direction:column;align-items:center;width:100%;margin-bottom:60px;}
 .photo{width:60px;height:60px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:8px;color:#666;font-size:24px;font-weight:700;overflow:hidden;}
 img{width:100%;height:100%;object-fit:cover;}
@@ -250,7 +250,7 @@ button.nav-active::after{content:"";position:absolute;bottom:-20px;right:0;width
 <div id="structureBody"></div>
 </div>
 
-<div class='page' id='page-map' style='padding:0;'><div id='mapBox' style='flex:1;width:100%;height:100%;min-height:400px;'></div></div>
+<div class='page' id='page-map' style='padding:0;flex-direction:row-reverse;align-items:stretch;'><div id='mapBox' style='flex:1;min-width:0;height:100%;min-height:400px;'></div><div id='mapInfo' style='display:flex;width:460px;margin:0;opacity:1;flex-shrink:0;align-self:stretch;overflow:hidden;background:#fff;border-radius:0;box-shadow:12px 0 24px -12px rgba(0,0,0,0.2);flex-direction:column;transition:width .4s ease,margin .4s ease,opacity .4s ease;'><div id='mapInfoBody' style='padding:20px;box-sizing:border-box;flex:1;overflow-y:auto;'><div style="color:#9ca3af;font-size:11px;">Выберите объект на карте</div></div></div></div>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="/projects.js"></script>
@@ -317,10 +317,179 @@ document.getElementById('mapBtn').addEventListener('click',function(){
   showPage('page-map',this);
   if(leafMap==null){
     leafMap=L.map('mapBox').setView([40.85,69.6],13);
-    var sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Esri'});
-    var osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'OpenStreetMap'});
+    var sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Esri'});
+    var osm=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:18,attribution:'Esri'});
     sat.addTo(leafMap);
-    L.control.layers({'Спутник':sat,'Схема':osm}).addTo(leafMap);
+    var genplan=L.imageOverlay('/OXS01.png',[[40.85861,69.54604],[40.85988,69.54736]],{opacity:0.85,interactive:true}).addTo(leafMap);
+    var objHtml='<div style="display:flex;flex-direction:column;gap:10px;">'+'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:12px;color:#6b7280;">Код</div><div style="font-weight:700;font-size:15px;color:#1f2937;">OXS01</div></div>'+'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:12px;color:#6b7280;">Наименование</div><div style="font-weight:700;font-size:15px;color:#1f2937;">Кислородная станция</div></div>'+'</div>';
+    function refreshMap(){var t=0;var iv=setInterval(function(){leafMap.invalidateSize();t+=30;if(t>450)clearInterval(iv);},30);}
+    var allMarkers=[];var allPlans=[];
+    function insideAnyPlan(ll){for(var i=0;i<allPlans.length;i++){if(allPlans[i].getBounds().contains(ll)) return true;}return false;}
+    function mkHtml(code,name){return '<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:16px 18px;font-size:11px;font-weight:700;color:#1f2937;"><span style="color:#2c5364;">'+code+'</span> '+name+'</div>';}
+    function openObj(ll,html){
+      if(html==null) html=mkHtml('OXS01','Кислородная станция');
+      var pn=document.getElementById('mapInfo');pn.style.width='920px';pn.style.margin='0';pn.style.opacity='1';
+      document.getElementById('mapInfoBody').innerHTML=html;
+      allMarkers.forEach(function(m){if(leafMap.hasLayer(m)) leafMap.removeLayer(m);});
+      refreshMap();
+    }
+    function closeObj(){
+      var pn=document.getElementById('mapInfo');pn.style.width='460px';pn.style.margin='0';pn.style.opacity='1';renderMapList();
+      allMarkers.forEach(function(m){var g=m._grp||null;if(g!=null&&leafMap.hasLayer(g)==false) return;if(leafMap.hasLayer(m)==false) (g||leafMap).addLayer(m);});
+      refreshMap();
+    }
+    
+    genplan.on('click',function(e){openObj(e.latlng);});
+    leafMap.setView([40.859245,69.5467],18);
+    var objMarker=L.marker([40.859245,69.5467]).addTo(leafMap).bindTooltip('OXS01 Кислородная станция',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng);});
+    allPlans.push(genplan);allMarkers.push(objMarker);
+    var ieeHtml=mkHtml('IEE03','Главная понизительная подстанция №03');
+    var iee=L.imageOverlay('/IEE03.png',[[40.85971,69.545325],[40.8602,69.546445]],{opacity:0.85,interactive:true}).addTo(leafMap);
+    allPlans.push(iee);
+    var ieeMarker=L.marker([40.859955,69.545885]).addTo(leafMap).bindTooltip('IEE03 Главная понизительная подстанция №03',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng,ieeHtml);});
+    allMarkers.push(ieeMarker);
+    iee.on('click',function(e){openObj(e.latlng,ieeHtml);});
+    
+    leafMap.on('popupopen',function(e){if(e.popup.options.className=='obj-popup'&&leafMap.hasLayer(objMarker)) leafMap.removeLayer(objMarker);});
+    leafMap.on('popupclose',function(e){if(e.popup.options.className=='obj-popup'&&leafMap.hasLayer(objMarker)==false) objMarker.addTo(leafMap);});
+    var layersCtl=L.control.layers({'Спутник':sat,'Схема':osm},{}).addTo(leafMap);
+    var newGroup=L.layerGroup([genplan,objMarker,iee,ieeMarker]).addTo(leafMap);
+    layersCtl.addOverlay(newGroup,'Строительство новых объектов');
+    var prepGroup=L.layerGroup().addTo(leafMap);
+    layersCtl.addOverlay(prepGroup,'Подготовительные работы');
+    var prepObjs=[
+['CSM01-PR','Подготовительные работы на площадке',[[40.85329,69.54369],[40.85331,69.54531],[40.85417,69.54369],[40.85416,69.54528]]],
+['CSM01-SA','Склад серной кислоты №5',[[40.85299,69.54292],[40.85300,69.54358],[40.85407,69.54294],[40.85408,69.54358]]],
+['OXS01-AB','АБК для УСРР на территории МОФ',[[40.85874,69.54720],[40.85875,69.54759],[40.85910,69.54720],[40.85914,69.54758]]],
+['OXS01-AR','Участок наполнения и хранения баллонов аргона',[[40.85900,69.54548],[40.85901,69.54602],[40.85967,69.54538],[40.85967,69.54601]]],
+['HER01-IT','Внутризаводская транспортировка №27',[[40.84995,69.54611],[40.84992,69.54727],[40.85109,69.54605],[40.85108,69.54725]]],
+['HER01-SP','Отдел сортировки и упаковки готовой продукции (Пандус)',[[40.84960,69.54623],[40.84960,69.54646],[40.84981,69.54621],[40.84981,69.54643]]],
+['HER01-PR','Подготовительные работы на площадке (ЦЭМ)',[[40.85122,69.54599],[40.85119,69.54743],[40.85246,69.54600],[40.85245,69.54743]]],
+['PSP01-RS','Склад огнеупоров №20 и центральный склад №21',[[40.85524,69.54278],[40.85523,69.54452],[40.85557,69.54277],[40.85559,69.54449]]],
+['PSP01-EF','Электрофильтр ЭГТ-3-60',[[40.85429,69.54700],[40.85428,69.54739],[40.85473,69.54700],[40.85473,69.54737]]],
+['PSP01-CH','Участок кранового хозяйства',[[40.85526,69.54455],[40.85529,69.54532],[40.85564,69.54454],[40.85563,69.54532]]],
+['PSP01-CG','Конвейерная галерея ДШО',[[40.85466,69.54807],[40.85466,69.54837],[40.85651,69.54802],[40.85652,69.54841]]],
+['PSP01-RF','Огнеупорный цех',[[40.85565,69.54377],[40.85565,69.54423],[40.85594,69.54378],[40.85594,69.54423]]],
+['PSP01-MS','Склад металлов',[[40.85190,69.54809],[40.85190,69.54852],[40.85241,69.54808],[40.85241,69.54852]]]
+    ];
+    function rectFrom(c){
+      var la0=c[0][0],ln0=c[0][1];
+      function xy(q){return [(q[1]-ln0)*84200,(q[0]-la0)*111320];}
+      var bl=xy(c[0]),br=xy(c[1]),tl=xy(c[2]),tr=xy(c[3]);
+      function sub(a,b){return [a[0]-b[0],a[1]-b[1]];}
+      function dot(a,b){return a[0]*b[0]+a[1]*b[1];}
+      var eb=sub(br,bl),et=sub(tr,tl),el=sub(tl,bl),er=sub(tr,br),H=Math.PI/2;
+      var an=[Math.atan2(eb[1],eb[0]),Math.atan2(et[1],et[0]),Math.atan2(el[1],el[0])-H,Math.atan2(er[1],er[0])-H];
+      var sx=0,sy=0;an.forEach(function(q){sx+=Math.cos(q);sy+=Math.sin(q);});
+      var th=Math.atan2(sy,sx),u=[Math.cos(th),Math.sin(th)],v=[-Math.sin(th),Math.cos(th)];
+      var w=(dot(eb,u)+dot(et,u))/2,h=(dot(el,v)+dot(er,v))/2;
+      var cx=(bl[0]+br[0]+tl[0]+tr[0])/4,cy=(bl[1]+br[1]+tl[1]+tr[1])/4;
+      function pt(m,n){var x=cx+u[0]*m*w/2+v[0]*n*h/2,y=cy+u[1]*m*w/2+v[1]*n*h/2;return [la0+y/111320,ln0+x/84200];}
+      return [pt(-1,-1),pt(1,-1),pt(1,1),pt(-1,1)];
+    }
+    function axisRect(c){
+      var so=(c[0][0]+c[1][0])/2,no=(c[2][0]+c[3][0])/2,we=(c[0][1]+c[2][1])/2,ea=(c[1][1]+c[3][1])/2;
+      return [[so,we],[so,ea],[no,ea],[no,we]];
+    }
+    var lblCss=document.createElement('style');
+    lblCss.textContent='.obj-label{background:rgba(255,255,255,0.92);border:none;border-radius:6px;box-shadow:none;font-size:11px;font-weight:600;color:#1f2937;white-space:normal;width:130px;text-align:center;padding:3px 5px;line-height:1.25;} .obj-label:before{display:none;} .hide-lbl .obj-label{display:none;}';
+    lblCss.textContent+=' .ml-kids{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .4s ease,opacity .35s ease;} .ml-kids.open{grid-template-rows:1fr;opacity:1;} .ml-kids-in{overflow:hidden;min-height:0;background:#fff;} #mapInfo{scrollbar-width:none;-ms-overflow-style:none;} #mapInfo::-webkit-scrollbar{display:none;} #mapInfoBody{scrollbar-width:none;-ms-overflow-style:none;} #mapInfoBody::-webkit-scrollbar{display:none;} .ml-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin:3px 8px;box-shadow:0 0 7px rgba(107,114,128,0.22);overflow:hidden;} .ml-card .ml-kids.open{border-top:1px solid #eef0f3;} .ml-card0{background:#f8fafc;border-radius:12px;margin:10px 8px;box-shadow:0 -4px 12px -3px rgba(124,92,255,0.5),0 5px 12px -3px rgba(0,170,255,0.5);overflow:hidden;} .ml-card0>.ml-row{margin:0!important;box-shadow:none!important;border-radius:0!important;background:transparent!important;} .ml-card0 .ml-kids.open{border-top:1px solid #eef0f3;} .ml-card0 .ml-kids-in{background:#fff;}';document.head.appendChild(lblCss);
+    leafMap.on('zoomend',function(){document.getElementById('mapBox').classList.toggle('hide-lbl',leafMap.getZoom()<17);});
+    function distM(a,b){var dy=(a[0]-b[0])*111320;var dx=(a[1]-b[1])*84200;return Math.sqrt(dx*dx+dy*dy);}
+    function roundPoly(pts){
+      var n=pts.length,mn=1e9,out=[];
+      for(var i=0;i<n;i++){var d=distM(pts[i],pts[(i+1)%n]);if(d<mn) mn=d;}
+      var r=mn*0.2;
+      for(var j=0;j<n;j++){
+        var p0=pts[(j+n-1)%n],p1=pts[j],p2=pts[(j+1)%n];
+        var k0=r/distM(p1,p0),k2=r/distM(p1,p2);
+        var a=[p1[0]+(p0[0]-p1[0])*k0,p1[1]+(p0[1]-p1[1])*k0];
+        var b=[p1[0]+(p2[0]-p1[0])*k2,p1[1]+(p2[1]-p1[1])*k2];
+        for(var t=0;t<=6;t++){var u=t/6;var w0=(1-u)*(1-u),w1=2*(1-u)*u,w2=u*u;out.push([w0*a[0]+w1*p1[0]+w2*b[0],w0*a[1]+w1*p1[1]+w2*b[1]]);}
+      }
+      return out;
+    }
+    var prepStatus={};
+    var prepColors={done:'#16a34a',active:'#eab308',none:'#2563eb'};
+    var prepPolys={};
+    function prepPanel(code,name){
+      var st=prepStatus[code]||{status:'none',pct:0};
+      var txt=st.status=='done'?'Завершён':(st.status=='active'?'Выполняется':'Нет данных');
+      return '<div style="display:flex;flex-direction:column;gap:10px;">'+mkHtml(code,name)+'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:11px;color:#6b7280;">Статус</div><div style="font-weight:700;font-size:11px;color:#1f2937;">'+txt+', выполнено '+st.pct+'%</div></div></div>';
+    }
+    prepObjs.forEach(function(o){
+      var c=o[2];
+      var poly=L.polygon(roundPoly(axisRect(c)),{color:prepColors.none,weight:3,lineJoin:'round',fillColor:prepColors.none,fillOpacity:0.2}).addTo(prepGroup);
+      
+      poly.on('click',function(e){openObj(e.latlng,prepPanel(o[0],o[1]));});
+      prepPolys[o[0]]=poly;allPlans.push(poly);
+      var q=axisRect(c);var ctr=[(q[0][0]+q[2][0])/2,(q[0][1]+q[2][1])/2];
+      var pm=L.marker(ctr).addTo(prepGroup).bindTooltip(o[0]+' '+o[1],{permanent:true,direction:'top',offset:[-15,-10],className:'pin-label'}).on('click',function(e){openObj(e.latlng,prepPanel(o[0],o[1]));});
+      pm._grp=prepGroup;allMarkers.push(pm);
+    });
+    function projName(code){var all=PROJECTS.main.items.concat(PROJECTS.aux.items);for(var i=0;i<all.length;i++){if(all[i].code==code) return all[i].name;}return '';}
+    function findItem(code){var ks=['prep','main','aux'];for(var a=0;a<ks.length;a++){var it=PROJECTS[ks[a]].items;for(var i=0;i<it.length;i++){if(it[i].code==code) return it[i];}}return null;}
+    var listOpen={};
+    function isNarrow(){return parseInt(document.getElementById('mapInfo').style.width)<=460;}
+    function dot(code){var st=prepStatus[code];var col=prepColors[st?st.status:'none'];return '<span style="display:inline-block;width:8px;min-width:8px;height:8px;border-radius:2px;background:'+col+';margin-right:8px;flex-shrink:0;"></span>';}
+    function mrow(level,key,text,hasKids,open,code){
+      var pad=12;
+      var arrow=hasKids?(open?'▾':'▸'):'';
+      return '<div class="ml-row" data-key="'+key+'" data-code="'+(code||'')+'" style="display:flex;align-items:center;padding:9px 10px 9px '+pad+'px;border-bottom:1px solid #eef0f3;cursor:pointer;text-align:left;font-size:11px;'+(level==0?'font-weight:700;color:#1f2937;background:#f8fafc;border-radius:12px;margin:10px 8px;border-bottom:none;box-shadow:0 -4px 12px -3px rgba(124,92,255,0.5),0 5px 12px -3px rgba(0,170,255,0.5);':(key.indexOf('prep:')==0?'color:#374151;border-bottom:none;':'color:#374151;'))+'"><span style="width:12px;min-width:12px;flex-shrink:0;color:#6b7280;">'+arrow+'</span>'+(code?dot(code):'')+'<span>'+text+'</span></div>';
+    }
+    function prepGroups(){var g={},order=[];PROJECTS.prep.items.forEach(function(it){var pc=it.code.split('-')[0];if(g[pc]==null){g[pc]=[];order.push(pc);}g[pc].push(it);});return {g:g,order:order};}
+    function kids(key,inner){var o=listOpen[key]==true;return '<div class="ml-kids'+(o?' open':'')+'" data-kids="'+key+'"><div class="ml-kids-in">'+inner+'</div></div>';}
+    function renderMapList(){
+      var h='';
+      if(leafMap.hasLayer(prepGroup)){
+        var pg=prepGroups();
+        h+='<div class="ml-card0">'+mrow(0,'prep','Подготовительные работы',true,listOpen['prep']);
+        var inner='';
+        pg.order.forEach(function(pc){
+          var k='prep:'+pc;
+          var rowH=mrow(1,k,(pc+' '+projName(pc)).trim(),true,listOpen[k],pc);
+          var sub='';
+          pg.g[pc].forEach(function(it){sub+=mrow(2,'obj:'+it.code,it.code+' '+it.name,false,false,it.code);});
+          inner+='<div class="ml-card">'+rowH+kids(k,sub)+'</div>';
+        });
+        h+=kids('prep',inner)+'</div>';
+      }
+      if(leafMap.hasLayer(newGroup)){
+        ['main','aux'].forEach(function(sec){
+          h+='<div class="ml-card0">'+mrow(0,sec,PROJECTS[sec].title,true,listOpen[sec]);
+          var inn='';
+          PROJECTS[sec].items.forEach(function(it){inn+=mrow(1,'proj:'+it.code,it.code+' '+it.name,false,false,it.code);});
+          h+=kids(sec,inn)+'</div>';
+        });
+      }
+      if(h=='') h='<div style="color:#9ca3af;font-size:11px;">Нет включённых слоёв</div>';
+      document.getElementById('mapInfoBody').innerHTML=h;
+    }
+    document.getElementById('mapInfoBody').addEventListener('click',function(e){
+      var el=e.target.closest('.ml-row');
+      if(el==null) return;
+      var key=el.getAttribute('data-key');
+      if(key=='prep'||key=='main'||key=='aux'||key.indexOf('prep:')==0){
+        listOpen[key]=(listOpen[key]==true)?false:true;var kd=document.querySelector('.ml-kids[data-kids="'+key+'"]');if(kd) kd.classList.toggle('open',listOpen[key]);el.firstElementChild.textContent=listOpen[key]?'▾':'▸';
+        return;
+      }
+      var code=el.getAttribute('data-code');
+      var it=findItem(code);
+      var nm=it?it.name:'';
+      openObj(null,prepPanel(code,nm));
+      setTimeout(function(){
+        if(prepPolys[code]) leafMap.fitBounds(prepPolys[code].getBounds(),{maxZoom:18});
+        else if(code=='OXS01') leafMap.fitBounds(genplan.getBounds());
+        else if(code=='IEE03') leafMap.fitBounds(iee.getBounds());
+      },470);
+    });
+    leafMap.on('overlayadd overlayremove',function(){if(isNarrow()) renderMapList();});
+    renderMapList();
+    fetch('/api/map-status').then(function(r){return r.json();}).then(function(d){
+      prepStatus=d;renderMapList();
+      prepObjs.forEach(function(o){var st=d[o[0]];var col=prepColors[st?st.status:'none'];prepPolys[o[0]].setStyle({color:col,fillColor:col});});
+    }).catch(function(){});
+    leafMap.on('click',function(e){if(e.originalEvent.shiftKey==false){if(parseInt(document.getElementById('mapInfo').style.width)>460&&insideAnyPlan(e.latlng)==false) closeObj();return;}L.popup().setLatLng(e.latlng).setContent(e.latlng.lat.toFixed(5)+', '+e.latlng.lng.toFixed(5)).openOn(leafMap);});
   }
   setTimeout(function(){leafMap.invalidateSize();},200);
 });
