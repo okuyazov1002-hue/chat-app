@@ -327,11 +327,89 @@ document.getElementById('mapBtn').addEventListener('click',function(){
     function refreshMap(){var t=0;var iv=setInterval(function(){leafMap.invalidateSize();t+=30;if(t>450)clearInterval(iv);},30);}
     var allMarkers=[];var allPlans=[];
     function insideAnyPlan(ll){for(var i=0;i<allPlans.length;i++){if(allPlans[i].getBounds().contains(ll)) return true;}return false;}
-    function mkHtml(code,name){return '<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:16px 18px;font-size:11px;font-weight:700;color:#1f2937;"><span style="color:#2c5364;">'+code+'</span> '+name+'</div>';}
+    function esc(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function pmoney(n){return new Intl.NumberFormat('ru-RU',{maximumFractionDigits:0}).format(Math.round(n||0));}
+    function pdate(d){if(d==null||d=='') return '—';var x=new Date(d);return String(x.getDate()).padStart(2,'0')+'.'+String(x.getMonth()+1).padStart(2,'0')+'.'+x.getFullYear();}
+    function pbar(plan,fact){
+      var col=fact>=plan?'#16a34a':'#eab308';
+      return '<div style="position:relative;height:8px;background:#e5e7eb;border-radius:4px;margin-top:8px;"><div style="position:absolute;left:0;top:0;bottom:0;width:'+Math.min(100,fact)+'%;background:'+col+';border-radius:4px;"></div><div style="position:absolute;top:-3px;bottom:-3px;width:2px;left:'+Math.min(100,plan)+'%;background:#1f2937;"></div></div>';
+    }
+    function pcard(title,val){
+      return '<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:11px;color:#6b7280;">'+title+'</div><div style="font-weight:700;font-size:11px;color:#1f2937;margin-top:2px;">'+val+'</div></div>';
+    }
+    function fillPrepReport(){
+      var box=document.getElementById('prepReport');
+      if(box==null) return;
+      var code=box.getAttribute('data-code');
+      fetch('/api/map-object/'+encodeURIComponent(code)).then(function(r){return r.ok?r.json():null;}).then(function(d){
+        var cur=document.getElementById('prepReport');
+        if(cur==null) return;
+        if(cur.getAttribute('data-code')==code){}else return;
+        if(d==null){cur.textContent='Ошибка загрузки';return;}
+        if(d.has==false){cur.textContent='Нет данных по объекту';return;}
+        var h='';
+        var th='padding:8px 10px;text-align:left;font-size:11px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;white-space:nowrap;';
+        var td='padding:8px 10px;font-size:11px;color:#1f2937;border-bottom:1px solid #f3f4f6;white-space:nowrap;';
+        var t='<table style="width:100%;border-collapse:collapse;"><tr>';
+        ['Этап','Стоимость','Выполнено','План %','Факт %','Начало','Окончание'].forEach(function(x){t+='<th style="'+th+'">'+x+'</th>';});
+        t+='</tr>';
+        d.stages.forEach(function(s){
+          t+='<tr><td style="'+td+'white-space:normal;">'+esc(s.name)+'</td><td style="'+td+'">'+pmoney(s.cost)+'</td><td style="'+td+'">'+pmoney(s.done)+'</td><td style="'+td+'">'+s.planPct+'%</td><td style="'+td+'">'+s.factPct+'%</td><td style="'+td+'">'+pdate(s.start)+'</td><td style="'+td+'">'+pdate(s.end)+'</td></tr>';
+        });
+        t+='</table>';
+        
+        var extra=document.createElement('div');
+        extra.id='pExtraBlock';
+        extra.style.cssText='background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;box-shadow:0 4px 14px rgba(0,0,0,0.08);';
+        var pxb='<div class="pxb" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;min-height:56px;"></div>';
+        var pxc=function(l,v,big,col){return '<div style="padding:1px 0 3px 0;"><div style="font-size:11px;color:#6b7280;">'+l+'</div><div style="font-size:'+(big?'18':'14')+'px;font-weight:700;color:'+col+';">'+pmoney(v)+'</div></div>';};
+        var pxb1='<div class="pxb" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;min-height:0;padding:6px 14px;box-sizing:border-box;grid-row:1 / span 2;">'+pxc('Общая стоимость',d.totalCost,true,'#1f2937')+'<div style="display:flex;gap:12px;">'+pxc('План',d.totalCost*d.planPct/100,false,'#4a9fd8')+pxc('Выполнено',d.done,false,'#16a34a')+pxc('Остаток',d.totalCost-d.done,false,'#1f2937')+'</div>'+'</div>';
+        var dts=function(f){var r=[];d.stages.forEach(function(x){if(x[f]) r.push(x[f]);});return r.sort(function(p,q){return new Date(p)-new Date(q);});};
+        var stA=dts('start'),enA=dts('end');
+        var pxd=function(l,v){return '<div style="padding:1px 0 3px 0;"><div style="font-size:11px;color:#6b7280;">'+l+'</div><div style="font-size:14px;font-weight:700;color:#1f2937;">'+pdate(v)+'</div></div>';};
+        var dd=d.deltaDays;
+        var pxs='<div style="padding:1px 0 3px 0;"><div style="font-size:11px;color:#6b7280;">Срок</div><div style="font-size:14px;font-weight:700;color:'+(dd==null?'#1f2937':(dd>0?'#e53e3e':(dd<0?'#16a34a':'#1f2937')))+';">'+(dd==null?'—':(dd>0?'+':'')+dd+' дн.')+'</div></div>';
+        var pxb2='<div class="pxb" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;min-height:40px;padding:4px 14px;box-sizing:border-box;display:flex;gap:20px;align-items:center;">'+pxd('Начало',d.start||(stA.length?stA[0]:null))+pxd('Окончание',d.end||(enA.length?enA[enA.length-1]:null))+pxd('Прогноз',d.forecastEnd)+pxs+'</div>';
+        var lagv=Math.round((d.factPct-d.planPct)*10)/10;
+        var lagc=lagv<0?'#e53e3e':(lagv>0?'#16a34a':'#1f2937');
+        var pxp=function(l,v,c){return '<div style="padding:1px 0 3px 0;"><div style="font-size:11px;color:#6b7280;">'+l+'</div><div style="font-size:14px;font-weight:700;color:'+c+';">'+v+'</div></div>';};
+        var bF=Math.max(0,Math.min(100,d.factPct)),bP=Math.max(0,Math.min(100,d.planPct));
+        var bBlue=Math.min(bF,bP),bRed=Math.max(0,bP-bF),bGreen=Math.max(0,bF-bP);
+        var pbar2='<div style="flex:1;min-width:120px;max-width:240px;height:10px;border-radius:5px;overflow:hidden;display:flex;background:#e5e7eb;"><div style="width:'+bBlue+'%;background:#4a9fd8;"></div><div style="width:'+bRed+'%;background:#ef4444;"></div><div style="width:'+bGreen+'%;background:#16a34a;"></div></div>';
+        var pxb3='<div class="pxb" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;min-height:40px;padding:4px 14px;box-sizing:border-box;display:flex;gap:20px;align-items:center;">'+pxp('План',d.planPct+'%','#4a9fd8')+pxp('Факт',d.factPct+'%','#16a34a')+pxp('Отставание',(lagv>0?'+':'')+lagv+'%',lagc)+pbar2+'</div>';
+        extra.innerHTML='<div style="display:grid;grid-template-columns:370px 1fr;gap:12px;">'+pxb1+pxb2+pxb3+'</div>';
+        h='<div id="pExtraSlot"></div>'+h;
+        cur.style.cssText='display:flex;flex-direction:column;gap:12px;';
+        cur.innerHTML=h;
+        var slot=document.getElementById('pExtraSlot');if(slot) slot.replaceWith(extra);
+        fetch('/api/prep/object/'+encodeURIComponent(code)+'/worklist').then(function(r){return r.ok?r.json():[];}).then(function(list){
+          var c2=document.getElementById('prepReport');
+          if(c2==null) return;
+          if(c2.getAttribute('data-code')==code){}else return;
+          if(list.length==0) return;
+          function fq(n){return (n||0).toFixed(2).replace('.',',');}
+          var hd='<div style="display:flex;align-items:center;gap:2px;padding:4px 0;"><div style="flex:1;font-size:10px;color:#9ca3af;">Виды работы</div><div style="font-size:10px;color:#9ca3af;width:45px;text-align:right;">Ед. изм.</div><div style="font-size:10px;color:#9ca3af;min-width:70px;text-align:right;">Общее</div><div style="font-size:10px;color:#9ca3af;min-width:70px;text-align:right;">План</div><div style="font-size:10px;color:#9ca3af;min-width:80px;text-align:right;">Факт</div><div style="font-size:10px;color:#9ca3af;width:70px;text-align:right;margin-right:16px;">Разница</div><div style="font-size:10px;color:#9ca3af;width:44px;text-align:center;">План%</div><div style="font-size:10px;color:#9ca3af;width:44px;text-align:center;">Факт%</div><div style="font-size:10px;color:#9ca3af;width:48px;text-align:center;">Разн.%</div></div>';
+          var rw=list.map(function(w){
+            var dq=(w.actualQuantity||0)-(w.quantity||0);
+            var dc=dq<0?'#e53e3e':(dq>0?'#38a169':'#1f2937');
+            var fp=w.quantity?Math.round((w.actualQuantity||0)/w.quantity*100):0;
+            var dp=fp-100;
+            var dpc=dp<0?'#e53e3e':(dp>0?'#38a169':'#1f2937');
+            return '<div style="display:flex;align-items:center;gap:2px;padding:6px 0;border-bottom:1px solid #f0f0f0;"><div style="flex:1;font-size:11px;font-weight:600;color:#1f2937;">'+esc(w.item)+'</div><div style="font-size:10px;color:#9ca3af;width:45px;text-align:right;">'+esc(w.uom||'—')+'</div><div style="font-size:11px;color:#1f2937;min-width:70px;text-align:right;">'+fq(w.quantity)+'</div><div style="font-size:11px;color:#1f2937;min-width:70px;text-align:right;">'+fq(w.quantity)+'</div><div style="font-size:11px;color:#1f2937;min-width:80px;text-align:right;">'+fq(w.actualQuantity)+'</div><div style="font-size:11px;font-weight:700;color:'+dc+';width:70px;text-align:right;margin-right:16px;">'+(dq>0?'+'+fq(dq):fq(dq))+'</div><div style="font-size:10px;font-weight:700;color:#fff;background:#4a9fd8;border-radius:10px;padding:2px 0;width:44px;text-align:center;">100%</div><div style="font-size:10px;font-weight:700;color:#fff;background:#38a169;border-radius:10px;padding:2px 0;width:44px;text-align:center;">'+fp+'%</div><div style="font-size:10px;font-weight:700;color:'+dpc+';width:48px;text-align:center;">'+(dp>0?'+'+dp:dp)+'%</div></div>';
+          }).join('');
+          var wrap=document.createElement('div');
+          wrap.id='pwlWrap';
+          wrap.innerHTML='<div style="font-size:12px;font-weight:700;color:#1f2937;margin-bottom:6px;">Информация по видам работ</div><div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:0 18px 12px 18px;max-height:calc(100vh - 300px);min-height:200px;overflow-y:auto;scrollbar-width:none;"><div style="position:sticky;top:0;background:#fff;z-index:2;padding-top:8px;border-bottom:1px solid #f0f0f0;">'+hd+'</div>'+rw+'</div>';
+          c2.appendChild(wrap);
+          
+        });
+      });
+    }
+    function mkHtml(code,name){return '<div style="display:flex;align-items:center;gap:10px;"><button class="pback" title="Назад к списку" style="width:34px;min-width:34px;margin:0;padding:0;background:#f8fafc;color:#1f2937;border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;height:34px;display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 12 12"><polygon points="9,1 9,11 2,6" fill="#1f2937"/></svg></button><div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;width:fit-content;max-width:100%;box-sizing:border-box;padding:10px 16px;font-size:11px;font-weight:700;color:#1f2937;"><span style="color:#2c5364;">'+code+'</span> '+name+'</div></div>';}
     function openObj(ll,html){
       if(html==null) html=mkHtml('OXS01','Кислородная станция');
       var pn=document.getElementById('mapInfo');pn.style.width='920px';pn.style.margin='0';pn.style.opacity='1';
-      document.getElementById('mapInfoBody').innerHTML=html;
+      document.getElementById('mapInfoBody').innerHTML=html;fillPrepReport();
       allMarkers.forEach(function(m){if(leafMap.hasLayer(m)) leafMap.removeLayer(m);});
       refreshMap();
     }
@@ -415,9 +493,15 @@ document.getElementById('mapBtn').addEventListener('click',function(){
     var prepColors={done:'#16a34a',active:'#eab308',none:'#2563eb'};
     var prepPolys={};
     function prepPanel(code,name){
+      var isPrep=false;
+      PROJECTS.prep.items.forEach(function(it){if(it.code==code) isPrep=true;});
+      var base=mkHtml(code,name);
+      if(isPrep){
+        return '<div style="display:flex;flex-direction:column;gap:12px;">'+base+'<div id="prepReport" data-code="'+code+'" style="color:#9ca3af;font-size:11px;">Загрузка...</div></div>';
+      }
       var st=prepStatus[code]||{status:'none',pct:0};
       var txt=st.status=='done'?'Завершён':(st.status=='active'?'Выполняется':'Нет данных');
-      return '<div style="display:flex;flex-direction:column;gap:10px;">'+mkHtml(code,name)+'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:11px;color:#6b7280;">Статус</div><div style="font-weight:700;font-size:11px;color:#1f2937;">'+txt+', выполнено '+st.pct+'%</div></div></div>';
+      return '<div style="display:flex;flex-direction:column;gap:10px;">'+base+'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:11px;color:#6b7280;">Статус</div><div style="font-weight:700;font-size:11px;color:#1f2937;">'+txt+', выполнено '+st.pct+'%</div></div></div>';
     }
     prepObjs.forEach(function(o){
       var c=o[2];
@@ -485,6 +569,7 @@ document.getElementById('mapBtn').addEventListener('click',function(){
         else if(code=='IEE03') leafMap.fitBounds(iee.getBounds());
       },470);
     });
+    document.getElementById('mapInfoBody').addEventListener('click',function(e){if(e.target.closest('.pback')){closeObj();}});
     leafMap.on('overlayadd overlayremove',function(){if(isNarrow()) renderMapList();});
     renderMapList();
     fetch('/api/map-status').then(function(r){return r.json();}).then(function(d){

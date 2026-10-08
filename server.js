@@ -1211,4 +1211,43 @@ app.put('/api/me/password', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'server' }); }
 });
 
+app.get('/api/map-object/:code', async (req, res) => {
+  try {
+    const report = await mongoose.connection.db.collection('reports').findOne({ code: req.params.code });
+    if (report == null || report.rows == null || report.rows.length == 0) {
+      return res.json({ has: false, totalCost: 0, done: 0, paid: 0, planPct: 0, factPct: 0, stages: [] });
+    }
+    const rows = report.rows;
+    const sum = function (arr, f) { return arr.reduce(function (t, x) { return t + (x[f] || 0); }, 0); };
+    const totalCost = sum(rows, 'cost');
+    const done = sum(rows, 'done');
+    const paid = sum(rows, 'costFact');
+    const planPct = calcPlanPct(rows, totalCost);
+    const factPct = totalCost > 0 ? Math.round(done / totalCost * 1000) / 10 : 0;
+    const names = [];
+    rows.forEach(function (r) { const n = r.stage || 'Без этапа'; if (names.indexOf(n) < 0) names.push(n); });
+    const stages = names.map(function (name) {
+      const rs = rows.filter(function (r) { return (r.stage || 'Без этапа') == name; });
+      const c = sum(rs, 'cost');
+      const d = sum(rs, 'done');
+      const pp = calcPlanPct(rs, c);
+      const dt = calcStageDates(rs, c, d, pp);
+      return { name: name, cost: c, done: d, paid: sum(rs, 'costFact'), planPct: pp, factPct: c > 0 ? Math.round(d / c * 1000) / 10 : 0, start: dt.start, end: dt.end, forecastEnd: dt.forecastEnd, deltaDays: dt.deltaDays };
+    });
+    stages.sort(function (x, y) { return new Date(x.start || '2100-01-01') - new Date(y.start || '2100-01-01'); });
+    const starts = rows.map(function (r) { return r.planStart; }).filter(Boolean).sort(function (x, y) { return new Date(x) - new Date(y); });
+    const ends = rows.map(function (r) { return r.forecastEnd || r.planEnd; }).filter(Boolean).sort(function (x, y) { return new Date(x) - new Date(y); });
+    const pStart = starts.length ? starts[0] : null;
+    const pEnd = ends.length ? ends[ends.length - 1] : null;
+    let pForecast = null, pDelta = null;
+    if (pStart && pEnd) {
+      const dur = (new Date(pEnd) - new Date(pStart)) / 86400000;
+      const fp = totalCost > 0 ? Math.min(100, Math.round(done / totalCost * 100)) : 0;
+      pDelta = Math.round((planPct - fp) / 100 * dur);
+      pForecast = new Date(new Date(pEnd).getTime() + pDelta * 86400000);
+    }
+    res.json({ has: true, totalCost: totalCost, done: done, paid: paid, planPct: planPct, factPct: factPct, updatedAt: report.updatedAt || null, start: pStart, end: pEnd, forecastEnd: pForecast, deltaDays: pDelta, stages: stages });
+  } catch (err) { res.status(500).json({ error: 'server' }); }
+});
+
 app.listen(PORT, () => console.log(`🚀 Port ${PORT}`));
