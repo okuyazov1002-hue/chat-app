@@ -244,7 +244,7 @@ button.nav-active::after{content:"";position:absolute;bottom:-20px;right:0;width
 </aside>
 <main class="content">
 <div class="page active" id="page-home"><div class="empty"><h1>Добро пожаловать</h1><p>Выберите раздел</p></div></div>
-<div class="page" id="page-team" style="flex-direction:column;overflow-y:auto;justify-content:flex-start;align-items:stretch;"><div class="team-blue-top" id="teamHeader"></div><div id="teamNewBlock" style="width:1350px;height:675px;flex-shrink:0;align-self:flex-start;margin:16px 24px;background:#f8fafc;border-radius:12px;box-shadow:0 -4px 12px -3px rgba(124,92,255,0.5),0 5px 12px -3px rgba(0,170,255,0.5);box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;"><div class="team-col-header"><div></div><div class="emp-row-name">Имя и Фамилия</div><div class="emp-row-dept">Отдел</div><div class="emp-row-pos">Должность</div><div class="emp-row-cell">Дата</div><div class="emp-row-cell">Внутренний</div><div class="emp-row-cell">Мобильный</div><div class="emp-row-cell">Почта</div></div><div class="team-emp-list" id="teamEmpList"></div></div></div>
+<div class="page" id="page-team" style="flex-direction:column;overflow-y:auto;justify-content:flex-start;align-items:stretch;"><div class="team-blue-top" id="teamHeader"></div><div id="teamNewBlock" style="width:1350px;height:calc(100vh - 76px - 66px);min-height:400px;flex-shrink:0;align-self:flex-start;margin:16px 24px;background:#f8fafc;border-radius:12px;box-shadow:0 -4px 12px -3px rgba(124,92,255,0.5),0 5px 12px -3px rgba(0,170,255,0.5);box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;"><div class="team-col-header"><div></div><div class="emp-row-name">Имя и Фамилия</div><div class="emp-row-dept">Отдел</div><div class="emp-row-pos">Должность</div><div class="emp-row-cell">Дата</div><div class="emp-row-cell">Внутренний</div><div class="emp-row-cell">Мобильный</div><div class="emp-row-cell">Почта</div></div><div class="team-emp-list" id="teamEmpList"></div></div></div>
 <div class="page" id="page-info">
 <div class="info-wrap">
 <div class="info-topnav">
@@ -569,11 +569,20 @@ document.getElementById('mapBtn').addEventListener('click',function(){
     var ieeMarker=L.marker([40.859955,69.545885]).addTo(leafMap).bindTooltip('IEE03 Главная понизительная подстанция №03',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng,ieeHtml);});
     allMarkers.push(ieeMarker);
     iee.on('click',function(e){openObj(e.latlng,ieeHtml);});
+    var herHtml='<div style="display:flex;flex-direction:column;gap:10px;">'
+      +'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:12px;color:#6b7280;">Код</div><div style="font-size:16px;font-weight:700;color:#1f2937;">HER01</div></div>'
+      +'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:12px;color:#6b7280;">Наименование</div><div style="font-size:16px;font-weight:700;color:#1f2937;">Цех электролиза меди</div></div>'
+      +'</div>';
+    var her=L.imageOverlay('/HER01.png',[[40.849795,69.545557],[40.852613,69.547897]],{opacity:0.9,interactive:true}).addTo(leafMap);
+    allPlans.push(her);
+    var herMarker=L.marker([40.85114,69.54698]).addTo(leafMap).bindTooltip('HER01 Цех электролиза меди',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng,herHtml);});
+    allMarkers.push(herMarker);
+    her.on('click',function(e){openObj(e.latlng,herHtml);});
     
     leafMap.on('popupopen',function(e){if(e.popup.options.className=='obj-popup'&&leafMap.hasLayer(objMarker)) leafMap.removeLayer(objMarker);});
     leafMap.on('popupclose',function(e){if(e.popup.options.className=='obj-popup'&&leafMap.hasLayer(objMarker)==false) objMarker.addTo(leafMap);});
     var layersCtl=L.control.layers({'Спутник':sat,'Схема':osm},{}).addTo(leafMap);
-    var newGroup=L.layerGroup([genplan,objMarker,iee,ieeMarker]).addTo(leafMap);
+    var newGroup=L.layerGroup([genplan,objMarker,iee,ieeMarker,her,herMarker]).addTo(leafMap);
     layersCtl.addOverlay(newGroup,'Строительство новых объектов');
     var prepGroup=L.layerGroup().addTo(leafMap);
     layersCtl.addOverlay(prepGroup,'Подготовительные работы');
