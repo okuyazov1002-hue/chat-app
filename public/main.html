@@ -462,7 +462,7 @@ document.getElementById('mapBtn').addEventListener('click',function(){
     var sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Esri'});
     var osm=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:18,attribution:'Esri'});
     sat.addTo(leafMap);
-    var genplan=L.imageOverlay('/OXS01.png',[[40.85861,69.54604],[40.85988,69.54736]],{opacity:0.85,interactive:true}).addTo(leafMap);
+    var genplan=L.imageOverlay('/genplans/OXS01.png',[[40.85861,69.54604],[40.85988,69.54736]],{opacity:0.85,interactive:true}).addTo(leafMap);
     var objHtml='<div style="display:flex;flex-direction:column;gap:10px;">'+'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:12px;color:#6b7280;">Код</div><div style="font-weight:700;font-size:15px;color:#1f2937;">OXS01</div></div>'+'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:12px;color:#6b7280;">Наименование</div><div style="font-weight:700;font-size:15px;color:#1f2937;">Кислородная станция</div></div>'+'</div>';
     function refreshMap(){var t=0;var iv=setInterval(function(){leafMap.invalidateSize();t+=30;if(t>450)clearInterval(iv);},30);}
     var allMarkers=[];var allPlans=[];
@@ -564,7 +564,7 @@ document.getElementById('mapBtn').addEventListener('click',function(){
     var objMarker=L.marker([40.859245,69.5467]).addTo(leafMap).bindTooltip('OXS01 Кислородная станция',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng);});
     allPlans.push(genplan);allMarkers.push(objMarker);
     var ieeHtml=mkHtml('IEE03','Главная понизительная подстанция №03');
-    var iee=L.imageOverlay('/IEE03.png',[[40.85971,69.545325],[40.8602,69.546445]],{opacity:0.85,interactive:true}).addTo(leafMap);
+    var iee=L.imageOverlay('/genplans/IEE03.png',[[40.85971,69.545325],[40.8602,69.546445]],{opacity:0.85,interactive:true}).addTo(leafMap);
     allPlans.push(iee);
     var ieeMarker=L.marker([40.859955,69.545885]).addTo(leafMap).bindTooltip('IEE03 Главная понизительная подстанция №03',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng,ieeHtml);});
     allMarkers.push(ieeMarker);
@@ -573,12 +573,12 @@ document.getElementById('mapBtn').addEventListener('click',function(){
       +'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:12px;color:#6b7280;">Код</div><div style="font-size:16px;font-weight:700;color:#1f2937;">HER01</div></div>'
       +'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:12px;color:#6b7280;">Наименование</div><div style="font-size:16px;font-weight:700;color:#1f2937;">Цех электролиза меди</div></div>'
       +'</div>';
-    var her=L.imageOverlay('/HER01.png',[[40.849795,69.545557],[40.852613,69.547897]],{opacity:0.9,interactive:true}).addTo(leafMap);
+    var her=L.imageOverlay('/genplans/HER01.png',[[40.849795,69.545557],[40.852613,69.547897]],{opacity:0.9,interactive:true}).addTo(leafMap);
     allPlans.push(her);
     var herMarker=L.marker([40.85114,69.54698]).addTo(leafMap).bindTooltip('HER01 Цех электролиза меди',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng,herHtml);});
     allMarkers.push(herMarker);
     her.on('click',function(e){openObj(e.latlng,herHtml);});
-    var csmPlan=L.imageOverlay('/CSM01.png',[[40.85330,69.54369],[40.85417,69.54530]],{opacity:0.9,interactive:false}).addTo(leafMap);
+    var csmPlan=L.imageOverlay('/genplans/CSM01.png',[[40.85330,69.54369],[40.85417,69.54530]],{opacity:0.9,interactive:false}).addTo(leafMap);
     var csmHtml='<div style="display:flex;flex-direction:column;gap:10px;">'
       +'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:12px;color:#6b7280;">Код</div><div style="font-size:16px;font-weight:700;color:#1f2937;">CSM01</div></div>'
       +'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:12px;color:#6b7280;">Наименование</div><div style="font-size:16px;font-weight:700;color:#1f2937;">Сернокислотный цех и ООГ</div></div>'
@@ -599,14 +599,14 @@ document.getElementById('mapBtn').addEventListener('click',function(){
         var south=mscCfg.lat, east=mscCfg.lon;
         var north=south+img.naturalHeight*mpp/111050;
         var west=east-img.naturalWidth*mpp/84376;
-        var mscPlan=L.imageOverlay('/MSC01.png',[[south,west],[north,east]],{opacity:0.9,interactive:false});
+        var mscPlan=L.imageOverlay('/genplans/MSC01.png',[[south,west],[north,east]],{opacity:0.9,interactive:false});
         newGroup.addLayer(mscPlan);
         var mscHtml='<div style="font-family:Arial;font-size:13px"><b>Код:</b> MSC01<br><b>Наименование:</b> Шлакообогатительная фабрика</div>';
         var mscMarker=L.marker([40.86424,69.53611]).bindTooltip('MSC01 Шлакообогатительная фабрика',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng,mscHtml);});
         newGroup.addLayer(mscMarker);
         allMarkers.push(mscMarker);
       };
-      img.src='/MSC01.png';
+      img.src='/genplans/MSC01.png';
     })();
     var opsCfg={lat:40.859894,lon:69.542618,w:108,fx:0.5214,fy:0.3922};
     (function(){
@@ -615,14 +615,33 @@ document.getElementById('mapBtn').addEventListener('click',function(){
         var Wm=opsCfg.w,Hm=Wm*img.naturalHeight/img.naturalWidth;
         var west=opsCfg.lon-opsCfg.fx*Wm/84376, east=west+Wm/84376;
         var north=opsCfg.lat+opsCfg.fy*Hm/111050, south=north-Hm/111050;
-        var opsPlan=L.imageOverlay('/OPS01-CP.png',[[south,west],[north,east]],{opacity:0.9,interactive:false});
+        var opsPlan=L.imageOverlay('/genplans/OPS01-CP.png',[[south,west],[north,east]],{opacity:0.9,interactive:false});
         newGroup.addLayer(opsPlan);
         var opsHtml='<div style="font-family:Arial;font-size:13px"><b>Код:</b> OPS01-CP<br><b>Наименование:</b> Новый автомобильный КПП (Таначи–Бука)</div>';
         var opsMarker=L.marker([opsCfg.lat,opsCfg.lon]).bindTooltip('OPS01-CP Новый автомобильный КПП (Таначи–Бука)',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng,opsHtml);});
         newGroup.addLayer(opsMarker);
         allMarkers.push(opsMarker);
       };
-      img.src='/OPS01-CP.png';
+      img.src='/genplans/OPS01-CP.png';
+    })();
+    var opsTcHtml='<div style="font-family:Arial;font-size:13px"><b>Код:</b> OPS01-TC<br><b>Наименование:</b> Временный вахтовый городок для строителей</div>';
+    var opsTcMarker=L.marker([40.86613,69.55271]).bindTooltip('OPS01-TC Временный вахтовый городок для строителей',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng,opsTcHtml);});
+    newGroup.addLayer(opsTcMarker);
+    allMarkers.push(opsTcMarker);
+    var opsTsHtml='<div style="font-family:Arial;font-size:13px"><b>Код:</b> OPS01-TS<br><b>Наименование:</b> Временный склад Metso</div>';
+    var opsTsMarker=L.marker([40.86313,69.54245]).bindTooltip('OPS01-TS Временный склад Metso',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng,opsTsHtml);});
+    newGroup.addLayer(opsTsMarker);
+    allMarkers.push(opsTsMarker);
+    var opsTsCfg={lat:40.86106,lon:69.540783,w:560,fx:0.186,fy:1};
+    (function(){
+      var img=new Image();
+      img.onload=function(){
+        var Wm=opsTsCfg.w,Hm=Wm*img.naturalHeight/img.naturalWidth;
+        var west=opsTsCfg.lon-opsTsCfg.fx*Wm/84376, east=west+Wm/84376;
+        var north=opsTsCfg.lat+opsTsCfg.fy*Hm/111050, south=north-Hm/111050;
+        newGroup.addLayer(L.imageOverlay('/genplans/OPS01-TS.png',[[south,west],[north,east]],{opacity:0.9,interactive:false}));
+      };
+      img.src='/genplans/OPS01-TS.png';
     })();
     var prepGroup=L.layerGroup().addTo(leafMap);
     layersCtl.addOverlay(prepGroup,'Подготовительные работы');
