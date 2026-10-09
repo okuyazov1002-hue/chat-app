@@ -608,6 +608,22 @@ document.getElementById('mapBtn').addEventListener('click',function(){
       };
       img.src='/MSC01.png';
     })();
+    var opsCfg={lat:40.859894,lon:69.542618,w:108,fx:0.5214,fy:0.3922};
+    (function(){
+      var img=new Image();
+      img.onload=function(){
+        var Wm=opsCfg.w,Hm=Wm*img.naturalHeight/img.naturalWidth;
+        var west=opsCfg.lon-opsCfg.fx*Wm/84376, east=west+Wm/84376;
+        var north=opsCfg.lat+opsCfg.fy*Hm/111050, south=north-Hm/111050;
+        var opsPlan=L.imageOverlay('/OPS01-CP.png',[[south,west],[north,east]],{opacity:0.9,interactive:false});
+        newGroup.addLayer(opsPlan);
+        var opsHtml='<div style="font-family:Arial;font-size:13px"><b>Код:</b> OPS01-CP<br><b>Наименование:</b> Новый автомобильный КПП (Таначи–Бука)</div>';
+        var opsMarker=L.marker([opsCfg.lat,opsCfg.lon]).bindTooltip('OPS01-CP Новый автомобильный КПП (Таначи–Бука)',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng,opsHtml);});
+        newGroup.addLayer(opsMarker);
+        allMarkers.push(opsMarker);
+      };
+      img.src='/OPS01-CP.png';
+    })();
     var prepGroup=L.layerGroup().addTo(leafMap);
     layersCtl.addOverlay(prepGroup,'Подготовительные работы');
     var prepObjs=[
