@@ -131,13 +131,30 @@ button.nav-active::after{content:"";position:absolute;bottom:-20px;right:0;width
 .bday-card-days{font-size:10px;font-weight:700;color:#4a9fd8;margin-top:2px;}
 .team-blue-top{width:100%;height:76px;background:#eaf3fb;border-radius:0 20px 0 0;align-self:flex-start;display:flex;align-items:center;gap:16px;padding:0 16px 0 16px;box-sizing:border-box;position:sticky;top:0;z-index:10;flex-shrink:0;}
 .team-emp-list{width:100%;padding:16px 24px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;}
-.emp-row{width:calc(100% - 28px);min-height:56px;background:#f7f9fb;border-radius:8px;padding:6px 16px 6px 34px;display:grid;grid-template-columns:180px 160px 160px 90px 100px 110px 1fr;align-items:center;gap:6px;box-sizing:border-box;position:relative;margin-left:28px;margin-right:28px;}
+.emp-row{width:1300px;min-width:1300px;max-width:1300px;height:56px;min-height:56px;flex-shrink:0;background:#f7f9fb;border-radius:8px;padding:6px 16px 6px 34px;display:grid;grid-template-columns:180px 160px 160px 90px 100px 110px 1fr;align-items:center;gap:6px;box-sizing:border-box;position:relative;margin-left:28px;margin-right:28px;}
 .emp-row-avatar{width:56px;height:56px;border-radius:50%;overflow:hidden;background:#4a9fd8;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0;position:absolute;left:0;top:50%;transform:translate(-50%,-50%);box-shadow:0 2px 8px rgba(0,0,0,0.15);}
 .emp-row-avatar img{width:100%;height:100%;object-fit:cover;}
 .emp-row-name{font-size:12px;font-weight:700;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .emp-row-dept{font-size:11px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .emp-row-pos{font-size:11px;color:#9ca3af;white-space:normal;overflow:hidden;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
 .emp-row-cell{font-size:11px;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* team block */
+.emp-dots{display:none !important;}
+#teamNewBlock .emp-row,#teamNewBlock .team-col-header{grid-template-columns:180px 270px 230px 90px 80px 125px 1fr !important;}
+.emp-row > div:nth-child(6),.team-col-header > div:nth-child(6){padding-left:0px;box-sizing:border-box;}
+.emp-row > div:nth-child(7),.team-col-header > div:nth-child(7){padding-left:0px;box-sizing:border-box;}
+.emp-row > div:nth-child(8),.team-col-header > div:nth-child(8){padding-left:0px;box-sizing:border-box;}
+#teamNewBlock .team-col-header{position:static;top:auto;flex-shrink:0;grid-template-columns:180px 160px 160px 90px 100px 110px 1fr;padding:0 0 0 86px;background:#eaf3fb;}
+#teamNewBlock .team-col-header > div:first-child{display:none;}
+#teamNewBlock .team-emp-list{flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;padding:12px 24px;gap:12px;}
+#teamNewBlock .team-emp-list::-webkit-scrollbar{display:none;}
+#teamNewBlock .emp-row{width:calc(100% - 28px);min-width:0;max-width:none;margin-left:28px;margin-right:0;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 0 7px rgba(107,114,128,0.22);}
+
+
+.emp-dots{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;margin:0;padding:0;background:transparent;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.emp-dots:hover{background:#e5e9ef;}
+
+
 .team-col-header{width:100%;height:40px;background:#eaf3fb;display:grid;grid-template-columns:62px 180px 160px 160px 90px 100px 110px 1fr;align-items:center;gap:6px;box-sizing:border-box;padding:0 16px 0 34px;position:sticky;top:76px;z-index:9;font-size:7.5px;font-weight:700;color:#4a9fd8;}
 .team-col-header > div{overflow:hidden;text-align:left;white-space:normal;line-height:1.1;font-size:11px;font-weight:400;color:#374151;text-transform:none;}
 .team-blue-panel{width:100%;height:90px;background:linear-gradient(180deg,#5BB0E5,#4a9fd8);position:absolute;top:0;left:0;}
@@ -227,7 +244,7 @@ button.nav-active::after{content:"";position:absolute;bottom:-20px;right:0;width
 </aside>
 <main class="content">
 <div class="page active" id="page-home"><div class="empty"><h1>Добро пожаловать</h1><p>Выберите раздел</p></div></div>
-<div class="page" id="page-team" style="flex-direction:column;overflow-y:auto;justify-content:flex-start;align-items:stretch;"><div class="team-blue-top" id="teamHeader"></div><div class="team-col-header"><div></div><div class="emp-row-name">Имя и Фамилия</div><div class="emp-row-dept">Отдел</div><div class="emp-row-pos">Должность</div><div class="emp-row-cell">Дата</div><div class="emp-row-cell">Внутренний</div><div class="emp-row-cell">Мобильный</div><div class="emp-row-cell">Почта</div></div><div class="team-emp-list" id="teamEmpList"></div></div>
+<div class="page" id="page-team" style="flex-direction:column;overflow-y:auto;justify-content:flex-start;align-items:stretch;"><div class="team-blue-top" id="teamHeader"></div><div id="teamNewBlock" style="width:1350px;height:675px;flex-shrink:0;align-self:flex-start;margin:16px 24px;background:#f8fafc;border-radius:12px;box-shadow:0 -4px 12px -3px rgba(124,92,255,0.5),0 5px 12px -3px rgba(0,170,255,0.5);box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;"><div class="team-col-header"><div></div><div class="emp-row-name">Имя и Фамилия</div><div class="emp-row-dept">Отдел</div><div class="emp-row-pos">Должность</div><div class="emp-row-cell">Дата</div><div class="emp-row-cell">Внутренний</div><div class="emp-row-cell">Мобильный</div><div class="emp-row-cell">Почта</div></div><div class="team-emp-list" id="teamEmpList"></div></div></div>
 <div class="page" id="page-info">
 <div class="info-wrap">
 <div class="info-topnav">
@@ -268,7 +285,7 @@ if(user.avatar){
 }
 window.currentUserRole=user.role;
 window.currentLogin=user.login;
-fetch("/api/users/list").then(function(r){return r.ok?r.json():null;}).then(function(l){if(l&&l.length){PERSONNEL.length=0;l.forEach(function(x){PERSONNEL.push(x);});}});
+fetch("/api/users/list").then(function(r){return r.ok?r.json():null;}).then(function(l){if(l&&l.length){PERSONNEL.length=0;l.forEach(function(x){PERSONNEL.push(x);});teamLoaded=false;if(document.getElementById("page-team").classList.contains("active")) loadTeamPage();}});
 if(user.role!=="admin"&&user.role!=="developer"){
   const btn=document.getElementById("structureBtn");
   if(btn) btn.style.display="none";
@@ -286,11 +303,20 @@ let teamLoaded=false;
 function loadTeamPage(){
   if(teamLoaded) return;
   teamLoaded=true;
-  const users=PERSONNEL;
+  function topRank(u){
+    var pos=String(u.position||"").toLowerCase().trim();
+    var dep=String(u.department||"").toLowerCase();
+    if(pos.indexOf("заместитель директора")>=0 && pos.indexOf("управлению проектами")>=0) return 2;
+    if(pos.indexOf("директор")===0 && pos.indexOf("заместитель")<0) return 1;
+    if(pos==="главный инженер" || pos.indexOf("главный инженер дсомк")>=0) return 3;
+    if(dep.indexOf("технологический")>=0 && pos.indexOf("начальник отдела")>=0) return 4;
+    return 99;
+  }
+  const users=PERSONNEL.map(function(u,i){ return {u:u,i:i,r:topRank(u)}; }).sort(function(a,b){ return a.r-b.r || a.i-b.i; }).map(function(x){ return x.u; });
   const empListEl=document.getElementById("teamEmpList");
   empListEl.innerHTML=users.map(u=>{
     const avatarHtml=u.avatar?'<img src="'+u.avatar+'">':'<span>'+(u.name?u.name.charAt(0):"?")+'</span>';
-    return '<div class="emp-row"><div class="emp-row-avatar">'+avatarHtml+'</div><div class="emp-row-name">'+u.name+'</div><div class="emp-row-dept">'+(u.department||"")+'</div><div class="emp-row-pos">'+(u.position||"")+'</div><div class="emp-row-cell">'+(u.birthday||"")+'</div><div class="emp-row-cell">'+(u.internalPhone||"")+'</div><div class="emp-row-cell">'+(u.mobilePhone||"")+'</div><div class="emp-row-cell">'+(u.email||"")+'</div></div>';
+    return '<div class="emp-row"><div class="emp-row-avatar">'+avatarHtml+'</div><div class="emp-row-name">'+u.name+'</div><div class="emp-row-dept">'+(u.department||"")+'</div><div class="emp-row-pos">'+(u.position||"")+'</div><div class="emp-row-cell">'+(u.birthday||"")+'</div><div class="emp-row-cell">'+(u.internalPhone||"")+'</div><div class="emp-row-cell">'+(u.mobilePhone||"")+'</div><div class="emp-row-cell">'+(u.email||"")+'</div>'+(window.currentUserRole==="developer"?'<button class="emp-dots" data-un="'+u.username+'" title="Меню"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="3" r="1.6" fill="#6b7280"/><circle cx="8" cy="8" r="1.6" fill="#6b7280"/><circle cx="8" cy="13" r="1.6" fill="#6b7280"/></svg></button>':"")+'</div>';
   }).join("");
   const today=new Date();
   today.setHours(0,0,0,0);
@@ -311,7 +337,121 @@ function loadTeamPage(){
     return '<div class="bday-card"><div class="bday-card-avatar">'+avatarHtml+'</div><div class="bday-card-info"><div class="bday-card-name">'+u.name+'</div><div class="bday-card-date">'+u.birthday+'</div><div class="bday-card-days">'+fmtDaysUntil(u.daysUntil)+'</div></div></div>';
   }).join("");
 }
-document.getElementById("teamBtn").addEventListener("click",function(){showPage("page-team",this);loadTeamPage();});
+(function(){
+  var menu=null;
+  function closeMenu(){ if(menu){ menu.remove(); menu=null; } }
+  function api(method,url,body){
+    return fetch(url,{method:method,headers:{"Content-Type":"application/json"},body:body?JSON.stringify(body):undefined}).then(function(r){
+      return r.json().catch(function(){return {};}).then(function(j){
+        if(r.ok==false) throw new Error(j.error||j.message||("Ошибка "+r.status));
+        return j;
+      });
+    });
+  }
+  function item(text,fn,danger){
+    var d=document.createElement("div");
+    d.textContent=text;
+    d.style.cssText="padding:9px 18px;cursor:pointer;font-size:13px;white-space:nowrap;color:"+(danger?"#dc2626":"#1f2937")+";";
+    d.onmouseenter=function(){d.style.background="#f1f5f9";};
+    d.onmouseleave=function(){d.style.background="transparent";};
+    d.onclick=function(ev){ ev.stopPropagation(); closeMenu(); fn(); };
+    return d;
+  }
+  function head(text){
+    var d=document.createElement("div");
+    d.textContent=text;
+    d.style.cssText="padding:8px 18px 4px;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;";
+    return d;
+  }
+  function sep(){
+    var d=document.createElement("div");
+    d.style.cssText="height:1px;background:#e5e7eb;margin:4px 0;";
+    return d;
+  }
+  document.addEventListener("contextmenu",function(e){
+    var row=e.target.closest("#teamEmpList .emp-row");
+    if(row==null){ closeMenu(); return; }
+    if(window.currentUserRole!=="developer") return;
+    var rows=Array.prototype.slice.call(document.querySelectorAll("#teamEmpList .emp-row"));
+    var nm=(row.querySelector(".emp-row-name")||{}).textContent||"";
+    var cells=row.querySelectorAll(".emp-row-cell");
+    var em=cells.length?cells[cells.length-1].textContent.trim():"";
+    var u=null;
+    for(var k=0;k<PERSONNEL.length;k++){
+      if(String(PERSONNEL[k].name||"").trim()===nm.trim() && String(PERSONNEL[k].email||"").trim()===em){ u=PERSONNEL[k]; break; }
+    }
+    if(u==null){
+      for(var k2=0;k2<PERSONNEL.length;k2++){ if(String(PERSONNEL[k2].name||"").trim()===nm.trim()){ u=PERSONNEL[k2]; break; } }
+    }
+    if(u==null) return;
+    var un=u.username||u.login||String(u.email||"").split("@")[0];
+    e.preventDefault();
+    closeMenu();
+    menu=document.createElement("div");
+    menu.style.cssText="position:fixed;z-index:99999;background:#fff;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,0.18);padding:6px 0;min-width:220px;border:1px solid #e5e7eb;";
+    menu.appendChild(item("Редактировать",function(){ openProfileModal(un); }));
+    menu.appendChild(item("Копировать почту",function(){ if(navigator.clipboard) navigator.clipboard.writeText(u.email||""); }));
+    menu.appendChild(item("Сбросить пароль",function(){
+      var pw=prompt("Новый пароль для "+u.name+" (минимум 6 символов):");
+      if(pw==null) return;
+      if(pw.length<6){ alert("Пароль слишком короткий"); return; }
+      api("PUT","/api/users/"+encodeURIComponent(un)+"/password",{password:pw}).then(function(){ alert("Пароль изменён"); }).catch(function(err){ alert(err.message); });
+    }));
+    menu.appendChild(sep());
+    var RN={user:"Пользователь",admin:"Администратор",developer:"Разработчик"};
+    menu.appendChild(head("Роль: "+(RN[u.role]||u.role||"")));
+    ["user","admin","developer"].forEach(function(r){
+      if(r===u.role) return;
+      menu.appendChild(item("Сделать: "+RN[r],function(){
+        if(confirm("Изменить роль "+u.name+" на «"+RN[r]+"»?")){
+          api("PUT","/api/users/"+encodeURIComponent(un)+"/role",{role:r}).then(function(){ location.reload(); }).catch(function(err){ alert(err.message); });
+        }
+      }));
+    });
+    menu.appendChild(sep());
+    menu.appendChild(item("Удалить пользователя",function(){
+      if(confirm("Удалить "+u.name+"? Это нельзя отменить.")){
+        api("DELETE","/api/users/"+encodeURIComponent(un)).then(function(){ location.reload(); }).catch(function(err){ alert(err.message); });
+      }
+    },true));
+    document.body.appendChild(menu);
+    var w=menu.offsetWidth,h=menu.offsetHeight;
+    menu.style.left=Math.max(4,Math.min(e.clientX,window.innerWidth-w-8))+"px";
+    menu.style.top=Math.max(4,Math.min(e.clientY,window.innerHeight-h-8))+"px";
+  });
+  document.addEventListener("click",closeMenu);
+  window.addEventListener("scroll",closeMenu,true);
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeMenu(); });
+})();
+(function(){
+  var hd=document.getElementById("teamHeader");
+  var list=document.getElementById("teamEmpList");
+  if(hd==null||list==null) return;
+  var wrap=document.createElement("div");
+  wrap.style.cssText="margin-left:auto;flex-shrink:0;";
+  var inp=document.createElement("input");
+  inp.type="text";
+  inp.autocomplete="off";
+  inp.placeholder="Поиск: имя, отдел, должность";
+  inp.style.cssText="width:340px;height:44px;box-sizing:border-box;padding:0 16px;border:1px solid #d1d5db;border-radius:8px;background:#fff;font-size:14px;color:#1f2937;outline:none;box-shadow:0 0 7px rgba(107,114,128,0.18);";
+  inp.addEventListener("focus",function(){ inp.style.borderColor="#4a9fd8"; });
+  inp.addEventListener("blur",function(){ inp.style.borderColor="#d1d5db"; });
+  wrap.appendChild(inp);
+  function txt(row,sel){ var e=row.querySelector(sel); return e?e.textContent:""; }
+  function apply(){
+    var q=inp.value.toLowerCase().trim();
+    var rows=list.querySelectorAll(".emp-row");
+    for(var i=0;i<rows.length;i++){
+      var t=(txt(rows[i],".emp-row-name")+" "+txt(rows[i],".emp-row-dept")+" "+txt(rows[i],".emp-row-pos")).toLowerCase();
+      rows[i].style.display=(q===""||t.indexOf(q)>=0)?"":"none";
+    }
+  }
+  inp.addEventListener("input",apply);
+  new MutationObserver(function(){ if(wrap.parentNode!==hd) hd.appendChild(wrap); }).observe(hd,{childList:true});
+  new MutationObserver(apply).observe(list,{childList:true});
+  hd.appendChild(wrap);
+})();
+document.getElementById("teamBtn").addEventListener("click",function(){showPage("page-team",this);teamLoaded=false;loadTeamPage();});
 document.getElementById("infoBtn").addEventListener("click",function(){showPage("page-info",this);});
 document.getElementById("structureBtn").addEventListener("click",function(){showPage("page-structure",this);renderStructureLevel1();});
 var leafMap=null;
@@ -1031,7 +1171,7 @@ function closeProfileModal(){
   ex.querySelector(".stage-modal").classList.remove("open");
   setTimeout(function(){ ex.remove(); },400);
 }
-function buildProfileForm(){
+function buildProfileForm(target){
   const body=document.querySelector(".profile-modal-overlay .obj-modal-body");
   if(body==null) return;
   body.style.overflowY="auto";
@@ -1040,6 +1180,7 @@ function buildProfileForm(){
   const bst="height:30px;padding:0 16px;background:#4a9fd8;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;";
   const fields=[["name","Имя и Фамилия"],["department","Отдел"],["position","Должность"],["birthday","Дата (дд.мм.гггг)"],["internalPhone","Внутренний"],["mobilePhone","Мобильный"],["email","Почта"]];
   let h='<style>.profile-modal-overlay .obj-modal-body::-webkit-scrollbar{display:none;}.profile-modal-overlay .obj-modal-body{scrollbar-width:none;}</style>';
+  h+='<div style="display:flex;align-items:center;gap:16px;margin-bottom:6px;"><canvas id="pfAvCanvas" width="280" height="280" style="width:140px;height:140px;border-radius:50%;background:#f3f4f6;border:1px solid #e5e9ef;cursor:grab;touch-action:none;flex-shrink:0;"></canvas><div style="display:flex;flex-direction:column;gap:8px;flex:1;"><div style="display:flex;gap:8px;"><button id="pfAvPick" type="button" style="'+bst+'">Выбрать фото</button><button id="pfAvDel" type="button" style="'+bst+'background:#9ca3af;">Удалить</button></div><div style="font-size:11px;color:#6b7280;">Масштаб</div><input id="pfAvZoom" type="range" min="1" max="3" step="0.01" value="1" style="width:100%;"><div style="font-size:10px;color:#9ca3af;">Перетащите фото мышью, чтобы выбрать положение</div><input id="pfAvFile" type="file" accept="image/*" style="display:none;"></div></div>';
   fields.forEach(function(f){ h+='<div style="'+lst+'">'+f[1]+'</div><input id="pf_'+f[0]+'" type="text" style="'+fst+'">'; });
   
   h+='<div style="border-top:1px solid #eee;margin-top:22px;padding-top:12px;font-size:12px;font-weight:700;color:#1f2937;">Смена пароля</div>';
@@ -1048,10 +1189,49 @@ function buildProfileForm(){
   h+='<div style="'+lst+'">Повторите новый пароль</div><input id="pf_new2" type="password" autocomplete="new-password" style="'+fst+'">';
   h+='<div style="display:flex;align-items:center;gap:12px;margin-top:16px;"><button id="pfSave" style="'+bst+'">Сохранить</button><span id="pfMsg" style="font-size:11px;"></span></div>';
   body.innerHTML=h;
-  fetch("/api/users/list").then(function(r){ return r.json(); }).then(function(l){
-    const me=l.find(function(x){ return x.username===window.currentLogin; });
+  if(target){ var pwh=Array.prototype.find.call(body.children,function(x){ return x.textContent==="Смена пароля"; }); var pwn=pwh; for(var qq=0;qq<7&&pwn;qq++){ var pwx=pwn.nextElementSibling; pwn.style.display="none"; pwn=pwx; } }
+  var avState={img:null,changed:false,zoom:1,ox:0,oy:0};
+  var AVP=280;
+  var avCv=document.getElementById("pfAvCanvas"),avZ=document.getElementById("pfAvZoom"),avF=document.getElementById("pfAvFile");
+  function avDraw(cx,S){
+    cx.fillStyle="#f3f4f6";cx.fillRect(0,0,S,S);
+    var im=avState.img;
+    if(im==null) return;
+    var sc=Math.max(S/im.width,S/im.height)*avState.zoom,w=im.width*sc,hh=im.height*sc,k=S/AVP;
+    var mx=Math.max(0,(w-S)/2),my=Math.max(0,(hh-S)/2);
+    var ox=Math.max(-mx,Math.min(mx,avState.ox*k)),oy=Math.max(-my,Math.min(my,avState.oy*k));
+    if(S==AVP){avState.ox=ox;avState.oy=oy;}
+    cx.drawImage(im,(S-w)/2+ox,(S-hh)/2+oy,w,hh);
+  }
+  function avRefresh(){ avDraw(avCv.getContext("2d"),AVP); }
+  var dr=null;
+  avCv.addEventListener("pointerdown",function(e){ if(avState.img==null) return; dr={x:e.clientX,y:e.clientY,ox:avState.ox,oy:avState.oy}; avCv.setPointerCapture(e.pointerId); avCv.style.cursor="grabbing"; });
+  avCv.addEventListener("pointermove",function(e){ if(dr==null) return; avState.ox=dr.ox+(e.clientX-dr.x)*2; avState.oy=dr.oy+(e.clientY-dr.y)*2; avState.changed=true; avRefresh(); });
+  avCv.addEventListener("pointerup",function(){ dr=null; avCv.style.cursor="grab"; });
+  avCv.addEventListener("wheel",function(e){ if(avState.img==null) return; e.preventDefault(); var z=Math.max(1,Math.min(3,avState.zoom+(e.deltaY<0?0.08:-0.08))); avState.zoom=z; avZ.value=z; avState.changed=true; avRefresh(); },{passive:false});
+  avZ.addEventListener("input",function(){ avState.zoom=parseFloat(avZ.value); avState.changed=true; avRefresh(); });
+  document.getElementById("pfAvPick").addEventListener("click",function(){ avF.click(); });
+  document.getElementById("pfAvDel").addEventListener("click",function(){ avState.img=null;avState.changed=true;avState.zoom=1;avState.ox=0;avState.oy=0;avZ.value=1;avRefresh(); });
+  avF.addEventListener("change",function(){
+    var f=avF.files[0]; if(f==null) return;
+    var rd=new FileReader();
+    rd.onload=function(){ var im=new Image(); im.onload=function(){ avState.img=im;avState.zoom=1;avState.ox=0;avState.oy=0;avState.changed=true;avZ.value=1;avRefresh(); }; im.src=rd.result; };
+    rd.readAsDataURL(f); avF.value="";
+  });
+  function avLoad(src){ var im=new Image(); im.onload=function(){ avState.img=im; avRefresh(); }; im.src=src; }
+  function avRender(){
+    if(avState.img==null) return "";
+    var c=document.createElement("canvas"); c.width=256; c.height=256;
+    avDraw(c.getContext("2d"),256);
+    var q=0.85,out=c.toDataURL("image/jpeg",q);
+    while(out.length>85000&&q>0.4){ q-=0.1; out=c.toDataURL("image/jpeg",q); }
+    return out;
+  }
+  avRefresh();
+  Promise.resolve(PERSONNEL).then(function(l){
+    const me=l.find(function(x){ return x.username===(target||window.currentLogin); });
     if(me==null) return;
-    fields.forEach(function(f){ document.getElementById("pf_"+f[0]).value=me[f[0]]||""; });
+    fields.forEach(function(f){ document.getElementById("pf_"+f[0]).value=me[f[0]]||""; }); if(me.avatar){ avLoad(me.avatar); }
   });
   const oldEl=document.getElementById("pf_old"),newEl=document.getElementById("pf_new"),new2El=document.getElementById("pf_new2");
   function pfErr(el){ el.style.border="1px solid #d94f4f"; el.style.background="#fdecec"; }
@@ -1074,6 +1254,7 @@ function buildProfileForm(){
     msg.textContent="";
     const data={};
     fields.forEach(function(f){ data[f[0]]=document.getElementById("pf_"+f[0]).value; });
+    if(avState.changed){ data.avatar=avRender(); }
     if(data.name.trim()===""){ pfBad("Укажите имя и фамилию"); return; }
     const o=oldEl.value,n1=newEl.value,n2=new2El.value;
     const wantPw=(n1===""&&n2==="")?false:true;
@@ -1083,12 +1264,13 @@ function buildProfileForm(){
       if(n1.length<6){ pfErr(newEl); pfErr(new2El); pfBad("Пароль минимум 6 символов"); return; }
       if(o===""){ pfErr(oldEl); pfBad("Введите текущий пароль"); return; }
     }
-    fetch("/api/me/profile",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)}).then(function(r){ return r.ok?r.json():null; }).then(function(u){
+    fetch(target?("/api/users/"+encodeURIComponent(target)+"/profile"):"/api/me/profile",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)}).then(function(r){ return r.ok?r.json():null; }).then(function(u){
       if(u==null){ pfBad("Ошибка сохранения"); return; }
       const i=PERSONNEL.findIndex(function(x){ return x.username===u.username; });
       if(i>=0) Object.assign(PERSONNEL[i],u);
-      document.getElementById("username").textContent=u.name;
-      if(u.avatar==null||u.avatar===""){ document.getElementById("avatar").textContent=u.name.charAt(0).toUpperCase(); }
+      teamLoaded=false; if(document.getElementById("page-team").classList.contains("active")) loadTeamPage();
+      if(u.username===window.currentLogin) document.getElementById("username").textContent=u.name;
+      if(u.username===window.currentLogin) if(u.avatar==null||u.avatar===""){ document.getElementById("avatar").textContent=u.name.charAt(0).toUpperCase(); } else { document.getElementById("avatar").innerHTML='<img src="'+u.avatar+'" style="width:100%;height:100%;object-fit:cover;">'; } avState.changed=false;
       if(wantPw===false){ msg.style.color="#16a34a"; msg.textContent="Сохранено"; return; }
       return fetch("/api/me/password",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({oldPassword:o,newPassword:n1})}).then(function(r){
         if(r.status===403){ pfErr(oldEl); pfBad("Данные сохранены, но текущий пароль неверный"); return; }
@@ -1099,8 +1281,8 @@ function buildProfileForm(){
     });
   });
 }
-function openProfileModal(){
-  setTimeout(function(){ buildProfileForm(); },0);
+function openProfileModal(target){
+  setTimeout(function(){ buildProfileForm(target); },0);
   const st=document.querySelector(".settings-modal-overlay");
   if(st){ st.remove(); document.getElementById("settingsBtn").classList.remove("nav-active"); }
   const overlay=document.createElement("div");
@@ -1109,7 +1291,7 @@ function openProfileModal(){
   overlay.style.padding="0";
   overlay.style.background="transparent";
   overlay.style.pointerEvents="none";
-  overlay.innerHTML='<div class="stage-modal" style="position:fixed;left:104px;top:16px;bottom:16px;height:calc(100vh - 32px);width:520px;max-width:calc(100vw - 140px);border-radius:0 20px 20px 0;transform-origin:left center;box-shadow:16px -10px 16px rgba(0,0,0,0.08),20px 0 20px rgba(0,0,0,0.10),16px 10px 16px rgba(0,0,0,0.08);pointer-events:auto;"><div class="obj-modal-header">Профиль</div><div class="obj-modal-body" style="flex:1;display:flex;flex-direction:column;overflow:hidden;padding:16px;"></div></div>';
+  overlay.innerHTML='<div class="stage-modal" style="position:fixed;left:104px;top:16px;bottom:16px;height:calc(100vh - 32px);width:520px;max-width:calc(100vw - 140px);border-radius:0 20px 20px 0;transform-origin:left center;box-shadow:16px -10px 16px rgba(0,0,0,0.08),20px 0 20px rgba(0,0,0,0.10),16px 10px 16px rgba(0,0,0,0.08);pointer-events:auto;"><div class="obj-modal-header">'+(target?"Редактирование аккаунта":"Профиль")+'</div><div class="obj-modal-body" style="flex:1;display:flex;flex-direction:column;overflow:hidden;padding:16px;"></div></div>';
   document.body.appendChild(overlay);
   requestAnimationFrame(function(){ overlay.classList.add("open"); overlay.querySelector(".stage-modal").classList.add("open"); });
 }
@@ -1121,6 +1303,11 @@ avatarEl.addEventListener("click",function(){
   openProfileModal();
 });
 document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeProfileModal(); });
+document.getElementById("teamEmpList").addEventListener("click",function(e){
+  var db=e.target.closest(".emp-dots");
+  if(db==null) return;
+  if(window.currentUserRole==="developer"){ var ex=document.querySelector(".profile-modal-overlay"); if(ex) ex.remove(); openProfileModal(db.getAttribute("data-un")); }
+});
 const mainDropdown=document.getElementById("mainDropdown");
 mainDropdown.innerHTML=PROJECTS.main.items.map(p=>
   '<div class="proj-card" data-code="'+p.code+'"><div class="proj-name">'+p.name+'</div></div>'

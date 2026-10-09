@@ -1182,12 +1182,32 @@ app.put('/api/users/:username/role', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'server' }); }
 });
 
+app.put('/api/users/:username/password', async (req, res) => {
+  try {
+    const me = await meUser(req);
+    if (canManageUsers(me)==false) return res.status(403).json({ error: 'forbidden' });
+    const pw = String((req.body || {}).password || '');
+    if (pw.length < 6) return res.status(400).json({ error: 'Пароль слишком короткий' });
+    const col = mongoose.connection.db.collection('users');
+    const target = await col.findOne({ username: req.params.username });
+    if (target == null) return res.status(404).json({ error: 'not found' });
+    if (target.role == 'developer' && (me.role == 'developer')==false) return res.status(403).json({ error: 'forbidden' });
+    await col.updateOne({ username: target.username }, { $set: { password: await bcrypt.hash(pw, 10) } });
+    res.json({ message: 'OK' });
+  } catch (err) { res.status(500).json({ error: 'server' }); }
+});
+
 app.put('/api/me/profile', async (req, res) => {
   try {
     const b = req.body || {};
     const clean = function (v) { return String(v == null ? '' : v).trim().slice(0, 200); };
     const set = { name: clean(b.name), department: clean(b.department), position: clean(b.position), birthday: clean(b.birthday), internalPhone: clean(b.internalPhone), mobilePhone: clean(b.mobilePhone), email: clean(b.email) };
     if (set.name == '') return res.status(400).json({ error: 'name required' });
+    if (typeof b.avatar == 'string') {
+      if (b.avatar == '') set.avatar = '';
+      else if (b.avatar.indexOf('data:image/jpeg;base64,') == 0 && b.avatar.length < 90000) set.avatar = b.avatar;
+      else return res.status(400).json({ error: 'bad avatar' });
+    }
     const col = mongoose.connection.db.collection('users');
     await col.updateOne({ username: req.session.user }, { $set: set });
     const u = await col.findOne({ username: req.session.user }, { projection: { password: 0 } });
@@ -1247,6 +1267,28 @@ app.get('/api/map-object/:code', async (req, res) => {
       pForecast = new Date(new Date(pEnd).getTime() + pDelta * 86400000);
     }
     res.json({ has: true, totalCost: totalCost, done: done, paid: paid, planPct: planPct, factPct: factPct, updatedAt: report.updatedAt || null, start: pStart, end: pEnd, forecastEnd: pForecast, deltaDays: pDelta, stages: stages });
+  } catch (err) { res.status(500).json({ error: 'server' }); }
+});
+
+app.put('/api/users/:username/profile', async (req, res) => {
+  try {
+    const me = await meUser(req);
+    if (me == null || (me.role == 'developer') == false) return res.status(403).json({ error: 'forbidden' });
+    const b = req.body || {};
+    const clean = function (v) { return String(v == null ? '' : v).trim().slice(0, 200); };
+    const set = { name: clean(b.name), department: clean(b.department), position: clean(b.position), birthday: clean(b.birthday), internalPhone: clean(b.internalPhone), mobilePhone: clean(b.mobilePhone), email: clean(b.email) };
+    if (set.name == '') return res.status(400).json({ error: 'name required' });
+    if (typeof b.avatar == 'string') {
+      if (b.avatar == '') set.avatar = '';
+      else if (b.avatar.indexOf('data:image/jpeg;base64,') == 0 && b.avatar.length < 90000) set.avatar = b.avatar;
+      else return res.status(400).json({ error: 'bad avatar' });
+    }
+    const col = mongoose.connection.db.collection('users');
+    const target = await col.findOne({ username: req.params.username });
+    if (target == null) return res.status(404).json({ error: 'not found' });
+    await col.updateOne({ username: target.username }, { $set: set });
+    const u = await col.findOne({ username: target.username }, { projection: { password: 0 } });
+    res.json(u);
   } catch (err) { res.status(500).json({ error: 'server' }); }
 });
 
