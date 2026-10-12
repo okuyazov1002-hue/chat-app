@@ -16,6 +16,7 @@ const session=require('express-session');
 const cm=require('connect-mongo');const MongoStore=cm.MongoStore||cm.default||cm;
 const bcrypt=require('bcryptjs');
 app.set('trust proxy',1);
+app.use(function(req,res,next){var h=String(req.headers.host||'').toLowerCase().split(':')[0];if(h==='dsomk.online'||h==='www.dsomk.online'){return res.redirect(301,'https://upmo.uz'+req.originalUrl);}next();});
 app.use(session({secret:process.env.SESSION_SECRET,resave:false,saveUninitialized:false,store:MongoStore.create({mongoUrl:process.env.MONGODB_URI}),cookie:{httpOnly:true,sameSite:'lax',secure:'auto',maxAge:1000*60*60*12}}));
 app.use('/api',(req,res,next)=>{
   if(req.path=='/login'||req.path=='/logout') return next();
