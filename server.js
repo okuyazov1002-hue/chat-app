@@ -220,11 +220,17 @@ app.get("/api/reports/:code/summary", async (req, res) => {
   }
 });
 
+function filterByType(rows, type) {
+  if (type == "int") return rows.filter(x => x.contractor && x.contractor.includes("Внутренний"));
+  if (type == "ext") return rows.filter(x => x.contractor === "Внешний");
+  return rows;
+}
 app.get("/api/prep/objects", async (req, res) => {
   try {
     const reports = await mongoose.connection.db.collection("reports").find({ code: { $regex: "-" } }).toArray();
+    const ftype = req.query.type;
     const result = reports.map(r => {
-      const rows = r.rows || [];
+      const rows = filterByType(r.rows || [], ftype);
       const cost = rows.reduce((s, x) => s + (x.cost || 0), 0);
       const done = rows.reduce((s, x) => s + (x.done || 0), 0);
       const planPct = calcPlanPct(rows, cost);
@@ -237,6 +243,7 @@ app.get("/api/prep/objects", async (req, res) => {
       const workType = stages.join(", ");
       return {
         code: r.code,
+        nrows: rows.length,
         cost, done, paid,
         workType,
         remDone: cost - done, remPaid: cost - paid,
@@ -254,8 +261,52 @@ app.get("/api/prep/objects", async (req, res) => {
         updatedBy: r.updatedBy || null
       };
     });
-    result.sort((a, b) => a.code.localeCompare(b.code));
-    res.json(result);
+    const out = ftype ? result.filter(o => o.nrows > 0) : result;
+    out.sort((a, b) => a.code.localeCompare(b.code));
+    res.json(out);
+  } catch (err) {
+    res.status(500).json({ message: "Ошибка сервера: " + err.message });
+  }
+});
+app.get("/api/prep/object/:code/term", async (req, res) => {
+  try {
+    const code = req.params.code;
+    const report = await mongoose.connection.db.collection("reports").findOne({ code });
+    const rows = (report && report.rows) ? report.rows : [];
+    let start = null, end = null, cost = 0, done = 0;
+    rows.forEach(r => {
+      cost += r.cost || 0; done += r.done || 0;
+      if (r.planStart) { const d = new Date(r.planStart); if (isNaN(d) == false && (start == null || d < start)) start = d; }
+      if (r.planEnd) { const d = new Date(r.planEnd); if (isNaN(d) == false && (end == null || d > end)) end = d; }
+    });
+    const curve = await mongoose.connection.db.collection("data").findOne({ _id: "prep_cost_curve_" + code });
+    const today = new Date();
+    let delay = 0;
+    if (start != null && end != null && cost > 0 && done < cost * 0.999) {
+      let dateF = null;
+      const v = curve ? (curve.value || {}) : {};
+      const labels = v.labels || [], per = v.planPer || [];
+      if (labels.length > 0) {
+        let cum = 0;
+        for (let i = 0; i < labels.length; i++) {
+          const m = per[i] || 0;
+          if (cum + m >= done) {
+            const parts = String(labels[i]).split("-");
+            const ms = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+            const me = new Date(Number(parts[0]), Number(parts[1]), 1);
+            const frac = m > 0 ? (done - cum) / m : 0;
+            dateF = new Date(ms.getTime() + frac * (me.getTime() - ms.getTime()));
+            break;
+          }
+          cum += m;
+        }
+      } else {
+        dateF = new Date(start.getTime() + (done / cost) * (end.getTime() - start.getTime()));
+      }
+      if (dateF != null) { delay = Math.max(0, Math.round((today.getTime() - dateF.getTime()) / 86400000)); }
+    }
+    const forecast = end ? new Date(end.getTime() + delay * 86400000) : null;
+    res.json({ start, end, forecast, delay });
   } catch (err) {
     res.status(500).json({ message: "Ошибка сервера: " + err.message });
   }
@@ -387,6 +438,7 @@ app.post("/api/prep/import", upload.single("file"), async (req, res) => {
       const actualCost = cellNum(row.getCell(12));
       const dates = datesByCode[code] || {};
       byCode[code].push({
+        project: String(row.getCell(3).value || ""),
         stage: row.getCell(4).value || "",
         item: row.getCell(5).value || "",
         uom: row.getCell(6).value || "",
@@ -519,7 +571,7 @@ app.get("/api/prep/export", async (req, res) => {
     basic.addRow(["Code", "Contractor", "Project", "Discipline", "Work Type", "UOM", "Quantity", "Actual Q", "Man-Hours", "Actual MH", "Cost", "Actual Cost", "Начало", "Окончание"]);
     reports.forEach(r => {
       (r.rows || []).filter(row => !stageFilter || row.stage === stageFilter).forEach(row => {
-        basic.addRow([r.code, row.contractor || "", "", row.stage || "", row.item || "", "", 0, 0, row.mhPlan || 0, row.mhFact || 0, row.cost || 0, row.costFact || 0, row.planStart ? new Date(row.planStart) : "", row.planEnd ? new Date(row.planEnd) : ""]);
+        basic.addRow([r.code, row.contractor || "", row.project || "", row.stage || "", row.item || "", "", 0, 0, row.mhPlan || 0, row.mhFact || 0, row.cost || 0, row.costFact || 0, row.planStart ? new Date(row.planStart) : "", row.planEnd ? new Date(row.planEnd) : ""]);
       });
     });
 
@@ -533,11 +585,24 @@ app.get("/api/prep/export", async (req, res) => {
       const mhFact = rows.reduce((s, x) => s + (x.mhFact || 0), 0);
       const contractor = rows.find(x => x.contractor)?.contractor || "";
       const progress = cost ? Math.round(done / cost * 100) / 100 : 0;
-      total.addRow([r.code, contractor, "", mh, mhFact, cost, done, progress]);
+      total.addRow([r.code, contractor, (rows.find(x => x.project) || {}).project || "", mh, mhFact, cost, done, progress]);
     });
 
     const byMonth = {};
+    const curveCodes = {};
+    const curveDocs = await mongoose.connection.db.collection("data").find({ _id: { $regex: "^prep_cost_curve_" } }).toArray();
+    curveDocs.forEach(cd => {
+      const v = cd.value || {};
+      if (reports.some(r => r.code == cd.code) == false) return;
+      curveCodes[cd.code] = 1;
+      (v.labels || []).forEach((k, i) => {
+        byMonth[k] = byMonth[k] || { plan: 0, fact: 0 };
+        byMonth[k].plan += (v.planPer || [])[i] || 0;
+        byMonth[k].fact += (v.factPer || [])[i] || 0;
+      });
+    });
     reports.forEach(r => {
+      if (curveCodes[r.code]) return;
       (r.rows || []).forEach(row => {
         if (row.planStart == null || row.planEnd == null) return;
         const ps = new Date(row.planStart), pe = new Date(row.planEnd);
@@ -588,6 +653,16 @@ app.get("/api/prep/export", async (req, res) => {
         mobByMonth[key].fact = Math.max(mobByMonth[key].fact, m.fact || 0);
       });
     });
+    const mobDocs = await mongoose.connection.db.collection("data").find({ _id: { $regex: "^prep_mobilization_" } }).toArray();
+    mobDocs.forEach(md => {
+      if (reports.some(r => r.code == md.code) == false) return;
+      const v = md.value || {};
+      (v.labels || []).forEach((k, i) => {
+        mobByMonth[k] = mobByMonth[k] || { plan: 0, fact: 0 };
+        mobByMonth[k].plan += (v.plan || [])[i] || 0;
+        mobByMonth[k].fact += (v.fact || [])[i] || 0;
+      });
+    });
     const mobSheet = wb.addWorksheet("Mobilization");
     mobSheet.addRow(["Month", "Plan", "Actual"]);
     Object.keys(mobByMonth).sort().forEach(key => {
@@ -610,7 +685,7 @@ app.get("/api/prep/summary", async (req, res) => {
   try {
     const reports = await mongoose.connection.db.collection("reports").find({ code: { $regex: "-" } }).toArray();
     let allRows = [];
-    reports.forEach(r => { allRows = allRows.concat(r.rows || []); });
+    reports.forEach(r => { allRows = allRows.concat(filterByType(r.rows || [], req.query.type)); });
     const internalRows = allRows.filter(r => r.contractor && r.contractor.includes("Внутренний"));
     const externalRows = allRows.filter(r => r.contractor === "Внешний");
     const sumCost = rows => rows.reduce((s, r) => s + (r.cost || 0), 0);
@@ -645,6 +720,9 @@ app.get("/api/prep/scurve", async (req, res) => {
     let docs = await mongoose.connection.db.collection("data").find({ _id: { $regex: "^prep_cost_curve_" } }).toArray();
     if (contractor) docs = docs.filter(d => d.contractor && d.contractor.includes(contractor));
     if (codeFilter) docs = docs.filter(d => d.code === codeFilter);
+    const ty = req.query.type;
+    if (ty == "int") docs = docs.filter(d => d.contractor && (d.contractor.includes("Внутренний") || d.contractor == "Смешанный"));
+    if (ty == "ext") docs = docs.filter(d => d.contractor && (d.contractor == "Внешний" || d.contractor == "Смешанный"));
     const byMonth = {};
     let total = 0;
     docs.forEach(doc => {
@@ -664,16 +742,17 @@ app.get("/api/prep/scurve", async (req, res) => {
     const now = new Date();
     const nowKey = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
     let cp = 0, cf = 0;
-    const labels = [], planPerOut = [], factPerOut = [], planCum = [], factCum = [];
+    const labels = [], planPerOut = [], factPerOut = [], planCum = [], factCum = [], planAmt = [], factAmt = [];
     keys.forEach(k => {
       cp += byMonth[k].plan; cf += byMonth[k].fact;
       labels.push(k);
       planPerOut.push(Math.round(byMonth[k].plan / total * 100 * 10) / 10);
+      planAmt.push(Math.round(byMonth[k].plan)); factAmt.push(k <= nowKey ? Math.round(byMonth[k].fact) : null);
       factPerOut.push(k <= nowKey ? Math.round(byMonth[k].fact / total * 100 * 10) / 10 : null);
       planCum.push(Math.round(cp / total * 100));
       factCum.push(k <= nowKey ? Math.round(cf / total * 100) : null);
     });
-    res.json({ labels, planPer: planPerOut, factPer: factPerOut, planCum, factCum });
+    res.json({ labels, planPer: planPerOut, factPer: factPerOut, planCum, factCum, planAmt, factAmt });
   } catch (err) {
     res.status(500).json({ message: "Ошибка сервера: " + err.message });
   }
