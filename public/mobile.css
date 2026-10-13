@@ -91,3 +91,15 @@ button.nav-active::before{display:block;content:"";position:absolute;top:50%;lef
 @media (max-width:768px){#teamSheetOverlay .stage-modal{border-radius:0 0 16px 16px !important;}}
 
 @media (max-width:768px){body:has(#teamSheetOverlay) #dsBack{visibility:hidden !important;pointer-events:none !important;}}
+
+@media (max-width:768px){#infoSheetOverlay .stage-modal{border-radius:0 0 16px 16px !important;}}
+
+@media (max-width:768px){#upmoOverlay .stage-modal{border-radius:0 0 16px 16px !important;}}
+
+#upmoOverlay, #upmoOverlay *{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;outline:none;}
+#upmoOverlay .stage-modal, #upmoPanel2in{will-change:transform;backface-visibility:hidden;}
+
+@media (min-width:769px){
+#upmoOverlay .stage-modal{transform:translateX(-100%) !important;clip-path:inset(0 0 0 100%);opacity:1 !important;transition:transform .45s cubic-bezier(.22,1,.36,1),clip-path .45s cubic-bezier(.22,1,.36,1);}
+#upmoOverlay .stage-modal.open{transform:translateX(0) !important;clip-path:inset(0 0 0 0);}
+}

@@ -34,7 +34,7 @@ b.classList.add('nav-active');
 var ov=document.createElement('div');
 ov.id='infoSheetOverlay';ov.className='stage-modal-overlay';
 ov.style.display='block';ov.style.padding='0';ov.style.background='transparent';
-ov.innerHTML='<div class="stage-modal" style="position:fixed;left:0;top:56px;bottom:64px;width:100%;"><div class="obj-modal-header">Информация</div><div id="infoSheetBody" style="flex:1;min-height:0;padding:6px 0 16px 0;">'+build()+'</div></div>';
+ov.innerHTML='<div class="stage-modal" style="position:fixed;left:0;top:56px;bottom:64px;width:100%;"><div class="obj-modal-header" style="min-height:0;padding:0;border:0;"></div><div id="infoSheetBody" style="flex:1;min-height:0;padding:0;display:flex;flex-direction:column;"><div id="infoTop" style="flex:0 0 auto;height:120px;position:relative;z-index:1;border-radius:0 0 18px 18px;background:linear-gradient(90deg,#6a5ae0 0%,#4a90d9 50%,#1dd3b0 100%);transition:height .4s ease;"><div id="infoTab" style="position:absolute;left:50%;bottom:-15px;transform:translateX(-50%);width:52px;height:28px;border-radius:14px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:center;font-size:14px;color:#4a90d9;cursor:pointer;z-index:3;">&#9650;</div></div><div id="infoWhite" style="flex:1;position:relative;margin-top:-18px;padding-top:18px;box-sizing:border-box;background:#fff;"></div></div></div>';
 document.body.appendChild(ov);
 setTimeout(function(){ov.classList.add('open');ov.querySelector('.stage-modal').classList.add('open');},20);
 ov.addEventListener('click',function(ev){
@@ -439,3 +439,5 @@ document.querySelectorAll('.tmCard[data-o="1"]').forEach(function(x){x.style.hei
 if(!open){var det=c.querySelector('.tmDet');c.style.height=(44+det.offsetHeight)+'px';c.setAttribute('data-o','1');}
 },true);
 })();
+
+document.addEventListener('click',function(e){var tb=e.target.closest('#infoTab');if(tb==null){return;}e.stopPropagation();var t=document.getElementById('infoTop');var closed=t.getAttribute('data-c')=='1';t.style.height=closed?'120px':'14px';t.setAttribute('data-c',closed?'0':'1');tb.innerHTML=closed?'&#9650;':'&#9660;';},true);

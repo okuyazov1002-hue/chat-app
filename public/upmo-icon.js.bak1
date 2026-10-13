@@ -1,0 +1,11 @@
+(function(){
+var st=document.createElement('style');
+st.textContent='#settingsBtn .su-cur{opacity:0;}#settingsBtn.su-go .su-cur{animation:suCur 1.4s ease forwards;}#settingsBtn.su-go .su-plus{animation:suPlus .8s ease .6s;transform-box:view-box;transform-origin:17px 85px;}@keyframes suCur{0%{opacity:0;transform:translate(30px,30px)}25%{opacity:1;transform:translate(0,0)}40%{transform:translate(-1px,-1px) scale(.85)}52%{transform:translate(0,0)}85%{opacity:1}100%{opacity:0;transform:translate(16px,16px)}}@keyframes suPlus{0%{transform:rotate(0)}15%{transform:rotate(-28deg)}35%{transform:rotate(28deg)}55%{transform:rotate(-20deg)}75%{transform:rotate(20deg)}100%{transform:rotate(0)}}';
+document.head.appendChild(st);
+var b=document.getElementById('settingsBtn');
+if(b===null){return;}
+b.addEventListener('click',function(){
+b.classList.remove('su-go');void b.offsetWidth;b.classList.add('su-go');
+setTimeout(function(){b.classList.remove('su-go');},1500);
+});
+})();

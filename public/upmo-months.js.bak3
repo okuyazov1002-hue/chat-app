@@ -1,0 +1,39 @@
+window.upmoMonths=function(el,ty){
+if(el===null){return;}
+var msg=function(t){el.innerHTML='<div style="padding:14px;color:#fff;font-size:11px;">'+t+'</div>';};
+msg('Загрузка...');
+fetch('/api/prep/scurve'+(ty?'?type='+ty:'')).then(function(r){return r.json();}).then(function(sc){
+var n=sc.labels?sc.labels.length:0;
+if(n===0){msg('Нет данных');return;}
+var step=Math.max(22,Math.floor(((el.clientWidth||0)-24)/n));
+var bw=step-6,H=110,pc=[],last=0;
+sc.labels.forEach(function(k,i){var p=(sc.planPer&&sc.planPer[i])||0;var f=sc.factPer?sc.factPer[i]:null;var v=(f==null)?null:((p>0)?f/p*100:null);pc.push(v);if(f!=null){last=i;}});
+var h='';
+sc.labels.forEach(function(k,i){var v=pc[i];var hf=(v==null)?0:Math.round(Math.min(v,100)/100*H);var mm=String(k).slice(5);var yy=String(k).slice(0,4);
+h+='<div style="width:'+step+'px;flex:none;display:flex;flex-direction:column;align-items:center;"><div style="position:relative;width:'+step+'px;height:'+H+'px;"><div class="upTr" style="position:absolute;left:3px;bottom:0;width:'+bw+'px;height:'+H+'px;background:rgba(255,255,255,0.3);border-radius:'+(bw/2)+'px;"></div><div style="position:absolute;left:3px;bottom:0;width:'+bw+'px;height:'+hf+'px;background:#138a62;border-radius:'+(bw/2)+'px;"></div></div><div style="font-size:9px;color:rgba(255,255,255,0.9);margin-top:8px;">'+mm+'</div><div style="font-size:9px;color:rgba(255,255,255,0.7);height:11px;">'+((i===0||mm==='01')?yy:'')+'</div></div>';});
+var bub='<div id="upmoBub" style="display:none;position:absolute;top:0;left:0;background:#fff;border-radius:10px;padding:5px 9px;font-size:10px;font-weight:700;line-height:1.4;text-align:right;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.25);z-index:5;"><div id="upmoBT"></div><div id="upmoAr" style="position:absolute;bottom:-4px;left:0;width:9px;height:9px;background:#fff;transform:rotate(45deg);"></div></div>';
+el.innerHTML='<div id="upmoMS" style="overflow-x:auto;scrollbar-width:none;padding:6px 12px 8px;cursor:grab;"><div id="upmoMW" style="position:relative;display:flex;width:'+(n*step)+'px;padding-top:16px;">'+h+bub+'</div></div>';
+var ms=document.getElementById('upmoMS');ms.scrollLeft=Math.max(0,(last-5)*step);if(window.upmoLink){window.upmoLink();}
+var wr=document.getElementById('upmoMW'),bb=document.getElementById('upmoBub'),bt=document.getElementById('upmoBT'),ar=document.getElementById('upmoAr');
+var fm=(typeof fmtMoney==='function')?fmtMoney:function(x){return String(x);};
+function mark(i){el.querySelectorAll('.upTr').forEach(function(t,j){t.style.background=(j===i)?'rgba(255,255,255,0.6)':'rgba(255,255,255,0.3)';});}
+function show(i,x,y){
+var pa=sc.planAmt?sc.planAmt[i]:null,fa=sc.factAmt?sc.factAmt[i]:null;
+var t='<div style="color:#2563eb;">'+((pa==null)?'—':fm(pa))+'</div>';
+if(fa!=null){t+='<div style="color:#138a62;">'+fm(fa)+'</div>';var d=(pa||0)-fa;if(d>0){t+='<div style="color:#e53e3e;">−'+fm(d)+'</div>';}else if(d<0){t+='<div style="color:#138a62;">+'+fm(-d)+'</div>';}}
+bt.innerHTML=t;bb.style.display='block';
+var w=bb.offsetWidth,hh=bb.offsetHeight;
+var L=Math.max(0,Math.min(x-w/2,n*step-w)),T=y-hh-10,up=true;
+if(T<0){T=y+14;up=false;}
+bb.style.left=L+'px';bb.style.top=T+'px';
+ar.style.left=Math.max(4,Math.min(w-14,x-L-5))+'px';
+if(up){ar.style.bottom='-4px';ar.style.top='auto';}else{ar.style.top='-4px';ar.style.bottom='auto';}
+}
+wr.addEventListener('click',function(e){
+if(bb.contains(e.target)){bb.style.display='none';mark(-1);return;}
+var r=wr.getBoundingClientRect();var x=e.clientX-r.left,y=e.clientY-r.top;
+var i=Math.floor(x/step);if(i<0||i>=n){return;}
+show(i,x,y);mark(i);
+});
+}).catch(function(){msg('Не удалось загрузить');});
+};
