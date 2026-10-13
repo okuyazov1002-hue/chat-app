@@ -682,6 +682,24 @@ app.get("/api/prep/export", async (req, res) => {
     res.status(500).json({ message: "Ошибка сервера: " + err.message });
   }
 });
+app.get("/api/proj/summary", async (req, res) => {
+  try {
+    const code = String(req.query.code || "");
+    const rep = await mongoose.connection.db.collection("reports").findOne({ code });
+    if (!rep) return res.json({ totalCost: 0, done: 0, plan: 0, remaining: 0 });
+    const now = Date.now();
+    let tc = 0, dn = 0, pl = 0, pd = 0;
+    (rep.rows || []).forEach(function (x) {
+      const c = x.cost || 0; tc += c; dn += x.done || 0; pd += x.costFact || 0;
+      const a = x.planStart ? new Date(x.planStart).getTime() : null;
+      const b = x.planEnd ? new Date(x.planEnd).getTime() : null;
+      if (b !== null && b <= now) pl += c;
+      else if (a !== null && b !== null && a < now && b > a) pl += c * (now - a) / (b - a);
+    });
+    res.json({ totalCost: tc, done: dn, plan: Math.round(pl), paid: pd, remaining: Math.max(0, tc - pd) });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
+});
+
 app.get("/api/prep/summary", async (req, res) => {
   try {
     const reports = await mongoose.connection.db.collection("reports").find({ code: { $regex: "-" } }).toArray();

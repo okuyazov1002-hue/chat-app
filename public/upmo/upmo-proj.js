@@ -68,6 +68,7 @@ pv[2].style.color=xc;bi[0].style.width=w0;bi[1].style.width=w1;
 function applyCard(){
 var p=window.upmoPeriod||null;var code=window._upmoFocus||null;var o=code?(dm[code]||null):null;
 if(!p){setCard(o,code,code===null);return;}
+if(p.t){setCardMonth('Неделя · вт '+p.t.slice(8)+'.'+p.t.slice(5,7)+'.'+p.t.slice(0,4)+(code?' · '+code:''),'—','—','—','—');setProgPct(null,null);return;}
 window.upmoScData(ty,code).then(function(sc){
 var fm=(typeof fmtMoney==='function')?fmtMoney:function(x){return String(x);};
 var key=p.y+'-'+(p.m<10?'0':'')+p.m;
