@@ -305,6 +305,15 @@ return;}
 var ex=document.querySelector('.settings-modal-overlay');
 if(ex){var m=ex.querySelector('.stage-modal');if(m){m.style.display='none';}ex.remove();if(sb){sb.classList.remove('nav-active');}}
 },true);
+(function(){var st=document.createElement('style');st.id='pfLogoutCss';st.textContent='#logoutBtn{display:none!important;}';document.head.appendChild(st);
+function add(){var sv=document.getElementById('pfSave');if(!sv||document.getElementById('pfLogout')){return;}
+var row=sv.parentNode;if(!row||!row.parentNode){return;}
+var b=document.createElement('button');b.id='pfLogout';b.textContent='Выход';
+b.style.cssText='display:block;width:100%;height:34px;margin:12px 0 4px;border:0;border-radius:10px;background:#fff;color:#d9776f;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.12);';
+sv.style.cssText+=';display:block;width:100%;height:34px;border-radius:10px;font-size:12px;';sv.setAttribute('pfSaveW','1');if(row.style){row.style.display='block';}
+b.onclick=function(){var lb=document.getElementById('logoutBtn');if(lb){lb.click();}};
+row.parentNode.insertBefore(b,row.nextSibling);}
+new MutationObserver(add).observe(document.body,{childList:true,subtree:true});})();
 function structAct(act,code){
 if(act==='export'){window.location.href='/api/reports/export?code='+encodeURIComponent(code);return;}
 var inp=document.createElement('input');inp.type='file';inp.accept='.xlsx';
