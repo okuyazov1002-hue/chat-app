@@ -495,7 +495,7 @@ app.post("/api/prep/import", upload.single("file"), async (req, res) => {
         { code },
         { $set: {
             code, rows: finalRows, updatedAt: new Date(),
-            updatedBy: "О. Курязов",
+            updatedBy: await (async function(){try{var _u=await mongoose.connection.db.collection("users").findOne({username:req.session.user});return (_u&&(_u.name||_u.fullName||_u.username))||req.session.user||"";}catch(e){return req.session.user||"";}})(),
             totalCost: totalInfo.totalCost || 0,
             totalDone: totalInfo.totalDone || 0,
             contractorType: totalInfo.contractor || ""
@@ -1157,7 +1157,7 @@ app.post("/api/reports/import", upload.single("file"), async (req, res) => {
     for (const code of Object.keys(byCode)) {
       await mongoose.connection.db.collection("reports").updateOne(
         { code },
-        { $set: { code, rows: byCode[code], updatedAt: new Date(), updatedBy: "О. Курязов" } },
+        { $set: { code, rows: byCode[code], updatedAt: new Date(), updatedBy: await (async function(){try{var _u=await mongoose.connection.db.collection("users").findOne({username:req.session.user});return (_u&&(_u.name||_u.fullName||_u.username))||req.session.user||"";}catch(e){return req.session.user||"";}})() } },
         { upsert: true }
       );
       results.push({ code, status: "обновлено (" + byCode[code].length + " строк)" });
@@ -1390,4 +1390,5 @@ app.put('/api/users/:username/profile', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'server' }); }
 });
 
+require('./assistant')(app,{calcPlanPct:calcPlanPct,getStagesForCode:getStagesForCode});
 app.listen(PORT, () => console.log(`🚀 Port ${PORT}`));
