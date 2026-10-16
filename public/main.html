@@ -665,7 +665,10 @@ document.getElementById('mapBtn').addEventListener('click',function(){
 ['PSP01-CH','Участок кранового хозяйства',[[40.85526,69.54455],[40.85529,69.54532],[40.85564,69.54454],[40.85563,69.54532]]],
 ['PSP01-CG','Конвейерная галерея ДШО',[[40.85466,69.54807],[40.85466,69.54837],[40.85651,69.54802],[40.85652,69.54841]]],
 ['PSP01-RF','Огнеупорный цех',[[40.85565,69.54377],[40.85565,69.54423],[40.85594,69.54378],[40.85594,69.54423]]],
-['PSP01-MS','Склад металлов',[[40.85190,69.54809],[40.85190,69.54852],[40.85241,69.54808],[40.85241,69.54852]]]
+['PSP01-MS','Склад металлов',[[40.85190,69.54809],[40.85190,69.54852],[40.85241,69.54808],[40.85241,69.54852]]],
+['PSP01-GD','Магистральный газоход КАО Ду 2020 мм',[[40.85500,69.54547],[40.85487,69.54589],[40.85489,69.54749],[40.85586,69.54750]],'line'],
+['OXS01-GP','Трубопроводы газообразных продуктов (кислород, азот, воздух)',[[40.85502,69.54538],[40.85587,69.54539],[40.85603,69.54598],[40.85677,69.54598],[40.85677,69.54569],[40.85841,69.54569],[40.85841,69.54608],[40.85860,69.54608]],'line'],
+['MSC01-BR','Двухочковый железобетонный путепровод МПЗ',[[40.86098,69.53909],[40.86095,69.53949],[40.86125,69.53909],[40.86124,69.53951]]]
     ];
     function rectFrom(c){
       var la0=c[0][0],ln0=c[0][1];
@@ -718,16 +721,30 @@ document.getElementById('mapBtn').addEventListener('click',function(){
       var txt=st.status=='done'?'Завершён':(st.status=='active'?'Выполняется':'Нет данных');
       return '<div style="display:flex;flex-direction:column;gap:10px;">'+base+'<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;"><div style="font-size:11px;color:#6b7280;">Статус</div><div style="font-weight:700;font-size:11px;color:#1f2937;">'+txt+', выполнено '+st.pct+'%</div></div></div>';
     }
-    prepObjs.forEach(function(o){
+    (function(){var s=document.createElement('style');s.textContent='.br-hide{stroke-opacity:0!important;fill-opacity:0!important;}';document.head.appendChild(s);})();
+prepObjs.forEach(function(o){
       var c=o[2];
-      var poly=L.polygon(roundPoly(axisRect(c)),{color:prepColors.none,weight:3,lineJoin:'round',fillColor:prepColors.none,fillOpacity:0.2}).addTo(prepGroup);
+      var poly=(o[3]==='line'?L.polyline(c,{color:prepColors.none,weight:6,lineJoin:'round',lineCap:'round'}):L.polygon(roundPoly(axisRect(c)),{color:prepColors.none,weight:3,lineJoin:'round',fillColor:prepColors.none,fillOpacity:0.2,className:(o[0]==='MSC01-BR'?'br-hide':'')})).addTo(prepGroup);
       
       poly.on('click',function(e){openObj(e.latlng,prepPanel(o[0],o[1]));});
       prepPolys[o[0]]=poly;allPlans.push(poly);
-      var q=axisRect(c);var ctr=[(q[0][0]+q[2][0])/2,(q[0][1]+q[2][1])/2];
+      var q=o[3]==='line'?c:axisRect(c);var ctr=o[3]==='line'?[(c[(c.length>>1)-1][0]+c[c.length>>1][0])/2,(c[(c.length>>1)-1][1]+c[c.length>>1][1])/2]:[(q[0][0]+q[2][0])/2,(q[0][1]+q[2][1])/2];
       var pm=L.marker(ctr).addTo(prepGroup).bindTooltip(o[0]+' '+o[1],{permanent:true,direction:'top',offset:[-15,-10],className:'pin-label'}).on('click',function(e){openObj(e.latlng,prepPanel(o[0],o[1]));});
       pm._grp=prepGroup;pm._code=o[0];allMarkers.push(pm);
     });
+    (function(){
+      var S=40.86095,N=40.86125,W=69.53909,E=69.53951;
+      var img=new Image();
+      img.onload=function(){
+        var wm=(E-W)*84376,hm=(N-S)*111050,asp=img.naturalWidth/img.naturalHeight,w2,h2;
+        if(wm/hm>asp){h2=hm;w2=hm*asp;}else{w2=wm;h2=wm/asp;}
+        var cLat=(S+N)/2,cLon=(W+E)/2,dLat=h2/111050/2,dLon=w2/84376/2;
+        var ov=L.imageOverlay('/genplans/MSC01-BR.png',[[cLat-dLat-0.00001-0.15*2*dLat*1.25,cLon+dLon-2*dLon*1.25*1.15],[cLat-dLat-0.00001+2*dLat*1.25*1.08,cLon+dLon]],{opacity:0.9,interactive:false});
+        prepGroup.addLayer(ov);
+        window.mscBrPlan=ov;
+      };
+      img.src='/genplans/MSC01-BR.png';
+    })();
     window.dsMapFocus=function(code){var poly=prepPolys[code];if(!poly)return false;leafMap.invalidateSize();Object.keys(prepPolys).forEach(function(k){if(k==code){prepGroup.addLayer(prepPolys[k]);}else{prepGroup.removeLayer(prepPolys[k]);}});allMarkers.forEach(function(m){if(m._code==code){if(leafMap.hasLayer(m)==false)prepGroup.addLayer(m);}else if(leafMap.hasLayer(m)){leafMap.removeLayer(m);}});leafMap.fitBounds(poly.getBounds(),{maxZoom:18,padding:[20,20]});return true;};
     window.dsMapAll=function(){Object.keys(prepPolys).forEach(function(k){prepGroup.addLayer(prepPolys[k]);});allMarkers.forEach(function(m){if(m._grp==prepGroup&&leafMap.hasLayer(m)==false)prepGroup.addLayer(m);});};
     function projName(code){var all=PROJECTS.main.items.concat(PROJECTS.aux.items);for(var i=0;i<all.length;i++){if(all[i].code==code) return all[i].name;}return '';}
