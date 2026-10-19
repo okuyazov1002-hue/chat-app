@@ -504,12 +504,105 @@ function closeStruct(instant){
 if(sw===null){return;}
 var o=sw;sw=null;
 if(instant){o.style.display='none';}
-o.classList.remove('on');
+if(!instant&&window.DB_OLD!==true){dbDust(o,'out');}o.classList.remove('on');
 var sb=document.getElementById('structureBtn');if(sb){sb.classList.remove('nav-active');}
 if(window._structPrev){window._structPrev.classList.add('nav-active');window._structPrev=null;}
 window._structLastClose=Date.now();
-setTimeout(function(){o.remove();},520);
+setTimeout(function(){o.remove();},1050);
 }
+function dbDust(w,mode){var bs=[].slice.call(w.querySelectorAll('.dbb'));if(!bs.length){return;}
+var dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight,cv=document.createElement('canvas');
+cv.width=W*dpr;cv.height=H*dpr;cv.style.cssText='position:fixed;left:0;top:0;width:'+W+'px;height:'+H+'px;pointer-events:none;z-index:2003';
+document.body.appendChild(cv);var c=cv.getContext('2d');c.scale(dpr,dpr);
+var rs=bs.map(function(b){return b.getBoundingClientRect();}),y0=rs[0].top,y1=rs[rs.length-1].bottom,P=[],sbr=document.getElementById('structureBtn').getBoundingClientRect(),bx=sbr.left+sbr.width/2,by=sbr.top+sbr.height/2;
+function mix(a,b,t){return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),Math.round(a[2]+(b[2]-a[2])*t)];}
+function rgb(f){f=Math.max(0,Math.min(1,f+(Math.random()-.5)*.25));return (f<.5?mix([106,91,214],[91,148,208],f*2):mix([91,148,208],[95,210,176],(f-.5)*2)).join(',');}
+rs.forEach(function(r){var R=r.width/2,cx=r.left+R,cy=r.top+r.height/2;for(var i=0;i<1100;i++){var a=Math.random()*6.283,d=Math.sqrt(Math.random())*R*1.05,tx=cx+Math.cos(a)*d,ty=cy+Math.sin(a)*d;P.push({tx:tx,ty:ty,rgb:rgb((ty-y0)/Math.max(1,y1-y0)),dl:Math.random()*.4,ox:bx+(Math.random()-.5)*24,oy:by+(Math.random()-.5)*24,ph:Math.random()*6.283,s:.45+Math.random()*.4});}});
+var IN=mode==='in',T=IN?1100:950,t0=performance.now();
+if(IN){bs.forEach(function(b,i){setTimeout(function(){b.classList.add('sh');},600+i*110);});}else{bs.forEach(function(b){b.style.transition='opacity .25s';b.classList.remove('sh');});}
+function ease(x){return 1-Math.pow(1-x,3);}
+function fr(now){var e=(now-t0)/T;if(e>=1){cv.remove();return;}c.clearRect(0,0,W,H);
+var g=IN?(e>.65?Math.max(0,1-(e-.65)/.35):1):1;
+for(var i=0;i<P.length;i++){var p=P[i],k=Math.max(0,Math.min(1,(e-p.dl)/(1-p.dl))),q=ease(k),x,y,al;
+if(IN){x=p.tx+(p.ox-p.tx)*(1-q)+Math.sin(p.ph+e*9)*(1-q)*q*60;y=p.ty+(p.oy-p.ty)*(1-q)+Math.cos(p.ph+e*7)*(1-q)*q*60;al=Math.min(1,k*4)*g*.9;}
+else{x=p.tx+(p.ox-p.tx)*q+Math.sin(p.ph+e*9)*(1-q)*q*60;y=p.ty+(p.oy-p.ty)*q+Math.cos(p.ph+e*7)*(1-q)*q*60;al=(k>.9?(1-k)/.1:1)*.9;}
+if(al<=0.01){continue;}c.fillStyle='rgba('+p.rgb+','+al.toFixed(2)+')';c.fillRect(x,y,p.s,p.s);}
+requestAnimationFrame(fr);}
+requestAnimationFrame(fr);}
+function dbBtnsHtml(){var sb=document.getElementById('structureBtn');var r=sb?sb.getBoundingClientRect():{top:400,height:50};var cy=Math.round(r.top+r.height/2);
+var V=`<style>
+@keyframes vM{0%{opacity:0;transform:scale(.7);filter:blur(3px)}4%{opacity:1;transform:scale(1);filter:blur(0)}21%{opacity:1;transform:scale(1);filter:blur(0)}25%{opacity:0;transform:scale(1.3);filter:blur(3px)}100%{opacity:0;transform:scale(1.3);filter:blur(3px)}}
+.vI{transform-origin:60px 60px;opacity:0;animation:vM 9.6s ease-in-out infinite backwards}
+.vI1{animation-delay:-.38s}.vI2{animation-delay:2.02s}.vI3{animation-delay:4.42s}.vI4{animation-delay:6.82s}
+</style>
+<svg role="img" aria-label="Подготовительные работы" width="300" height="300" viewBox="0 0 120 120">
+<defs>
+<linearGradient id="vRing" gradientUnits="userSpaceOnUse" x1="0" y1="5" x2="0" y2="115"><stop offset="0" stop-color="#6A5BD6"/><stop offset="0.5" stop-color="#5B94D0"/><stop offset="1" stop-color="#5FD2B0"/></linearGradient>
+<linearGradient id="vBody" gradientUnits="userSpaceOnUse" x1="0" y1="28" x2="0" y2="92"><stop offset="0" stop-color="#6A5BD6"/><stop offset="0.5" stop-color="#5B94D0"/><stop offset="1" stop-color="#5FD2B0"/></linearGradient>
+<clipPath id="vClip"><circle cx="60" cy="60" r="49"/></clipPath>
+</defs>
+<path d="M5.84 50.45 A55 55 0 0 1 69.55 5.84" fill="none" stroke="url(#vRing)" stroke-width="6" stroke-linecap="round"/>
+<path d="M80.6 9 A55 55 0 1 1 5.03 61.92" fill="none" stroke="url(#vRing)" stroke-width="6" stroke-linecap="round"/>
+<g clip-path="url(#vClip)">
+<g class="vI vI1" fill="url(#vBody)" stroke="url(#vBody)" stroke-linejoin="round" stroke-linecap="round">
+<rect x="32" y="72" width="48" height="14" rx="7" stroke="none"/>
+<path d="M74 72 V54 H52 L44 64 V72 Z" stroke-width="3"/>
+<rect x="62" y="44" width="5" height="10" rx="2.5" stroke="none"/>
+<rect x="58" y="58" width="10" height="8" rx="2" fill="#fff" stroke="none"/>
+<path d="M86 44 V82" fill="none" stroke-width="7"/>
+<path d="M84 76 H76" fill="none" stroke-width="5"/>
+</g>
+<g class="vI vI2" fill="url(#vBody)" stroke="url(#vBody)" stroke-linejoin="round" stroke-linecap="round">
+<rect x="32" y="76" width="46" height="11" rx="5.5" stroke="none"/>
+<rect x="36" y="56" width="24" height="18" rx="4" stroke="none"/>
+<rect x="41" y="60" width="9" height="8" rx="2" fill="#fff" stroke="none"/>
+<path d="M56 62 L70 40 L86 52" fill="none" stroke-width="6"/>
+<path d="M82 50 L94 58 L88 68 L80 62 Z" stroke-width="2"/>
+</g>
+<g class="vI vI3" fill="url(#vBody)" stroke="url(#vBody)" stroke-linejoin="round" stroke-linecap="round">
+<path d="M30 50 H64 V70 H30 Z" stroke-width="4"/>
+<path d="M68 70 V54 H80 L90 64 V70 Z" stroke-width="3"/>
+<circle cx="44" cy="78" r="8.5" stroke="none"/>
+<circle cx="76" cy="78" r="8.5" stroke="none"/>
+<circle cx="44" cy="78" r="3" fill="#fff" stroke="none"/>
+<circle cx="76" cy="78" r="3" fill="#fff" stroke="none"/>
+<rect x="72" y="58" width="8" height="6" rx="1.5" fill="#fff" stroke="none"/>
+</g>
+<g class="vI vI4" fill="url(#vBody)" stroke="url(#vBody)" stroke-linejoin="round" stroke-linecap="round">
+<rect x="52" y="38" width="6" height="48" rx="1" stroke="none"/>
+<rect x="32" y="38" width="56" height="5" rx="2.5" stroke="none"/>
+<path d="M55 28 V38" fill="none" stroke-width="4"/>
+<rect x="32" y="43" width="9" height="9" rx="2" stroke="none"/>
+<path d="M78 43 V60" fill="none" stroke-width="2.5"/>
+<rect x="72" y="60" width="12" height="9" rx="2" stroke="none"/>
+<rect x="42" y="84" width="26" height="5" rx="2.5" stroke="none"/>
+</g>
+</g>
+</svg>`;
+var F=`<style>
+@keyframes fM{0%{opacity:0;transform:scale(.7);filter:blur(3px)}4%{opacity:1;transform:scale(1);filter:blur(0)}21%{opacity:1;transform:scale(1);filter:blur(0)}25%{opacity:0;transform:scale(1.3);filter:blur(3px)}100%{opacity:0;transform:scale(1.3);filter:blur(3px)}}
+.fM{transform-origin:60px 60px;opacity:0;animation:fM 9.6s ease-in-out infinite backwards}
+.fM1{animation-delay:-.38s}.fM2{animation-delay:2.02s}.fM3{animation-delay:4.42s}.fM4{animation-delay:6.82s}
+</style>
+<svg role="img" aria-label="Финансы" width="300" height="300" viewBox="0 0 120 120">
+<defs>
+<linearGradient id="fRing" gradientUnits="userSpaceOnUse" x1="0" y1="5" x2="0" y2="115"><stop offset="0" stop-color="#6A5BD6"/><stop offset="0.5" stop-color="#5B94D0"/><stop offset="1" stop-color="#5FD2B0"/></linearGradient>
+<linearGradient id="fCoinG" gradientUnits="userSpaceOnUse" x1="0" y1="26" x2="0" y2="94"><stop offset="0" stop-color="#6A5BD6"/><stop offset="0.5" stop-color="#5B94D0"/><stop offset="1" stop-color="#5FD2B0"/></linearGradient>
+</defs>
+<path d="M5.84 50.45 A55 55 0 0 1 69.55 5.84" fill="none" stroke="url(#fRing)" stroke-width="6" stroke-linecap="round"/>
+<path d="M80.6 9 A55 55 0 1 1 5.03 61.92" fill="none" stroke="url(#fRing)" stroke-width="6" stroke-linecap="round"/>
+<g fill="none" stroke="url(#fCoinG)" stroke-linecap="round" stroke-linejoin="round">
+<g class="fM fM1"><path d="M78 42 C74 34 66 32 60 32 C48 32 42 38 42 45 C42 54 52 56 60 59 C68 62 78 65 78 74 C78 82 70 88 60 88 C50 88 42 84 39 76" stroke-width="9"/><path d="M60 22 V98" stroke-width="5"/></g>
+<g class="fM fM2"><path d="M80 40 C74 34 66 32 58 32 C44 32 36 44 36 60 C36 76 44 88 58 88 C66 88 74 86 80 80" stroke-width="9"/><path d="M27 52 H68 M27 68 H68" stroke-width="5"/></g>
+<g class="fM fM3"><path d="M78 42 C74 34 66 32 60 32 C48 32 42 38 42 45 C42 54 52 56 60 59 C68 62 78 65 78 74 C78 82 70 88 60 88 C50 88 42 84 39 76" stroke-width="9"/><path d="M33 60 L87 52 M33 69 L87 61" stroke-width="5"/></g>
+<g class="fM fM4"><path d="M38 34 L60 60 L82 34 M60 60 V90" stroke-width="9"/><path d="M42 66 H78 M42 78 H78" stroke-width="5"/></g>
+</g>
+</svg>`;
+V=V.replace('width="300" height="300"','width="100%" height="100%"');F=F.replace('width="300" height="300"','width="100%" height="100%"');
+var B=[['','Оплаты'],['','Подготовительные работы'],['','']];
+var h='<style>.dbc{position:absolute;left:6px;top:'+Math.min(cy-120,innerHeight-250)+'px;display:flex;flex-direction:column;align-items:center;gap:8px;width:80px}.dbb{position:relative;pointer-events:auto;width:72px;height:72px;padding:0;box-sizing:border-box;border-radius:50%;border:0;background:none;color:#6A5BD6;font-size:20px;cursor:pointer;opacity:0;transition:opacity .5s,width .2s,height .2s;box-shadow:none}.dbb.sh{opacity:1}.dbb svg{width:100%;height:100%;display:block;pointer-events:none}.dbb.on{width:80px;height:80px}.dbb canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.dbb:after{content:"";position:absolute;inset:-16px;border-radius:50%;background:radial-gradient(circle,rgba(106,91,214,.95) 1px,transparent 1.6px) 0 0/6px 6px;opacity:0;pointer-events:none;display:none}@keyframes dbp{55%{opacity:.85}to{opacity:1;filter:blur(0);transform:none}}@keyframes dbd{0%{opacity:.95;transform:scale(1.7)}100%{opacity:0;transform:scale(1)}}</style><div class="dbc">';
+B.forEach(function(b,i){h+='<button class="dbb'+(i==0?' on':'')+'" title="'+b[1]+'" style="animation-delay:'+(i*120)+'ms" onclick="var a=this.parentNode.children;for(var k=1;k<a.length;k++)a[k].classList.remove(\'on\');this.classList.add(\'on\')">'+b[0]+'</button>';});
+return h+'</div>';}
 function openStruct(){
 if(sw!==null){return;}
 if(ov!==null){var _o=ov;closeAll();_o.style.display='none';}
@@ -520,7 +613,7 @@ document.querySelectorAll('.buttons button').forEach(function(x){x.classList.rem
 var sb=document.getElementById('structureBtn');if(sb){sb.classList.add('nav-active');}
 sw=document.createElement('div');sw.id='structWin';sw.className='upm-win';
 sw.style.cssText='left:104px;width:calc(70vw - 104px);padding:0;z-index:2001;border:0;overflow:auto;';
-sw.style.padding='16px';sw.innerHTML=STRUCT_DEFS+structListHtml();structBind(sw);structUpd(sw);document.body.appendChild(sw);void sw.offsetWidth;
+sw.style.cssText='left:104px;top:0;bottom:0;width:340px;padding:0;z-index:2001;border:0;overflow:visible;background:none!important;box-shadow:none!important;clip-path:none!important;pointer-events:none;';if(window.DB_OLD===true){sw.innerHTML=STRUCT_DEFS+structListHtml();structBind(sw);structUpd(sw);}else{sw.innerHTML=dbBtnsHtml();}document.body.appendChild(sw);void sw.offsetWidth;if(window.DB_OLD!==true){dbDust(sw,'in');if(window.dbMount){dbMount(sw);}}
 setTimeout(function(){if(sw){sw.classList.add('on');}},20);
 }
 document.addEventListener('click',function(e){
