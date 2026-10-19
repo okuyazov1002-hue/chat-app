@@ -504,12 +504,36 @@ function closeStruct(instant){
 if(sw===null){return;}
 var o=sw;sw=null;
 if(instant){o.style.display='none';}
-o.classList.remove('on');
+if(!instant&&window.DB_OLD!==true){dbDust(o,'out');}o.classList.remove('on');
 var sb=document.getElementById('structureBtn');if(sb){sb.classList.remove('nav-active');}
 if(window._structPrev){window._structPrev.classList.add('nav-active');window._structPrev=null;}
 window._structLastClose=Date.now();
-setTimeout(function(){o.remove();},520);
+setTimeout(function(){o.remove();},1050);
 }
+function dbDust(w,mode){var bs=[].slice.call(w.querySelectorAll('.dbb'));if(!bs.length){return;}
+var dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight,cv=document.createElement('canvas');
+cv.width=W*dpr;cv.height=H*dpr;cv.style.cssText='position:fixed;left:0;top:0;width:'+W+'px;height:'+H+'px;pointer-events:none;z-index:2003';
+document.body.appendChild(cv);var c=cv.getContext('2d');c.scale(dpr,dpr);
+var rs=bs.map(function(b){return b.getBoundingClientRect();}),y0=rs[0].top,y1=rs[rs.length-1].bottom,P=[],sbr=document.getElementById('structureBtn').getBoundingClientRect(),bx=sbr.left+sbr.width/2,by=sbr.top+sbr.height/2;
+function mix(a,b,t){return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),Math.round(a[2]+(b[2]-a[2])*t)];}
+function rgb(f){f=Math.max(0,Math.min(1,f+(Math.random()-.5)*.25));return (f<.5?mix([106,91,214],[91,148,208],f*2):mix([91,148,208],[95,210,176],(f-.5)*2)).join(',');}
+rs.forEach(function(r){var R=r.width/2,cx=r.left+R,cy=r.top+r.height/2;for(var i=0;i<1100;i++){var a=Math.random()*6.283,d=Math.sqrt(Math.random())*R*1.05,tx=cx+Math.cos(a)*d,ty=cy+Math.sin(a)*d;P.push({tx:tx,ty:ty,rgb:rgb((ty-y0)/Math.max(1,y1-y0)),dl:Math.random()*.4,ox:bx+(Math.random()-.5)*24,oy:by+(Math.random()-.5)*24,ph:Math.random()*6.283,s:.45+Math.random()*.4});}});
+var IN=mode==='in',T=IN?1100:950,t0=performance.now();
+if(IN){bs.forEach(function(b,i){setTimeout(function(){b.classList.add('sh');},600+i*110);});}else{bs.forEach(function(b){b.style.transition='opacity .25s';b.classList.remove('sh');});}
+function ease(x){return 1-Math.pow(1-x,3);}
+function fr(now){var e=(now-t0)/T;if(e>=1){cv.remove();return;}c.clearRect(0,0,W,H);
+var g=IN?(e>.65?Math.max(0,1-(e-.65)/.35):1):1;
+for(var i=0;i<P.length;i++){var p=P[i],k=Math.max(0,Math.min(1,(e-p.dl)/(1-p.dl))),q=ease(k),x,y,al;
+if(IN){x=p.tx+(p.ox-p.tx)*(1-q)+Math.sin(p.ph+e*9)*(1-q)*q*60;y=p.ty+(p.oy-p.ty)*(1-q)+Math.cos(p.ph+e*7)*(1-q)*q*60;al=Math.min(1,k*4)*g*.9;}
+else{x=p.tx+(p.ox-p.tx)*q+Math.sin(p.ph+e*9)*(1-q)*q*60;y=p.ty+(p.oy-p.ty)*q+Math.cos(p.ph+e*7)*(1-q)*q*60;al=(k>.9?(1-k)/.1:1)*.9;}
+if(al<=0.01){continue;}c.fillStyle='rgba('+p.rgb+','+al.toFixed(2)+')';c.fillRect(x,y,p.s,p.s);}
+requestAnimationFrame(fr);}
+requestAnimationFrame(fr);}
+function dbBtnsHtml(){var sb=document.getElementById('structureBtn');var r=sb?sb.getBoundingClientRect():{top:400,height:50};var cy=Math.round(r.top+r.height/2);
+var B=[['','Оплаты'],['','Подготовительные работы'],['','']];
+var h='<style>.dbc{position:absolute;left:6px;top:'+Math.min(cy-74,innerHeight-170)+'px;display:flex;flex-direction:column;align-items:center;gap:8px;width:52px}.dbb{position:relative;pointer-events:auto;width:44px;height:44px;padding:0;box-sizing:border-box;border-radius:50%;border:0;background:none;color:#6A5BD6;font-size:20px;cursor:pointer;opacity:0;transition:opacity .5s,width .2s,height .2s;box-shadow:none}.dbb.sh{opacity:1}.dbb.on{width:50px;height:50px}.dbb canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}</style><div class="dbc">';
+B.forEach(function(b,i){h+='<button class="dbb'+(i==0?' on':'')+'" title="'+b[1]+'" onclick="var a=this.parentNode.children;for(var k=0;k<a.length;k++)a[k].classList.remove(\'on\');this.classList.add(\'on\')">'+b[0]+'</button>';});
+return h+'</div>';}
 function openStruct(){
 if(sw!==null){return;}
 if(ov!==null){var _o=ov;closeAll();_o.style.display='none';}
@@ -520,7 +544,7 @@ document.querySelectorAll('.buttons button').forEach(function(x){x.classList.rem
 var sb=document.getElementById('structureBtn');if(sb){sb.classList.add('nav-active');}
 sw=document.createElement('div');sw.id='structWin';sw.className='upm-win';
 sw.style.cssText='left:104px;width:calc(70vw - 104px);padding:0;z-index:2001;border:0;overflow:auto;';
-sw.style.padding='16px';sw.innerHTML=STRUCT_DEFS+structListHtml();structBind(sw);structUpd(sw);document.body.appendChild(sw);void sw.offsetWidth;
+sw.style.cssText='left:104px;top:0;bottom:0;width:340px;padding:0;z-index:2001;border:0;overflow:visible;background:none!important;box-shadow:none!important;clip-path:none!important;pointer-events:none;';if(window.DB_OLD===true){sw.style.padding='16px';sw.innerHTML=STRUCT_DEFS+structListHtml();structBind(sw);structUpd(sw);}else{sw.innerHTML=dbBtnsHtml();}document.body.appendChild(sw);void sw.offsetWidth;if(window.DB_OLD!==true){dbDust(sw,'in');if(window.dbMount){dbMount(sw);}}
 setTimeout(function(){if(sw){sw.classList.add('on');}},20);
 }
 document.addEventListener('click',function(e){
