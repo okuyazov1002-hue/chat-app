@@ -12,6 +12,7 @@ if(!d||d.rev===undefined){return;}
 if(last===null){last=d.rev;return;}
 if(d.rev===last){return;}
 last=d.rev;
+if(window.upmoRecolor){window.upmoRecolor();}
 if(A&&A[0]&&document.body.contains(A[0])&&document.getElementById('upmoSc')){window.upmoFillPanel(A[0],A[1]);}
 }).catch(function(){busy=false;});
 },6000);

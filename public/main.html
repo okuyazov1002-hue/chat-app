@@ -832,6 +832,7 @@ prepObjs.forEach(function(o){
       prepStatus=d;renderMapList();
       prepObjs.forEach(function(o){var st=d[o[0]];var col=prepColors[st?st.status:'none'];prepPolys[o[0]].setStyle({color:col,fillColor:col});});
     }).catch(function(){});
+    window.upmoRecolor=function(){fetch('/api/map-status').then(function(r){return r.json();}).then(function(d){prepStatus=d;try{renderMapList();}catch(e){}prepObjs.forEach(function(o){var st=d[o[0]];var col=prepColors[st?st.status:'none'];if(prepPolys[o[0]]){prepPolys[o[0]].setStyle({color:col,fillColor:col});}});}).catch(function(){});};
     leafMap.on('click',function(e){if(e.originalEvent.shiftKey==false){if(parseInt(document.getElementById('mapInfo').style.width)>460&&insideAnyPlan(e.latlng)==false) closeObj();return;}L.popup().setLatLng(e.latlng).setContent(e.latlng.lat.toFixed(5)+', '+e.latlng.lng.toFixed(5)).openOn(leafMap);});
   }
   setTimeout(function(){leafMap.invalidateSize();},200);
