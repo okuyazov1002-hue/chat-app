@@ -510,7 +510,7 @@ if(window._structPrev){window._structPrev.classList.add('nav-active');window._st
 window._structLastClose=Date.now();
 setTimeout(function(){o.remove();},1050);
 }
-function dbDust(w,mode){var bs=[].slice.call(w.querySelectorAll('.dbb'));if(!bs.length){return;}
+window.dbDust=dbDust;function dbDust(w,mode){var bs=[].slice.call(w.querySelectorAll('.dbb'));if(!bs.length){return;}
 var dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight,cv=document.createElement('canvas');
 cv.width=W*dpr;cv.height=H*dpr;cv.style.cssText='position:fixed;left:0;top:0;width:'+W+'px;height:'+H+'px;pointer-events:none;z-index:2003';
 document.body.appendChild(cv);var c=cv.getContext('2d');c.scale(dpr,dpr);
@@ -532,7 +532,7 @@ requestAnimationFrame(fr);}
 function dbBtnsHtml(){var sb=document.getElementById('structureBtn');var r=sb?sb.getBoundingClientRect():{top:400,height:50};var cy=Math.round(r.top+r.height/2);
 var B=[['','Оплаты'],['','Подготовительные работы'],['','']];
 var h='<style>.dbc{position:absolute;left:6px;top:'+Math.min(cy-74,innerHeight-170)+'px;display:flex;flex-direction:column;align-items:center;gap:8px;width:52px}.dbb{position:relative;pointer-events:auto;width:44px;height:44px;padding:0;box-sizing:border-box;border-radius:50%;border:0;background:none;color:#6A5BD6;font-size:20px;cursor:pointer;opacity:0;transition:opacity .5s,width .2s,height .2s;box-shadow:none}.dbb.sh{opacity:1}.dbb.on{width:50px;height:50px}.dbb canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}</style><div class="dbc">';
-B.forEach(function(b,i){h+='<button class="dbb'+(i==0?' on':'')+'" title="'+b[1]+'" onclick="var a=this.parentNode.children;for(var k=0;k<a.length;k++)a[k].classList.remove(\'on\');this.classList.add(\'on\')">'+b[0]+'</button>';});
+B.forEach(function(b,i){h+='<button class="dbb'+(i==0?' on':'')+'" title="'+b[1]+'" onclick="var a=this.parentNode.children;for(var k=0;k<a.length;k++)a[k].classList.remove(\'on\');this.classList.add(\'on\');window.dbPanel&&dbPanel('+i+')">'+b[0]+'</button>';});
 return h+'</div>';}
 function openStruct(){
 if(sw!==null){return;}
