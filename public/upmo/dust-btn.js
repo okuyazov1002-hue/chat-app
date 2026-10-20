@@ -109,7 +109,10 @@ iv=setInterval(function(){if(!document.getElementById('structWin')){kill();}},30
 var COLS={Basic:['Code','ID','Dsc','Contractor','Project','Discipline','Work Type','UOM','Quantity','Actual Q','Man-Hours','Actual MH','Cost','Actual Cost','Start','Finish'],Cost:['Month'],Mobilization:['Month','Plan','Actual']};
 var KEY='upmoPrepGrid',D=null,tab='Basic';
 function load(){try{D=JSON.parse(localStorage.getItem(KEY));}catch(e){D=null;}if(!D||!D.t){D={t:{}};}for(var k in COLS){if(!D.t[k]){D.t[k]={c:COLS[k].slice(),r:[]};}}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}srvPush();}
+var SRVOK=false,SRVT=null;
+function srvPush(){if(!SRVOK){return;}clearTimeout(SRVT);SRVT=setTimeout(function(){try{fetch('/api/prepgrid',{method:'PUT',headers:{'Content-Type':'text/plain'},credentials:'same-origin',body:JSON.stringify(D)}).catch(function(){});}catch(e){}},800);}
+function srvSync(w){try{fetch('/api/prepgrid',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(!j){return;}if(j.data){var n=null;try{n=JSON.parse(j.data);}catch(e){}if(n&&n.t){for(var k in COLS){if(!n.t[k]){n.t[k]={c:COLS[k].slice(),r:[]};}}D=n;try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}try{rmCols();}catch(e){}if(w&&w.firstChild){draw(w.firstChild);}SRVOK=true;return;}}SRVOK=true;var has=false;for(var q in D.t){if(D.t[q]&&D.t[q].r&&D.t[q].r.length){has=true;}}if(has){srvPush();}}).catch(function(){});}catch(e){}}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
 var NC={'Quantity':1,'Actual Q':1,'Man-Hours':1,'Actual MH':1,'Cost':1,'Actual Cost':1,'Plan':1,'Actual':1};
 function isN(c){return NC[c]===1||(tab==='Cost'&&c!=='Month');}
@@ -332,7 +335,7 @@ function addObj(w){var T=D.t.Cost,n=prompt('\u041a\u043e\u0434\u0020\u043e\u0431
 function addMonth(w){var T=D.t.Cost,y=0,m=0;for(var i=T.r.length-1;i>=0;i--){var x=/^(\d{4})-(\d{2})-\d{2}$/.exec(String(T.r[i][0]));if(x){y=+x[1];m=+x[2];break;}}
 if(!y){var d=new Date();y=d.getFullYear();m=d.getMonth();}m++;if(m>12){m=1;y++;}
 var row=T.c.map(function(){return '';});row[0]=y+'-'+('0'+m).slice(-2)+'-01';T.r.push(row);save();CEL=null;ANCH=null;ACT=null;draw(w.firstChild);var s=w.querySelector('.gs');if(s){s.scrollTop=s.scrollHeight;}}var old=window.dbPanel;
-window.dbPanel=function(i){old(i);if(i!==1){return;}setTimeout(function(){var w=document.getElementById('dbPanel');if(!w||w._g){return;}w._g=1;load();rmCols();build(w);extra(w);},60);};
+window.dbPanel=function(i){old(i);if(i!==1){return;}setTimeout(function(){var w=document.getElementById('dbPanel');if(!w||w._g){return;}w._g=1;load();rmCols();build(w);extra(w);srvSync(w);},60);};
 })();
 ;(function(){try{if(document.getElementById('gapfix')){return;}var s=document.createElement('style');s.id='gapfix';s.textContent='.cw{gap:2px!important;padding:0!important}.cl{padding:0!important;margin:0 0 0 -2px!important}.op{padding:0!important;margin:0!important}.op>*{margin-left:0!important;margin-right:0!important}.cl table,.op table{margin:0!important}';document.head.appendChild(s);}catch(e){}})();
 ;(function(){try{if(document.getElementById('rowfix')){return;}var s=document.createElement('style');s.id='rowfix';s.textContent='.cl tr{height:22px!important}.cl td{height:22px!important;box-sizing:border-box!important;padding-top:0!important;padding-bottom:0!important;line-height:20px!important;white-space:nowrap!important;overflow:hidden!important;vertical-align:middle!important}';document.head.appendChild(s);}catch(e){}})();

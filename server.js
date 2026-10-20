@@ -1444,4 +1444,8 @@ res.setHeader('Content-Disposition',"attachment; filename=smr_export.xlsx; filen
 await wb.xlsx.write(res);res.end();
 }catch(err){res.status(500).json({message:'\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430: '+err.message});}});
 })();
+// ===== PREP GRID (shared state) =====
+app.get('/api/prepgrid',async function(req,res){try{var d=await mongoose.connection.db.collection('prep_grid').findOne({_id:'main'});res.json({data:d?d.data:null,updatedAt:d?d.updatedAt:null,by:d?d.by:null});}catch(e){res.status(500).json({error:String(e.message||e)});}});
+app.put('/api/prepgrid',express.text({type:'*/*',limit:'30mb'}),async function(req,res){try{var s=typeof req.body==='string'?req.body:'';var p=JSON.parse(s);if(!p||!p.t){return res.status(400).json({error:'bad data'});}var u=req.session&&req.session.user;await mongoose.connection.db.collection('prep_grid').updateOne({_id:'main'},{$set:{data:s,updatedAt:new Date(),by:(u&&(u.email||u.username||u.name||u.login))||null}},{upsert:true});res.json({ok:true});}catch(e){res.status(500).json({error:String(e.message||e)});}});
+// ===== /PREP GRID =====
 app.listen(PORT, () => console.log(`🚀 Port ${PORT}`));
