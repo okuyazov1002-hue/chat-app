@@ -18,6 +18,7 @@ res.factPer.push(gnull?null:(has?((O.factPer&&O.factPer[j])||0):0));
 res.factAmt.push(gnull?null:(has?((O.factAmt&&O.factAmt[j])||0):0));
 res.planCum.push(0);res.factCum.push(gnull?null:0);
 });
+var L=-1;res.labels.forEach(function(k,i){var j=idx[k];if(j!==undefined&&((O.planAmt&&O.planAmt[j]>0)||(O.factAmt&&O.factAmt[j]>0))){L=i;}});if(L>=1){['labels','planPer','factPer','planCum','factCum','planAmt','factAmt'].forEach(function(f){res[f]=res[f].slice(0,L+1);});}
 return res;
 });
 };
