@@ -1398,4 +1398,50 @@ async function isDev(req){var u=await mongoose.connection.db.collection('users')
 app.get('/api/ideas/all',async function(req,res){try{if(!(await isDev(req))){return res.status(403).json({error:'forbidden'});}var l=await mongoose.connection.db.collection('ideas').find({}).sort({createdAt:-1}).limit(200).toArray();res.json(l.map(function(x){return {id:String(x._id),code:x.code||String(parseInt(String(x._id).slice(-7),16)%90000000+10000000),type:x.type||'suggestion',text:x.text,name:x.name||x.username,role:x.role||'',status:x.status||'sent',createdAt:x.createdAt,reply:x.reply||null,repliedBy:x.repliedBy||null};}));}catch(e){res.status(500).json({error:e.message});}});
 app.put('/api/ideas/:id/review',async function(req,res){try{var u=await isDev(req);if(!u){return res.status(403).json({error:'forbidden'});}var b=req.body||{};var set={};if(['sent','reviewed','done'].indexOf(b.status)>=0){set.status=b.status;}if(typeof b.reply==='string'){var r0=b.reply.trim().slice(0,2000);set.reply=r0||null;set.repliedAt=r0?new Date():null;set.repliedBy=r0?(u.name||u.fullName||u.username):null;}if(!Object.keys(set).length){return res.status(400).json({error:'empty'});}await mongoose.connection.db.collection('ideas').updateOne({_id:new mongoose.Types.ObjectId(req.params.id)},{$set:set});res.json({ok:true});}catch(e){res.status(500).json({error:e.message});}});
 require('./assistant')(app,{calcPlanPct:calcPlanPct,getStagesForCode:getStagesForCode});
+/* ===== SMR step1: import/export (9 columns) ===== */
+(function(){
+var COLS=['\u041a\u043e\u0434 \u043e\u0431\u044a\u0435\u043a\u0442\u0430','\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043e\u0431\u044a\u0435\u043a\u0442\u0430','\u0414\u0438\u0441\u0446\u0438\u043f\u043b\u0438\u043d\u0430','\u0422\u0438\u043f \u0440\u0430\u0431\u043e\u0442\u044b','\u0412\u0438\u0434 \u0440\u0430\u0431\u043e\u0442\u044b','\u0415\u0434.\u0438\u0437\u043c','\u041e\u0431\u044a\u0451\u043c','\u0427\u0435\u043b-\u0447','\u041c\u0430\u0448-\u0447'];
+function col(n){return mongoose.connection.db.collection(n);}
+function cv(cell){var v=cell?cell.value:null;if(v==null){return '';}if(v instanceof Date){return v.toISOString().slice(0,10);}if(typeof v==='object'){if(v.richText){return v.richText.map(function(t){return t.text;}).join('').trim();}if(v.result!==undefined&&v.result!==null){return String(v.result).trim();}if(v.text!==undefined){return String(v.text).trim();}return '';}return String(v).trim();}
+function cn(cell){var v=cell?cell.value:null;if(v&&typeof v==='object'&&v.result!==undefined){v=v.result;}if(v==null||v===''){return 0;}if(typeof v==='number'){return v;}var n=Number(String(v).replace(/\s/g,'').replace(',','.'));return isNaN(n)?0:n;}
+app.post('/api/smr/import',upload.single('file'),async function(req,res){try{
+if(!req.file){return res.status(400).json({message:'\u0424\u0430\u0439\u043b \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d'});}
+var wb=new ExcelJS.Workbook();await wb.xlsx.load(req.file.buffer);var ws=wb.worksheets[0];
+if(!ws){return res.status(400).json({message:'\u041f\u0443\u0441\u0442\u043e\u0439 \u0444\u0430\u0439\u043b'});}
+var by={},names={},seq={};
+ws.eachRow(function(row,rn){
+if(rn===1){var h=cv(row.getCell(7));if(/\u043a\u043e\u0434|code/i.test(cv(row.getCell(1)))||(h!==''&&isNaN(Number(h.replace(/\s/g,'').replace(',','.'))))){return;}}
+var code=cv(row.getCell(1));if(!code){return;}
+if(!by[code]){by[code]=[];seq[code]=0;}
+var nm=cv(row.getCell(2));if(nm&&!names[code]){names[code]=nm;}
+by[code].push({objCode:code,objName:nm,discipline:cv(row.getCell(3)),workType:cv(row.getCell(4)),workName:cv(row.getCell(5)),uom:cv(row.getCell(6)),qty:cn(row.getCell(7)),mh:cn(row.getCell(8)),mach:cn(row.getCell(9)),order:seq[code]++});
+});
+var codes=Object.keys(by);
+if(!codes.length){return res.status(400).json({message:'\u041d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e \u0441\u0442\u0440\u043e\u043a \u0441 \u043a\u043e\u0434\u043e\u043c \u043e\u0431\u044a\u0435\u043a\u0442\u0430'});}
+var now=new Date(),uid=new mongoose.Types.ObjectId(),results=[];
+for(var i=0;i<codes.length;i++){var c=codes[i];
+await col('smr_rows').updateMany({objCode:c,deleted:{$ne:true}},{$set:{deleted:true,deletedAt:now,deletedByUpload:uid}});
+var docs=by[c].map(function(r){r.deleted=false;r.uploadId=uid;r.at=now;return r;});
+await col('smr_rows').insertMany(docs);
+results.push({code:c,name:names[c]||'',rows:docs.length});}
+await col('smr_uploads').insertOne({_id:uid,at:now,by:req.session.user||'',file:req.file.originalname||'',objects:results});
+res.json({results:results,uploadId:String(uid)});
+}catch(err){res.status(500).json({message:'\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430: '+err.message});}});
+app.get('/api/smr/summary',async function(req,res){try{
+var rows=await col('smr_rows').find({deleted:{$ne:true}},{projection:{objCode:1,objName:1}}).toArray(),m={},out=[];
+rows.forEach(function(r){if(!m[r.objCode]){m[r.objCode]={code:r.objCode,name:r.objName||'',rows:0};out.push(m[r.objCode]);}m[r.objCode].rows++;if(!m[r.objCode].name&&r.objName){m[r.objCode].name=r.objName;}});
+out.sort(function(a,b){return a.code<b.code?-1:(a.code>b.code?1:0);});res.json(out);
+}catch(err){res.status(500).json({message:'\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430: '+err.message});}});
+app.get('/api/smr/export',async function(req,res){try{
+var f={deleted:{$ne:true}};if(req.query.code){f.objCode=String(req.query.code);}
+var rows=await col('smr_rows').find(f).sort({objCode:1,order:1}).toArray();
+var wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('SMR');ws.addRow(COLS);ws.getRow(1).font={bold:true};
+[14,34,26,26,40,9,12,12,12].forEach(function(w,i){ws.getColumn(i+1).width=w;});
+rows.forEach(function(r){ws.addRow([r.objCode||'',r.objName||'',r.discipline||'',r.workType||'',r.workName||'',r.uom||'',r.qty||0,r.mh||0,r.mach||0]);});
+res.setHeader('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+var nm=(req.query.code?String(req.query.code):'SMR')+'.xlsx';
+res.setHeader('Content-Disposition',"attachment; filename=smr_export.xlsx; filename*=UTF-8''"+encodeURIComponent(nm));
+await wb.xlsx.write(res);res.end();
+}catch(err){res.status(500).json({message:'\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430: '+err.message});}});
+})();
 app.listen(PORT, () => console.log(`🚀 Port ${PORT}`));
