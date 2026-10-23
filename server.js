@@ -112,21 +112,6 @@ app.get('/api/map-object/:code',async function(req,res){try{var g=await pgLoad()
 setTimeout(function(){pgLoad().catch(function(){});},4000);
 app.get('/api/prep/rev',async function(req,res){try{var g=await pgLoad();res.json({rev:g.updatedAt||null});}catch(e){res.status(500).json({error:String(e.message||e)});}});
 // ===== /DASH FROM PREP GRID =====
-app.get('/api/map-status', async (req, res) => {
-  try {
-    const list = await mongoose.connection.db.collection('reports').find({}, { projection: { code: 1, rows: 1 } }).toArray();
-    const out = {};
-    list.forEach(function (r) {
-      let cost = 0, done = 0, run = 0;
-      (r.rows || []).forEach(function (w) { cost += w.cost || 0; done += w.done || 0; if (w.status == 'Выполняется') run++; });
-      let st = 'none';
-      if (cost > 0 && done >= cost * 0.999) st = 'done';
-      else if (done > 0 || run > 0) st = 'active';
-      out[r.code] = { status: st, pct: cost > 0 ? Math.round(done / cost * 1000) / 10 : 0 };
-    });
-    res.json(out);
-  } catch (err) { res.status(500).json({ error: 'server' }); }
-});
 
 app.post('/api/logout', (req, res) => {
   req.session.destroy(() => { res.clearCookie('connect.sid'); res.json({ message: 'OK' }); });
@@ -292,92 +277,6 @@ function filterByType(rows, type) {
   if (type == "ext") return rows.filter(x => x.contractor === "Внешний");
   return rows;
 }
-app.get("/api/prep/objects", async (req, res) => {
-  try {
-    const reports = await mongoose.connection.db.collection("reports").find({ code: { $regex: "-" } }).toArray();
-    const ftype = req.query.type;
-    const result = reports.map(r => {
-      const rows = filterByType(r.rows || [], ftype);
-      const cost = rows.reduce((s, x) => s + (x.cost || 0), 0);
-      const done = rows.reduce((s, x) => s + (x.done || 0), 0);
-      const planPct = calcPlanPct(rows, cost);
-      const factPct = cost ? Math.min(100, Math.round(done / cost * 100)) : 0;
-      const dates = calcStageDates(rows, cost, done, planPct);
-      const internalCost = rows.filter(x => (x.contractor && x.contractor.includes("Внутренний"))).reduce((s, x) => s + (x.cost || 0), 0);
-      const externalCost = rows.filter(x => x.contractor === "Внешний").reduce((s, x) => s + (x.cost || 0), 0);
-      const paid = rows.reduce((s, x) => s + (x.costFact || 0), 0);
-      const stages = [...new Set(rows.map(x => x.stage).filter(Boolean))];
-      const workType = stages.join(", ");
-      return {
-        code: r.code,
-        nrows: rows.length,
-        cost, done, paid,
-        workType,
-        remDone: cost - done, remPaid: cost - paid,
-        start: dates.start,
-        end: dates.forecastEnd || dates.end,
-        planEnd: dates.end,
-        forecastEnd: dates.forecastEnd,
-        deltaDays: dates.deltaDays,
-        planPct,
-        factPct,
-        delta: factPct - planPct,
-        internalCost,
-        externalCost,
-        updatedAt: r.updatedAt || null,
-        updatedBy: r.updatedBy || null
-      };
-    });
-    const out = ftype ? result.filter(o => o.nrows > 0) : result;
-    out.sort((a, b) => a.code.localeCompare(b.code));
-    res.json(out);
-  } catch (err) {
-    res.status(500).json({ message: "Ошибка сервера: " + err.message });
-  }
-});
-app.get("/api/prep/object/:code/term", async (req, res) => {
-  try {
-    const code = req.params.code;
-    const report = await mongoose.connection.db.collection("reports").findOne({ code });
-    const rows = (report && report.rows) ? report.rows : [];
-    let start = null, end = null, cost = 0, done = 0;
-    rows.forEach(r => {
-      cost += r.cost || 0; done += r.done || 0;
-      if (r.planStart) { const d = new Date(r.planStart); if (isNaN(d) == false && (start == null || d < start)) start = d; }
-      if (r.planEnd) { const d = new Date(r.planEnd); if (isNaN(d) == false && (end == null || d > end)) end = d; }
-    });
-    const curve = await mongoose.connection.db.collection("data").findOne({ _id: "prep_cost_curve_" + code });
-    const today = new Date();
-    let delay = 0;
-    if (start != null && end != null && cost > 0 && done < cost * 0.999) {
-      let dateF = null;
-      const v = curve ? (curve.value || {}) : {};
-      const labels = v.labels || [], per = v.planPer || [];
-      if (labels.length > 0) {
-        let cum = 0;
-        for (let i = 0; i < labels.length; i++) {
-          const m = per[i] || 0;
-          if (cum + m >= done) {
-            const parts = String(labels[i]).split("-");
-            const ms = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
-            const me = new Date(Number(parts[0]), Number(parts[1]), 1);
-            const frac = m > 0 ? (done - cum) / m : 0;
-            dateF = new Date(ms.getTime() + frac * (me.getTime() - ms.getTime()));
-            break;
-          }
-          cum += m;
-        }
-      } else {
-        dateF = new Date(start.getTime() + (done / cost) * (end.getTime() - start.getTime()));
-      }
-      if (dateF != null) { delay = Math.max(0, Math.round((today.getTime() - dateF.getTime()) / 86400000)); }
-    }
-    const forecast = end ? new Date(end.getTime() + delay * 86400000) : null;
-    res.json({ start, end, forecast, delay });
-  } catch (err) {
-    res.status(500).json({ message: "Ошибка сервера: " + err.message });
-  }
-});
 app.get("/api/prep/object/:code/worklist", async (req, res) => {
   try {
     const report = await mongoose.connection.db.collection("reports").findOne({ code: req.params.code });
@@ -433,36 +332,6 @@ app.get("/api/prep/object/:code/rows", async (req, res) => {
       };
     });
     res.json(result);
-  } catch (err) {
-    res.status(500).json({ message: "Ошибка сервера: " + err.message });
-  }
-});
-app.get("/api/prep/mobilization", async (req, res) => {
-  try {
-    const mobCode = req.query.code;
-    let labels = [], plan = [], fact = [];
-    if (mobCode) {
-      const doc = await mongoose.connection.db.collection("data").findOne({ _id: "prep_mobilization_" + mobCode });
-      if (doc && doc.value) { labels = doc.value.labels || []; plan = doc.value.plan || []; fact = doc.value.fact || []; }
-    } else {
-      const docs = await mongoose.connection.db.collection("data").find({ _id: { $regex: "^prep_mobilization_" } }).toArray();
-      const byMonth = {};
-      docs.forEach(doc => {
-        const v = doc.value || {};
-        (v.labels || []).forEach((k, idx) => {
-          byMonth[k] = byMonth[k] || { plan: 0, fact: 0 };
-          byMonth[k].plan += (v.plan || [])[idx] || 0;
-          byMonth[k].fact += (v.fact || [])[idx] || 0;
-        });
-      });
-      const keys = Object.keys(byMonth).sort();
-      labels = keys;
-      plan = keys.map(k => byMonth[k].plan);
-      fact = keys.map(k => byMonth[k].fact);
-    }
-    const months = labels.map(k => k.slice(5, 7));
-    const years = labels.map(k => k.slice(0, 4));
-    res.json({ labels: months, years, plan, fact });
   } catch (err) {
     res.status(500).json({ message: "Ошибка сервера: " + err.message });
   }
@@ -766,82 +635,10 @@ app.get("/api/proj/summary", async (req, res) => {
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-app.get("/api/prep/summary", async (req, res) => {
-  try {
-    const reports = await mongoose.connection.db.collection("reports").find({ code: { $regex: "-" } }).toArray();
-    let allRows = [];
-    reports.forEach(r => { allRows = allRows.concat(filterByType(r.rows || [], req.query.type)); });
-    const internalRows = allRows.filter(r => r.contractor && r.contractor.includes("Внутренний"));
-    const externalRows = allRows.filter(r => r.contractor === "Внешний");
-    const sumCost = rows => rows.reduce((s, r) => s + (r.cost || 0), 0);
-    const sumDone = rows => rows.reduce((s, r) => s + (r.done || 0), 0);
-    const totalCost = sumCost(allRows);
-    const done = sumDone(allRows);
-    const internal = sumCost(internalRows);
-    const internalDone = sumDone(internalRows);
-    const external = sumCost(externalRows);
-    const externalDone = sumDone(externalRows);
-    const planPct = calcPlanPct(allRows, totalCost);
-    const internalPlanPct = calcPlanPct(internalRows, internal);
-    const externalPlanPct = calcPlanPct(externalRows, external);
-    res.json({
-      totalCost, internal, external, done, remaining: totalCost - done,
-      internalDone, internalRemaining: internal - internalDone,
-      externalDone, externalRemaining: external - externalDone,
-      planPct, internalPlanPct, externalPlanPct
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Ошибка сервера: " + err.message });
-  }
-});
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/public/main.html");
 });
 
-app.get("/api/prep/scurve", async (req, res) => {
-  try {
-    const contractor = req.query.contractor;
-    const codeFilter = req.query.code;
-    let docs = await mongoose.connection.db.collection("data").find({ _id: { $regex: "^prep_cost_curve_" } }).toArray();
-    if (contractor) docs = docs.filter(d => d.contractor && d.contractor.includes(contractor));
-    if (codeFilter) docs = docs.filter(d => d.code === codeFilter);
-    const ty = req.query.type;
-    if (ty == "int") docs = docs.filter(d => d.contractor && (d.contractor.includes("Внутренний") || d.contractor == "Смешанный"));
-    if (ty == "ext") docs = docs.filter(d => d.contractor && (d.contractor == "Внешний" || d.contractor == "Смешанный"));
-    const byMonth = {};
-    let total = 0;
-    docs.forEach(doc => {
-      const v = doc.value || {};
-      const labels = v.labels || [];
-      const planPer = v.planPer || [];
-      const factPer = v.factPer || [];
-      labels.forEach((k, i) => {
-        byMonth[k] = byMonth[k] || { plan: 0, fact: 0 };
-        byMonth[k].plan += planPer[i] || 0;
-        byMonth[k].fact += factPer[i] || 0;
-      });
-      total += (planPer.reduce((s, x) => s + (x || 0), 0));
-    });
-    total = total || 1;
-    const keys = Object.keys(byMonth).sort();
-    const now = new Date();
-    const nowKey = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
-    let cp = 0, cf = 0;
-    const labels = [], planPerOut = [], factPerOut = [], planCum = [], factCum = [], planAmt = [], factAmt = [];
-    keys.forEach(k => {
-      cp += byMonth[k].plan; cf += byMonth[k].fact;
-      labels.push(k);
-      planPerOut.push(Math.round(byMonth[k].plan / total * 100 * 10) / 10);
-      planAmt.push(Math.round(byMonth[k].plan)); factAmt.push(k <= nowKey ? Math.round(byMonth[k].fact) : null);
-      factPerOut.push(k <= nowKey ? Math.round(byMonth[k].fact / total * 100 * 10) / 10 : null);
-      planCum.push(Math.round(cp / total * 100));
-      factCum.push(k <= nowKey ? Math.round(cf / total * 100) : null);
-    });
-    res.json({ labels, planPer: planPerOut, factPer: factPerOut, planCum, factCum, planAmt, factAmt });
-  } catch (err) {
-    res.status(500).json({ message: "Ошибка сервера: " + err.message });
-  }
-});
 app.get("/api/reports/:code/scurve", async (req, res) => {
   try {
     const report = await mongoose.connection.db.collection("reports").findOne({ code: req.params.code });
@@ -1133,7 +930,7 @@ app.get("/api/reports/:code/stage-objects-by-worktype", async (req, res) => {
   }
 });
 
-app.post("/api/reports/import", upload.single("file"), async (req, res) => {
+app.post("/api/reports/import", upload.single("file"), async (req, res) => { global._rrc={};
   try {
     if (req.file == null) return res.status(400).json({ message: "Файл не найден" });
     const wb = new ExcelJS.Workbook();
@@ -1161,6 +958,8 @@ app.post("/api/reports/import", upload.single("file"), async (req, res) => {
         item: [discipline, workType].filter(Boolean).join(" - ") || obj || "",
         obj: objVal,
         equip: objVal,
+        objOrig: obj,
+        disc: discipline,
         workType: workType,
         contractor: "",
         currency: row.getCell(11).value || "",
@@ -1395,44 +1194,6 @@ app.put('/api/me/password', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'server' }); }
 });
 
-app.get('/api/map-object/:code', async (req, res) => {
-  try {
-    const report = await mongoose.connection.db.collection('reports').findOne({ code: req.params.code });
-    if (report == null || report.rows == null || report.rows.length == 0) {
-      return res.json({ has: false, totalCost: 0, done: 0, paid: 0, planPct: 0, factPct: 0, stages: [] });
-    }
-    const rows = report.rows;
-    const sum = function (arr, f) { return arr.reduce(function (t, x) { return t + (x[f] || 0); }, 0); };
-    const totalCost = sum(rows, 'cost');
-    const done = sum(rows, 'done');
-    const paid = sum(rows, 'costFact');
-    const planPct = calcPlanPct(rows, totalCost);
-    const factPct = totalCost > 0 ? Math.round(done / totalCost * 1000) / 10 : 0;
-    const names = [];
-    rows.forEach(function (r) { const n = r.stage || 'Без этапа'; if (names.indexOf(n) < 0) names.push(n); });
-    const stages = names.map(function (name) {
-      const rs = rows.filter(function (r) { return (r.stage || 'Без этапа') == name; });
-      const c = sum(rs, 'cost');
-      const d = sum(rs, 'done');
-      const pp = calcPlanPct(rs, c);
-      const dt = calcStageDates(rs, c, d, pp);
-      return { name: name, cost: c, done: d, paid: sum(rs, 'costFact'), planPct: pp, factPct: c > 0 ? Math.round(d / c * 1000) / 10 : 0, start: dt.start, end: dt.end, forecastEnd: dt.forecastEnd, deltaDays: dt.deltaDays };
-    });
-    stages.sort(function (x, y) { return new Date(x.start || '2100-01-01') - new Date(y.start || '2100-01-01'); });
-    const starts = rows.map(function (r) { return r.planStart; }).filter(Boolean).sort(function (x, y) { return new Date(x) - new Date(y); });
-    const ends = rows.map(function (r) { return r.forecastEnd || r.planEnd; }).filter(Boolean).sort(function (x, y) { return new Date(x) - new Date(y); });
-    const pStart = starts.length ? starts[0] : null;
-    const pEnd = ends.length ? ends[ends.length - 1] : null;
-    let pForecast = null, pDelta = null;
-    if (pStart && pEnd) {
-      const dur = (new Date(pEnd) - new Date(pStart)) / 86400000;
-      const fp = totalCost > 0 ? Math.min(100, Math.round(done / totalCost * 100)) : 0;
-      pDelta = Math.round((planPct - fp) / 100 * dur);
-      pForecast = new Date(new Date(pEnd).getTime() + pDelta * 86400000);
-    }
-    res.json({ has: true, totalCost: totalCost, done: done, paid: paid, planPct: planPct, factPct: factPct, updatedAt: report.updatedAt || null, start: pStart, end: pEnd, forecastEnd: pForecast, deltaDays: pDelta, stages: stages });
-  } catch (err) { res.status(500).json({ error: 'server' }); }
-});
 
 app.put('/api/users/:username/profile', async (req, res) => {
   try {
@@ -1498,6 +1259,48 @@ var rows=await col('smr_rows').find({deleted:{$ne:true}},{projection:{objCode:1,
 rows.forEach(function(r){if(!m[r.objCode]){m[r.objCode]={code:r.objCode,name:r.objName||'',rows:0};out.push(m[r.objCode]);}m[r.objCode].rows++;if(!m[r.objCode].name&&r.objName){m[r.objCode].name=r.objName;}});
 out.sort(function(a,b){return a.code<b.code?-1:(a.code>b.code?1:0);});res.json(out);
 }catch(err){res.status(500).json({message:'\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430: '+err.message});}});
+global._rrc=global._rrc||{};
+async function repRows(code){
+if(global._rrc[code]){return global._rrc[code];}
+var a=await mongoose.connection.db.collection('reports').aggregate([{$match:{code:code}},{$project:{_id:0,rows:{$map:{input:{$filter:{input:'$rows',as:'y',cond:{$ne:['$$y.item','\u041e\u043f\u043b\u0430\u0442\u0430']}}},as:'x',in:{stage:'$$x.stage',obj:'$$x.obj',objOrig:'$$x.objOrig',disc:'$$x.disc',item:'$$x.item',workType:'$$x.workType',planStart:'$$x.planStart',planEnd:'$$x.planEnd',factStart:'$$x.factStart',factEnd:'$$x.factEnd',currency:'$$x.currency',cost:'$$x.cost',done:'$$x.done',status:'$$x.status'}}}}}]).toArray();
+var rows=((a[0]&&a[0].rows)||[]).map(function(x){return {code:code,stage:x.stage||'',obj:(x.objOrig!==undefined?x.objOrig:(x.obj||'')),disc:x.disc||'',item:(x.workType||x.item||''),planStart:x.planStart||null,planEnd:x.planEnd||null,factStart:x.factStart||null,factEnd:x.factEnd||null,currency:x.currency||'',cost:x.cost||0,done:x.done||0,status:x.status||''};});
+global._rrc[code]=rows;
+return rows;
+}
+app.get('/api/reports/rows',async function(req,res){try{res.json(await repRows(String(req.query.code||'')));}catch(err){res.status(500).json({message:err.message});}});
+setTimeout(function(){if(!mongoose.connection.db){return;}mongoose.connection.db.collection('reports').distinct('code').then(function(cs){return cs.reduce(function(p,c){return p.then(function(){return repRows(String(c)).catch(function(){});});},Promise.resolve());}).catch(function(){});},8000);
+app.get('/api/contracts',async function(req,res){try{var a=await mongoose.connection.db.collection('contracts').find({},{projection:{_id:0}}).sort({ord:1}).toArray();res.json(a);}catch(err){res.status(500).json({message:err.message});}});
+app.post('/api/contracts/save',async function(req,res){try{var r=req.body&&req.body.rows;if(!Array.isArray(r)){return res.status(400).json({message:'bad'});}var c=mongoose.connection.db.collection('contracts');var S=function(v){return String(v==null?'':v);};var docs=r.map(function(x,i){return {id:S(x.id),num:S(x.num),contractor:S(x.contractor),projects:Array.isArray(x.projects)?x.projects.map(S):[],services:Array.isArray(x.services)?x.services.map(S):[],sum:S(x.sum),cur:S(x.cur),signed:S(x.signed),until:S(x.until),status:S(x.status),type:S(x.type),term:S(x.term),paid:S(x.paid),ord:i};});await c.deleteMany({});if(docs.length){await c.insertMany(docs);}res.json({ok:true,n:docs.length});}catch(err){res.status(500).json({message:err.message});}});
+app.get('/api/con2',async function(req,res){try{var a=await mongoose.connection.db.collection('contracts2').find({},{projection:{_id:0}}).sort({ord:1}).toArray();res.json(a);}catch(err){res.status(500).json({message:err.message});}});
+app.post('/api/con2/save',async function(req,res){try{var r=req.body&&req.body.rows;if(!Array.isArray(r)){return res.status(400).json({message:'bad'});}var S=function(v){return String(v==null?'':v);};var A=function(v){return Array.isArray(v)?v:[];};var docs=r.map(function(x,i){return {id:S(x.id),num:S(x.num),contractor:S(x.contractor),status:S(x.status),cur:S(x.cur),signed:S(x.signed),open:x.open!==false,children:A(x.children).map(function(k){return {id:S(k.id),kind:S(k.kind),code:S(k.code),name:S(k.name),num:S(k.num),signed:S(k.signed),status:S(k.status),open:k.open!==false,services:A(k.services).map(function(s){return {id:S(s.id),name:S(s.name),sum:S(s.sum),paid:S(s.paid),scope:S(s.scope)==='all'?'all':A(s.scope).map(S)};})};}),ord:i};});var c=mongoose.connection.db.collection('contracts2');await c.deleteMany({});if(docs.length){await c.insertMany(docs);}res.json({ok:true,n:docs.length});}catch(err){res.status(500).json({message:err.message});}});
+app.use(['/api/con3','/api/reg'],async function(req,res,next){try{if(req.session.user==null){return res.status(401).json({error:'unauthorized'});}var me=await mongoose.connection.db.collection('users').findOne({username:req.session.user});var ed=!!(me&&(me.role==='developer'||String(me.username||'').toLowerCase()==='sh.arslanov'));var vw=ed||!!(me&&me.role==='admin');if(req.method==='GET'||req.method==='HEAD'){if(!vw){return res.status(403).json({error:'forbidden'});}}else if(!ed){return res.status(403).json({error:'forbidden'});}next();}catch(e){res.status(500).json({error:'acl'});}});
+app.get('/api/con3',async function(req,res){try{var a=await mongoose.connection.db.collection('contracts3').find({},{projection:{_id:0}}).sort({ord:1}).toArray();res.json(a);}catch(err){res.status(500).json({message:err.message});}});
+app.post('/api/con3/save',async function(req,res){try{
+var r=req.body&&req.body.rows;if(!Array.isArray(r)){return res.status(400).json({message:'bad'});}
+var clean=function(o,d){if(d>8){return null;}if(Array.isArray(o)){return o.map(function(x){return clean(x,d+1);});}if(o&&typeof o==='object'){var q={};Object.keys(o).forEach(function(k){if(k.charAt(0)==='$'||k.indexOf('.')>=0){return;}q[k]=clean(o[k],d+1);});return q;}if(typeof o==='string'){return o.slice(0,5000);}return o;};
+var seen={};var docs=r.map(function(x,i){var q=clean(x,0)||{};var id=String(q.id==null||q.id===''?('k'+Date.now().toString(36)+i):q.id);if(seen[id]){id=id+'_'+i;}seen[id]=1;q.id=id;q.ord=i;return q;});
+var db=mongoose.connection.db,c=db.collection('contracts3');
+var prev=await c.find({},{projection:{_id:0}}).sort({ord:1}).toArray();
+if(!docs.length&&prev.length>1){return res.status(409).json({message:'refuse to wipe'});}
+var h=db.collection('contracts3_hist');var last=await h.find({}).sort({ts:-1}).limit(1).toArray();var now=Date.now();
+if(prev.length&&(!last.length||now-last[0].ts>120000)){await h.insertOne({ts:now,rows:prev});var old=await h.find({},{projection:{ts:1}}).sort({ts:-1}).skip(60).toArray();if(old.length){await h.deleteMany({ts:{$in:old.map(function(z){return z.ts;})}});}}
+if(docs.length){await c.bulkWrite(docs.map(function(d){return {replaceOne:{filter:{id:d.id},replacement:d,upsert:true}};}));}
+await c.deleteMany({id:{$nin:docs.map(function(d){return d.id;})}});
+res.json({ok:true,n:docs.length});}catch(err){res.status(500).json({message:err.message});}});
+app.get('/api/con3/hist',async function(req,res){try{var a=await mongoose.connection.db.collection('contracts3_hist').find({},{projection:{ts:1,rows:1}}).sort({ts:-1}).toArray();res.json(a.map(function(z){return {ts:z.ts,at:new Date(z.ts).toISOString(),contracts:(z.rows||[]).length};}));}catch(err){res.status(500).json({message:err.message});}});
+app.get('/api/con3/hist/:ts',async function(req,res){try{var z=await mongoose.connection.db.collection('contracts3_hist').findOne({ts:Number(req.params.ts)},{projection:{_id:0}});res.json(z||{});}catch(err){res.status(500).json({message:err.message});}});
+app.get('/api/reg',async function(req,res){try{var a=await mongoose.connection.db.collection('payreg').find({},{projection:{_id:0}}).sort({ord:1}).toArray();res.json(a);}catch(err){res.status(500).json({message:err.message});}});
+app.post('/api/reg/save',async function(req,res){try{var r=req.body&&req.body.rows;if(!Array.isArray(r)){return res.status(400).json({message:'bad'});}
+var clean=function(o,d){if(d>6){return null;}if(Array.isArray(o)){return o.map(function(x){return clean(x,d+1);});}if(o&&typeof o==='object'){var q={};Object.keys(o).forEach(function(k){if(k.charAt(0)==='$'||k.indexOf('.')>=0){return;}q[k]=clean(o[k],d+1);});return q;}if(typeof o==='string'){return o.slice(0,5000);}return o;};
+var seen={};var docs=r.map(function(x,i){var q=clean(x,0)||{};var id=String(q.id==null||q.id===''?('k'+Date.now().toString(36)+i):q.id);if(seen[id]){id=id+'_'+i;}seen[id]=1;q.id=id;q.ord=i;return q;});
+var db=mongoose.connection.db,c=db.collection('payreg');
+var prev=await c.find({},{projection:{_id:0}}).sort({ord:1}).toArray();
+if(!docs.length&&prev.length>1){return res.status(409).json({message:'refuse to wipe'});}
+var h=db.collection('payreg_hist');var last=await h.find({}).sort({ts:-1}).limit(1).toArray();var now=Date.now();
+if(prev.length&&(!last.length||now-last[0].ts>120000)){await h.insertOne({ts:now,rows:prev});var old=await h.find({},{projection:{ts:1}}).sort({ts:-1}).skip(60).toArray();if(old.length){await h.deleteMany({ts:{$in:old.map(function(z){return z.ts;})}});}}
+if(docs.length){await c.bulkWrite(docs.map(function(d){return {replaceOne:{filter:{id:d.id},replacement:d,upsert:true}};}));}
+await c.deleteMany({id:{$nin:docs.map(function(d){return d.id;})}});
+res.json({ok:true,n:docs.length});}catch(err){res.status(500).json({message:err.message});}});
 app.get('/api/smr/export',async function(req,res){try{
 var f={deleted:{$ne:true}};if(req.query.code){f.objCode=String(req.query.code);}
 var rows=await col('smr_rows').find(f).sort({objCode:1,order:1}).toArray();
@@ -1511,8 +1314,9 @@ await wb.xlsx.write(res);res.end();
 }catch(err){res.status(500).json({message:'\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430: '+err.message});}});
 })();
 // ===== PREP GRID (shared state) =====
-app.get('/api/prepgrid',async function(req,res){try{var d=await mongoose.connection.db.collection('prep_grid').findOne({_id:'main'});res.json({data:d?d.data:null,rev:d?(d.rev||0):0,updatedAt:d?d.updatedAt:null,by:d?d.by:null});}catch(e){res.status(500).json({error:String(e.message||e)});}});
-app.put('/api/prepgrid',express.text({type:'*/*',limit:'30mb'}),async function(req,res){try{var col=mongoose.connection.db.collection('prep_grid');var s=typeof req.body==='string'?req.body:'';var p=JSON.parse(s);if(!p||!p.t){return res.status(400).json({error:'bad data'});}var u=req.session&&req.session.user;var by=(u&&(u.email||u.username||u.name||u.login))||null;var cur=await col.findOne({_id:'main'});var cr=cur?(cur.rev||0):0;if(req.query.base===undefined||String(cr)!==String(req.query.base)){return res.status(409).json({data:cur?cur.data:null,rev:cr});}if(cur&&cur.data){try{var h=mongoose.connection.db.collection('prep_grid_hist');var last=await h.find({}).sort({at:-1}).limit(1).toArray();if(!last.length||Date.now()-last[0].at.getTime()>600000){await h.insertOne({at:new Date(),rev:cr,data:cur.data,by:cur.by||null});var old=await h.find({}).sort({at:-1}).skip(200).toArray();if(old.length){await h.deleteMany({_id:{$in:old.map(function(x){return x._id;})}});}}}catch(e){}}var flt={_id:'main'};if(cur){flt.rev=cr===0?{$in:[null,0]}:cr;}var r;try{r=await col.updateOne(flt,{$set:{data:s,updatedAt:new Date(),by:by},$inc:{rev:1}},{upsert:!cur});}catch(e){if(e&&e.code===11000){r=null;}else{throw e;}}if(!r||(!r.matchedCount&&!r.upsertedCount)){var c2=await col.findOne({_id:'main'});return res.status(409).json({data:c2?c2.data:null,rev:c2?(c2.rev||0):0});}try{await pgSave(s,cr+1,by);}catch(e){}res.json({ok:true,rev:cr+1});}catch(e){res.status(500).json({error:String(e.message||e)});}});
+global._pgLoad=async function(){var d=await mongoose.connection.db.collection('prep_grid').findOne({_id:'main'});var s=JSON.stringify({data:d?d.data:null,rev:d?(d.rev||0):0,updatedAt:d?d.updatedAt:null,by:d?d.by:null});global._pgc={t:Date.now(),s:s};return s;};setTimeout(function(){global._pgLoad().catch(function(){});},6000);
+app.get('/api/prepgrid',async function(req,res){try{var c=global._pgc;var sj=(c&&Date.now()-c.t<300000)?c.s:await global._pgLoad();res.type('json').send(sj);}catch(e){res.status(500).json({error:String(e.message||e)});}});
+app.put('/api/prepgrid',express.text({type:'*/*',limit:'30mb'}),async function(req,res){try{res.on('finish',function(){global._pgc=null;});var col=mongoose.connection.db.collection('prep_grid');var s=typeof req.body==='string'?req.body:'';var p=JSON.parse(s);if(!p||!p.t){return res.status(400).json({error:'bad data'});}var u=req.session&&req.session.user;var by=(u&&(u.email||u.username||u.name||u.login))||null;var cur=await col.findOne({_id:'main'});var cr=cur?(cur.rev||0):0;if(req.query.base===undefined||String(cr)!==String(req.query.base)){return res.status(409).json({data:cur?cur.data:null,rev:cr});}if(cur&&cur.data){try{var h=mongoose.connection.db.collection('prep_grid_hist');var last=await h.find({}).sort({at:-1}).limit(1).toArray();if(!last.length||Date.now()-last[0].at.getTime()>600000){await h.insertOne({at:new Date(),rev:cr,data:cur.data,by:cur.by||null});var old=await h.find({}).sort({at:-1}).skip(200).toArray();if(old.length){await h.deleteMany({_id:{$in:old.map(function(x){return x._id;})}});}}}catch(e){}}var flt={_id:'main'};if(cur){flt.rev=cr===0?{$in:[null,0]}:cr;}var r;try{r=await col.updateOne(flt,{$set:{data:s,updatedAt:new Date(),by:by},$inc:{rev:1}},{upsert:!cur});}catch(e){if(e&&e.code===11000){r=null;}else{throw e;}}if(!r||(!r.matchedCount&&!r.upsertedCount)){var c2=await col.findOne({_id:'main'});return res.status(409).json({data:c2?c2.data:null,rev:c2?(c2.rev||0):0});}try{await pgSave(s,cr+1,by);}catch(e){}res.json({ok:true,rev:cr+1});}catch(e){res.status(500).json({error:String(e.message||e)});}});
 app.get('/api/prepgrid/history',async function(req,res){try{var a=await mongoose.connection.db.collection('prep_grid_hist').find({}).sort({at:-1}).limit(50).toArray();res.json(a.map(function(x){return {id:String(x._id),at:x.at,rev:x.rev,by:x.by,size:(x.data||'').length};}));}catch(e){res.status(500).json({error:String(e.message||e)});}});
 app.get('/api/prepgrid/history/:id',async function(req,res){try{var x=await mongoose.connection.db.collection('prep_grid_hist').findOne({_id:new mongoose.Types.ObjectId(req.params.id)});res.type('text/plain').send(x?x.data:'');}catch(e){res.status(500).json({error:String(e.message||e)});}});
 // ===== /PREP GRID =====

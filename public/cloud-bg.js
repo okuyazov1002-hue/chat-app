@@ -14,6 +14,7 @@
   'precision highp float;',
   'attribute vec4 a_rand;',
   'uniform mat4 u_mvp; uniform float u_time; uniform float u_pass; uniform float u_px; uniform float u_warn; uniform float u_pulse;',
+  'uniform float u_morph; uniform float u_dpr; uniform vec2 u_css; uniform vec4 u_panel;',
   'varying vec3 v_col; varying float v_a; varying float v_pass;',
   'vec3 mod289(vec3 x){return x-floor(x*(1./289.))*289.;}',
   'vec4 mod289(vec4 x){return x-floor(x*(1./289.))*289.;}',
@@ -65,6 +66,25 @@
   ' if(u_pass<0.5){',
   '  gl_PointSize=max(1.0,u_px*1.55*persp*(0.7+wr*0.9));',
   '  v_col=col; v_a=0.30+0.2*fil;',
+  ' if(u_morph>0.0){',
+  'float h1=fract(sin(dot(a_rand.xyz,vec3(12.9898,78.233,37.719)))*43758.5453);',
+  'float h2=fract(sin(dot(a_rand.xyz,vec3(39.346,11.135,83.155)))*24634.6345);',
+  'float h3=fract(sin(dot(a_rand.xyz,vec3(73.156,52.235,9.151)))*31415.9265);',
+  'float m=clamp((u_morph-h3*0.35)/0.65,0.0,1.0); m=m*m*(3.0-2.0*m);',
+  'vec2 tp=vec2(mix(u_panel.x,u_panel.z,h1),mix(u_panel.y,u_panel.w,h2));',
+  'vec2 cc=vec2((u_panel.x+u_panel.z)*0.5,(u_panel.y+u_panel.w)*0.5);',
+  'vec2 hs=vec2((u_panel.z-u_panel.x)*0.5,(u_panel.w-u_panel.y)*0.5);',
+  'vec2 qq=abs(tp-cc)-(hs-vec2(20.0));',
+  'if(tp.x<cc.x&&qq.x>0.0&&qq.y>0.0&&length(qq)>19.0){tp=cc+sign(tp-cc)*((hs-vec2(20.0))+qq/length(qq)*19.0);}',
+  'tp.x=min(tp.x,u_panel.z-1.2);tp.y=clamp(tp.y,u_panel.y+1.2,u_panel.w-1.2);vec2 tn=vec2(tp.x/u_css.x*2.0-1.0,1.0-tp.y/u_css.y*2.0);',
+  'vec2 n0=gl_Position.xy/gl_Position.w;',
+  'vec2 sw=vec2(sin(h2*6.283+u_time*2.0),cos(h1*6.283+u_time*2.0))*0.05*sin(m*3.14159);',
+  'gl_Position=vec4(mix(n0,tn,m)+sw,0.0,1.0);',
+  'gl_PointSize=mix(gl_PointSize,2.6*u_dpr,m);',
+  'float ty=(tp.y-u_panel.y)/(u_panel.w-u_panel.y);',
+  'vec3 g=ty<0.45?mix(vec3(0.416,0.353,0.878),vec3(0.290,0.565,0.851),ty/0.45):mix(vec3(0.290,0.565,0.851),vec3(0.114,0.827,0.690),(ty-0.45)/0.55);',
+  'v_col=mix(v_col,g,m); v_a=mix(v_a,0.9,m);',
+  ' }',
   ' } else {',
   '  gl_PointSize=u_px*13.0*persp*(0.6+wr*0.8);',
   '  v_col=vec3(1.0,0.42,0.16); v_a=0.04*heat*heat;',
@@ -107,7 +127,7 @@
   }
   var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
   var loc = gl.getAttribLocation(prog, 'a_rand'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 0, 0);
-  var U = {}; ['u_mvp', 'u_time', 'u_pass', 'u_px', 'u_warn', 'u_pulse'].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
+  var U = {}; ['u_mvp', 'u_time', 'u_pass', 'u_px', 'u_warn', 'u_pulse', 'u_morph', 'u_dpr', 'u_css', 'u_panel'].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
   gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.disable(gl.DEPTH_TEST);
   function mul(a, b) { var o = new Float32Array(16); for (var c = 0; c < 4; c++) for (var r = 0; r < 4; r++) { var s = 0; for (var k = 0; k < 4; k++) s += a[k*4+r] * b[c*4+k]; o[c*4+r] = s; } return o; }
   function persp(fovy, asp, n, f) { var t = 1 / Math.tan(fovy / 2), m = new Float32Array(16); m[0] = t / asp; m[5] = t; m[10] = (f+n)/(n-f); m[11] = -1; m[14] = 2*f*n/(n-f); return m; }
@@ -123,6 +143,8 @@
   var visible = true;
   document.addEventListener('visibilitychange', function () { visible = !document.hidden; });
   var t = 0, last = performance.now(), warnS = 0, pulseS = 0;
+  var morph = 0, morphDone = null;
+  window.upmoMorph = function (cb) { var t0 = performance.now(), D = 1800, pn = document.createElement('div'); pn.style.cssText = "position:fixed;z-index:0;left:16px;top:16px;bottom:16px;width:88px;opacity:0;transition:opacity .5s ease;pointer-events:none;background:linear-gradient(160deg,#6a5ae0 0%,#4a90d9 45%,#1dd3b0 100%);border-radius:20px 0 0 20px;box-shadow:0 -6px 22px -4px rgba(124,92,255,0.5),0 8px 22px -4px rgba(0,160,255,0.5),-6px 0 18px -6px rgba(110,110,240,0.35),6px 0 18px -6px rgba(60,150,250,0.35);"; document.body.appendChild(pn); var shown = 0, fin = 0; function stp(now) { var k = Math.min(1, (now - t0) / D); morph = k; if (k > 0.8 && !shown) { shown = 1; pn.style.opacity = '1'; } if (k < 1) { requestAnimationFrame(stp); } else if (!fin) { fin = 1; setTimeout(cb, 550); } } requestAnimationFrame(stp); };
   function frame(now) {
     var dt = Math.min(0.05, (now - last) / 1000); last = now;
     if (visible) {
@@ -134,6 +156,7 @@
       gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
       gl.uniformMatrix4fv(U.u_mvp, false, mvp); gl.uniform1f(U.u_time, t);
       gl.uniform1f(U.u_px, H2 / 1080 * 3.0); gl.uniform1f(U.u_warn, warnS); gl.uniform1f(U.u_pulse, pulseS);
+      gl.uniform1f(U.u_morph, morph); gl.uniform1f(U.u_dpr, Math.min(window.devicePixelRatio || 1, 2)); gl.uniform2f(U.u_css, window.innerWidth, window.innerHeight); gl.uniform4f(U.u_panel, 16, 16, 104, window.innerHeight - 16);
       gl.uniform1f(U.u_pass, 0); gl.drawArrays(gl.POINTS, 0, N);
     }
     requestAnimationFrame(frame);

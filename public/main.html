@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head><script>(function(){
+try{if(sessionStorage.getItem('upmoIntro')!=='1'){return;}sessionStorage.removeItem('upmoIntro');}catch(e){return;}
+var st=document.createElement('style');
+st.textContent='.sidebar-top,.buttons button{opacity:0}';
+document.head.appendChild(st);
+function go(){
+var sb=document.querySelector('.sidebar');if(sb){sb.style.transition='box-shadow 1.2s ease';}
+setTimeout(function(){st.textContent='.sidebar-top,.buttons button{opacity:0}';},350);
+var els=[].slice.call(document.querySelectorAll('.sidebar-top,.buttons button'));
+els.forEach(function(e,i){var dl=(0.15+i*0.07)+'s';e.style.transition='opacity .6s ease '+dl+',transform .6s ease '+dl;e.style.transform='scale(.85)';});
+requestAnimationFrame(function(){requestAnimationFrame(function(){
+els.forEach(function(e){e.style.opacity='1';e.style.transform='scale(1)';});
+setTimeout(function(){if(st.parentNode){st.parentNode.removeChild(st);}els.forEach(function(e){e.style.transition='';e.style.transform='';e.style.opacity='';});},2200);
+});});
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',go);}else{go();}
+})();</script>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>UPMO</title>
 <style>
@@ -242,12 +258,12 @@ button.nav-active::after{content:"";position:absolute;bottom:-20px;right:0;width
 <button id="ideaBtn" title="Предложения"><svg role="img" aria-label="Лампочка" width="34" height="34" viewBox="0 0 120 120"><style>@keyframes blOn{0%{opacity:0}8%{opacity:1}12%{opacity:.35}16%,58%{opacity:1}64%,100%{opacity:0}}@keyframes blGlow{0%{opacity:0}8%{opacity:.55}12%{opacity:.15}16%,58%{opacity:.55}64%,100%{opacity:0}}.blOn,.blGlow{opacity:0}@keyframes blIgn{0%{opacity:0}25%{opacity:1}38%{opacity:.35}52%,100%{opacity:1}}@keyframes blIgnG{0%{opacity:0}25%{opacity:.55}38%{opacity:.15}52%,100%{opacity:.55}}@keyframes blOff{from{opacity:1}to{opacity:0}}#ideaBtn.lampOn .blOn{animation:blIgn .9s ease-out forwards}#ideaBtn.lampOn .blGlow{animation:blIgnG .9s ease-out forwards}#ideaBtn.lampOff .blOn,#ideaBtn.lampOff .blGlow{animation:blOff .35s ease forwards}@media (prefers-reduced-motion:reduce){.blOn,.blGlow{animation:none}.blGlow{opacity:.5}}</style><defs><linearGradient id="blRing" gradientUnits="userSpaceOnUse" x1="0" y1="5" x2="0" y2="115"><stop offset="0" stop-color="#6A5BD6"/><stop offset="0.5" stop-color="#5B94D0"/><stop offset="1" stop-color="#5FD2B0"/></linearGradient><linearGradient id="blBulb" gradientUnits="userSpaceOnUse" x1="0" y1="28" x2="0" y2="78"><stop offset="0" stop-color="#6A5BD6"/><stop offset="0.55" stop-color="#5B94D0"/><stop offset="1" stop-color="#5FD2B0"/></linearGradient><filter id="blBlur" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5"/></filter></defs><g><animateTransform attributeName="transform" type="rotate" values="0 60 60;360 60 60" keyTimes="0;1" dur="1.2s" begin="indefinite" calcMode="spline" keySplines=".4 0 .2 1"/><circle cx="60" cy="60" r="52" fill="none" stroke="#6A5BD6" stroke-width="9" stroke-linecap="round" stroke-dasharray="78 249" transform="rotate(180 60 60)"/></g><g><animateTransform attributeName="transform" type="rotate" values="0 60 60;-360 60 60" keyTimes="0;1" dur="1.2s" begin="indefinite" calcMode="spline" keySplines=".4 0 .2 1"/><circle cx="60" cy="60" r="52" fill="none" stroke="url(#blRing)" stroke-width="9" stroke-linecap="round" stroke-dasharray="205 122" transform="rotate(285 60 60)"/></g><g transform="translate(60 60) scale(.68) translate(-60 -60)"><path class="blGlow" filter="url(#blBlur)" d="M60 30 C47 30 38 40 38 52 C38 60 43 65 47 70 C48.5 72 49 74 49 77 H71 C71 74 71.5 72 73 70 C77 65 82 60 82 52 C82 40 73 30 60 30 Z" fill="#5B94D0"/><path d="M60 30 C47 30 38 40 38 52 C38 60 43 65 47 70 C48.5 72 49 74 49 77 H71 C71 74 71.5 72 73 70 C77 65 82 60 82 52 C82 40 73 30 60 30 Z" fill="#DADFEB" stroke="#DADFEB" stroke-width="3" stroke-linejoin="round"/><path d="M53 50 L57 60 L60 52 L63 60 L67 50" fill="none" stroke="#B9C0D3" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><g class="blOn"><path d="M60 30 C47 30 38 40 38 52 C38 60 43 65 47 70 C48.5 72 49 74 49 77 H71 C71 74 71.5 72 73 70 C77 65 82 60 82 52 C82 40 73 30 60 30 Z" fill="url(#blBulb)" stroke="url(#blBulb)" stroke-width="3" stroke-linejoin="round"/><path d="M53 50 L57 60 L60 52 L63 60 L67 50" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></g><path d="M51 84 H69 M55 91 H65" fill="none" stroke="#5FD2B0" stroke-width="5" stroke-linecap="round"/></g></svg></button>
 <button id="structureBtn" title="База данных" onclick="this.querySelectorAll('animateTransform').forEach(function(a){a.beginElement();})"><svg width="34" height="34" viewBox="0 0 120 120" role="img" aria-label="Обновление базы данных"><style>.upmo-srv{animation:upmoSrv 6s ease-in-out infinite}.upmo-cld{animation:upmoCld 6s ease-in-out infinite;opacity:0}@keyframes upmoSrv{0%,28%{transform:translateX(0);opacity:1}40%{transform:translateX(40px);opacity:0}41%,91%{transform:translateX(-40px);opacity:0}100%{transform:translateX(0);opacity:1}}@keyframes upmoCld{0%,40%{transform:translateX(-40px);opacity:0}52%,76%{transform:translateX(0);opacity:1}88%,100%{transform:translateX(40px);opacity:0}}@media (prefers-reduced-motion:reduce){.upmo-srv,.upmo-cld{animation:none}.upmo-cld{opacity:0}}</style><defs><linearGradient id="dbArc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B94D0"/><stop offset="1" stop-color="#5FD2B0"/></linearGradient><linearGradient id="syncDb" gradientUnits="userSpaceOnUse" x1="0" y1="35" x2="0" y2="85"><stop offset="0" stop-color="#6A5BD6"/><stop offset="0.55" stop-color="#5B94D0"/><stop offset="1" stop-color="#5FD2B0"/></linearGradient><clipPath id="syncClip"><circle cx="60" cy="60" r="46"/></clipPath></defs><g><animateTransform attributeName="transform" type="rotate" values="0 60 60;360 60 60" keyTimes="0;1" dur="1.2s" begin="indefinite" calcMode="spline" keySplines=".4 0 .2 1"/><circle cx="60" cy="60" r="52" fill="none" stroke="#6A5BD6" stroke-width="9" stroke-linecap="round" stroke-dasharray="78 249" transform="rotate(180 60 60)"/></g><g><animateTransform attributeName="transform" type="rotate" values="0 60 60;-360 60 60" keyTimes="0;1" dur="1.2s" begin="indefinite" calcMode="spline" keySplines=".4 0 .2 1"/><circle cx="60" cy="60" r="52" fill="none" stroke="url(#dbArc)" stroke-width="9" stroke-linecap="round" stroke-dasharray="205 122" transform="rotate(285 60 60)"/></g><g clip-path="url(#syncClip)"><g class="upmo-srv"><path d="M40 42 L40 78 A20 7 0 0 0 80 78 L80 42 Z" fill="url(#syncDb)"/><ellipse cx="60" cy="42" rx="20" ry="7" fill="url(#syncDb)"/><ellipse cx="60" cy="42" rx="20" ry="7" fill="#fff" fill-opacity="0.3"/><path d="M40 56 A20 7 0 0 0 80 56 M40 68 A20 7 0 0 0 80 68" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></g><g class="upmo-cld"><rect x="36" y="64" width="48" height="14" rx="7" fill="url(#syncDb)"/><circle cx="46" cy="65" r="10" fill="url(#syncDb)"/><circle cx="62" cy="55" r="15" fill="url(#syncDb)"/><circle cx="76" cy="66" r="9" fill="url(#syncDb)"/><path d="M60 72 V58 M53.5 64.5 L60 58 L66.5 64.5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g></g></svg></button>
 <button id="settingsBtn" title="Добавить пользователя" onclick="var b=this;b.classList.remove('a4go');void b.offsetWidth;b.classList.add('a4go');this.querySelectorAll('animateTransform').forEach(function(a){a.beginElement();})"><svg width="34" height="34" viewBox="0 0 120 120" role="img" aria-label="Добавить пользователя"><style>#settingsBtn .a4-p{opacity:0;transform-origin:60px 70px}#settingsBtn .a4-c{transform-origin:60px 80px}#settingsBtn .a4-f{opacity:0;transform-origin:60px 60px}#settingsBtn .a4-b{opacity:0;transform-origin:80.5px 78px}#settingsBtn .a4-s1,#settingsBtn .a4-s2{opacity:0}#settingsBtn.a4go .a4-p{animation:a4p 4s 1}#settingsBtn.a4go .a4-c{animation:a4c 4s 1}#settingsBtn.a4go .a4-f{animation:a4f 4s 1}#settingsBtn.a4go .a4-b{animation:a4b 4s 1}#settingsBtn.a4go .a4-s1{animation:a4s1 4s 1}#settingsBtn.a4go .a4-s2{animation:a4s2 4s 1}@keyframes a4p{0%{opacity:0;transform:translateY(-44px);animation-timing-function:ease-in}8%{opacity:1}26%{opacity:1;transform:translateY(0);animation-timing-function:ease-in}36%{opacity:1;transform:translateY(52px)}37%,100%{opacity:0;transform:translateY(-44px)}}@keyframes a4c{0%,36%{opacity:1;transform:scale(1,1)}40%{opacity:1;transform:scale(1.07,0.92)}46%{opacity:1;transform:scale(0.98,1.03)}50%{opacity:1;transform:scale(1,1)}58%{opacity:0;transform:scale(0.3,0.3)}92%{opacity:0;transform:scale(0.3,0.3)}100%{opacity:1;transform:scale(1,1)}}@keyframes a4f{0%,50%{opacity:0;transform:scale(0.3)}60%{opacity:1;transform:scale(1.12)}66%{opacity:1;transform:scale(0.96)}72%,88%{opacity:1;transform:scale(1)}96%,100%{opacity:0;transform:scale(1)}}@keyframes a4b{0%,58%{opacity:0;transform:scale(0)}70%{opacity:1;transform:scale(1.25)}76%{opacity:1;transform:scale(0.95)}80%,100%{opacity:1;transform:scale(1)}}@keyframes a4s1{0%,35%{opacity:0;transform:translateY(0)}37%{opacity:1;transform:translateY(0)}54%,100%{opacity:0;transform:translateY(-14px)}}@keyframes a4s2{0%,52%{opacity:0;transform:translateY(0)}56%{opacity:1;transform:translateY(0)}76%,100%{opacity:0;transform:translateY(-9px)}}</style><defs><linearGradient id="a4Arc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B94D0"/><stop offset="1" stop-color="#5FD2B0"/></linearGradient><linearGradient id="a4Usr" gradientUnits="userSpaceOnUse" x1="0" y1="30" x2="0" y2="70"><stop offset="0" stop-color="#6A5BD6"/><stop offset="1" stop-color="#5B94D0"/></linearGradient><linearGradient id="a4UsrF" gradientUnits="userSpaceOnUse" x1="0" y1="31" x2="0" y2="84"><stop offset="0" stop-color="#6A5BD6"/><stop offset="1" stop-color="#5B94D0"/></linearGradient><linearGradient id="a4Db" gradientUnits="userSpaceOnUse" x1="0" y1="68" x2="0" y2="96"><stop offset="0" stop-color="#5B94D0"/><stop offset="1" stop-color="#5FD2B0"/></linearGradient><linearGradient id="a4Badge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5B94D0"/><stop offset="1" stop-color="#5FD2B0"/></linearGradient><clipPath id="a4Clip"><circle cx="60" cy="60" r="46"/></clipPath><clipPath id="a4Above"><rect x="0" y="0" width="120" height="77"/></clipPath></defs><g><animateTransform attributeName="transform" type="rotate" values="0 60 60;360 60 60" keyTimes="0;1" dur="1.2s" begin="indefinite" calcMode="spline" keySplines=".4 0 .2 1"/><circle cx="60" cy="60" r="52" fill="none" stroke="#6A5BD6" stroke-width="9" stroke-linecap="round" stroke-dasharray="78 249" transform="rotate(180 60 60)"/></g><g><animateTransform attributeName="transform" type="rotate" values="0 60 60;-360 60 60" keyTimes="0;1" dur="1.2s" begin="indefinite" calcMode="spline" keySplines=".4 0 .2 1"/><circle cx="60" cy="60" r="52" fill="none" stroke="url(#a4Arc)" stroke-width="9" stroke-linecap="round" stroke-dasharray="205 122" transform="rotate(285 60 60)"/></g><g clip-path="url(#a4Clip)"><g clip-path="url(#a4Above)"><g class="a4-p"><circle cx="60" cy="38" r="8" fill="url(#a4Usr)"/><path d="M43 70 C43 58 50 52 60 52 C70 52 77 58 77 70 Z" fill="url(#a4Usr)" stroke="url(#a4Usr)" stroke-width="3" stroke-linejoin="round"/></g></g><g class="a4-c"><path d="M38 74 V90 A22 6 0 0 0 82 90 V74 Z" fill="url(#a4Db)"/><ellipse cx="60" cy="74" rx="22" ry="6" fill="url(#a4Db)"/><ellipse cx="60" cy="74" rx="22" ry="6" fill="#fff" fill-opacity="0.3"/><path d="M38 82 A22 6 0 0 0 82 82" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></g><g class="a4-f"><circle cx="50.5" cy="43" r="12" fill="url(#a4UsrF)"/><path d="M26.5 84 C26.5 67 36.5 59 50.5 59 C64.5 59 74.5 67 74.5 84 Z" fill="url(#a4UsrF)" stroke="url(#a4UsrF)" stroke-width="3" stroke-linejoin="round"/><g class="a4-b"><circle cx="80.5" cy="78" r="14" fill="url(#a4Badge)" stroke="#F5F6FA" stroke-width="6" paint-order="stroke"/><path d="M80.5 71 V85 M73.5 78 H87.5" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none"/></g></g><g transform="translate(60 74)"><g style="transform:rotate(-75deg)"><line class="a4-s1" x1="0" y1="-12" x2="0" y2="-19" stroke="#5FD2B0" stroke-width="3" stroke-linecap="round"/></g><g style="transform:rotate(-45deg)"><line class="a4-s1" x1="0" y1="-12" x2="0" y2="-19" stroke="#5B94D0" stroke-width="3" stroke-linecap="round"/></g><g style="transform:rotate(-15deg)"><line class="a4-s1" x1="0" y1="-12" x2="0" y2="-19" stroke="#6A5BD6" stroke-width="3" stroke-linecap="round"/></g><g style="transform:rotate(15deg)"><line class="a4-s1" x1="0" y1="-12" x2="0" y2="-19" stroke="#6A5BD6" stroke-width="3" stroke-linecap="round"/></g><g style="transform:rotate(45deg)"><line class="a4-s1" x1="0" y1="-12" x2="0" y2="-19" stroke="#5B94D0" stroke-width="3" stroke-linecap="round"/></g><g style="transform:rotate(75deg)"><line class="a4-s1" x1="0" y1="-12" x2="0" y2="-19" stroke="#5FD2B0" stroke-width="3" stroke-linecap="round"/></g></g><g transform="translate(60 60)"><g style="transform:rotate(0deg)"><line class="a4-s2" x1="0" y1="-31" x2="0" y2="-37" stroke="#5FD2B0" stroke-width="3" stroke-linecap="round"/></g><g style="transform:rotate(45deg)"><line class="a4-s2" x1="0" y1="-31" x2="0" y2="-37" stroke="#5B94D0" stroke-width="3" stroke-linecap="round"/></g><g style="transform:rotate(90deg)"><line class="a4-s2" x1="0" y1="-31" x2="0" y2="-37" stroke="#6A5BD6" stroke-width="3" stroke-linecap="round"/></g><g style="transform:rotate(135deg)"><line class="a4-s2" x1="0" y1="-31" x2="0" y2="-37" stroke="#5FD2B0" stroke-width="3" stroke-linecap="round"/></g><g style="transform:rotate(180deg)"><line class="a4-s2" x1="0" y1="-31" x2="0" y2="-37" stroke="#5B94D0" stroke-width="3" stroke-linecap="round"/></g><g style="transform:rotate(225deg)"><line class="a4-s2" x1="0" y1="-31" x2="0" y2="-37" stroke="#6A5BD6" stroke-width="3" stroke-linecap="round"/></g><g style="transform:rotate(270deg)"><line class="a4-s2" x1="0" y1="-31" x2="0" y2="-37" stroke="#5FD2B0" stroke-width="3" stroke-linecap="round"/></g><g style="transform:rotate(315deg)"><line class="a4-s2" x1="0" y1="-31" x2="0" y2="-37" stroke="#5B94D0" stroke-width="3" stroke-linecap="round"/></g></g></g></svg></button>
-<button id="logoutBtn" title="Выход" style="color:#ff5c5c;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+<button id="logoutBtn" title="Выход" style="color:#ff5c5c;display:none!important;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
 </div>
 </div>
 </aside>
 <main class="content">
-<div class="page active" id="page-home"><div class="empty"><h1>Добро пожаловать</h1><p>Выберите раздел</p></div></div>
+<div class="page active" id="page-home"></div>
 
 <div class="page" id="page-info">
 <div class="info-wrap">
@@ -596,7 +612,7 @@ document.getElementById('mapBtn').addEventListener('click',function(){
     leafMap.on('popupopen',function(e){if(e.popup.options.className=='obj-popup'&&leafMap.hasLayer(objMarker)) leafMap.removeLayer(objMarker);});
     leafMap.on('popupclose',function(e){if(e.popup.options.className=='obj-popup'&&leafMap.hasLayer(objMarker)==false) objMarker.addTo(leafMap);});
     var layersCtl=L.control.layers((window.innerWidth<=768?{'Спутник':sat}:{'Спутник':sat,'Схема':osm}),{}).addTo(leafMap);
-    var newGroup=L.layerGroup([genplan,objMarker,iee,ieeMarker,her,herMarker,csmPlan,csmMarker]).addTo(leafMap);
+    var newGroup=L.layerGroup([genplan,objMarker,iee,ieeMarker,her,herMarker,csmPlan,csmMarker]).addTo(leafMap);var prepGroup=L.layerGroup().addTo(leafMap);
     layersCtl.addOverlay(newGroup,'Строительство новых объектов');
     var mscCfg={lat:40.86105,lon:69.54044,w:600};
     (function(){
@@ -623,21 +639,21 @@ document.getElementById('mapBtn').addEventListener('click',function(){
         var west=opsCfg.lon-opsCfg.fx*Wm/84376, east=west+Wm/84376;
         var north=opsCfg.lat+opsCfg.fy*Hm/111050, south=north-Hm/111050;
         var opsPlan=L.imageOverlay('/genplans/OPS01-CP.png',[[south,west],[north,east]],{opacity:0.9,interactive:false});
-        newGroup.addLayer(opsPlan);
+        prepGroup.addLayer(opsPlan);
         var opsHtml='<div style="font-family:Arial;font-size:13px"><b>Код:</b> OPS01-CP<br><b>Наименование:</b> Новый автомобильный КПП (Таначи–Бука)</div>';
         var opsMarker=L.marker([opsCfg.lat,opsCfg.lon],{opacity:0}).bindTooltip('OPS01-CP Новый автомобильный КПП (Таначи–Бука)',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng,opsHtml);});
-        newGroup.addLayer(opsMarker);
+        prepGroup.addLayer(opsMarker);
         allMarkers.push(opsMarker);
       };
       img.src='/genplans/OPS01-CP.png';
     })();
     var opsTcHtml='<div style="font-family:Arial;font-size:13px"><b>Код:</b> OPS01-TC<br><b>Наименование:</b> Временный вахтовый городок для строителей</div>';
     var opsTcMarker=L.marker([40.86613,69.55271],{opacity:0}).bindTooltip('OPS01-TC Временный вахтовый городок для строителей',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng,opsTcHtml);});
-    newGroup.addLayer(opsTcMarker);
+    prepGroup.addLayer(opsTcMarker);
     allMarkers.push(opsTcMarker);
     var opsTsHtml='<div style="font-family:Arial;font-size:13px"><b>Код:</b> OPS01-TS<br><b>Наименование:</b> Временный склад Metso</div>';
     var opsTsMarker=L.marker([40.86313,69.54245],{opacity:0}).bindTooltip('OPS01-TS Временный склад Metso',{permanent:true,direction:'top',offset:[-15,-10]}).on('click',function(e){openObj(e.latlng,opsTsHtml);});
-    newGroup.addLayer(opsTsMarker);
+    prepGroup.addLayer(opsTsMarker);
     allMarkers.push(opsTsMarker);
     var opsTsCfg={lat:40.86106,lon:69.540783,w:560,fx:0.186,fy:1};
     (function(){
@@ -646,13 +662,13 @@ document.getElementById('mapBtn').addEventListener('click',function(){
         var Wm=opsTsCfg.w,Hm=Wm*img.naturalHeight/img.naturalWidth;
         var west=opsTsCfg.lon-opsTsCfg.fx*Wm/84376, east=west+Wm/84376;
         var north=opsTsCfg.lat+opsTsCfg.fy*Hm/111050, south=north-Hm/111050;
-        newGroup.addLayer(L.imageOverlay('/genplans/OPS01-TS.png',[[south,west],[north,east]],{opacity:0.9,interactive:false}));
+        prepGroup.addLayer(L.imageOverlay('/genplans/OPS01-TS.png',[[south,west],[north,east]],{opacity:0.9,interactive:false}));
       };
       img.src='/genplans/OPS01-TS.png';
     })();
-    var prepGroup=L.layerGroup().addTo(leafMap);
+    
 var dsLbl=L.marker([40.85430,69.54646],{icon:L.divIcon({className:'',iconSize:[0,0],html:'<div class="dsTop" style="transform:translate(-50%,-50%);white-space:nowrap;font:700 18px Arial,sans-serif;letter-spacing:2px;color:#f3f3f3;text-shadow:0 0 3px #000,0 0 6px #000,1px 1px 2px #000;pointer-events:none">ДСОМК</div>'}),interactive:false,keyboard:false}).addTo(leafMap);
-window.dsZ={top:15,prj:16,obj:18};
+window.dsZ={top:15,prj:16,obj:17};
 (function(){var P=[[40.859245,69.5467,'OXS01 Кислородная станция'],[40.859955,69.545885,'IEE03 Главная понизительная подстанция №03'],[40.85114,69.54698,'HER01 Цех электролиза меди'],[40.85395,69.54450,'CSM01 Сернокислотный цех и ООГ'],[40.86424,69.53611,'MSC01 Шлакообогатительная фабрика']];
 P.forEach(function(o){L.marker([o[0],o[1]],{icon:L.divIcon({className:'',iconSize:[0,0],html:'<div class="dsPL" style="transform:translate(-50%,-50%);white-space:nowrap;font:700 15px Arial,sans-serif;letter-spacing:1px;color:#f3f3f3;text-shadow:0 0 3px #000,0 0 6px #000,1px 1px 2px #000;pointer-events:none">'+o[2]+'</div>'}),interactive:false,keyboard:false}).addTo(leafMap);});
 var c=leafMap.getContainer();
@@ -665,6 +681,9 @@ st.textContent='.leaflet-tooltip.dsPrj{display:none!important}.leaflet-tooltip.d
 document.head.appendChild(st);})();
     layersCtl.addOverlay(prepGroup,'Подготовительные работы');window.upmoNewGroup=newGroup;window.upmoPrepGroup=prepGroup;if(window.innerWidth<=768){leafMap.removeLayer(newGroup);layersCtl.remove();}
     var prepObjs=[
+['OPS01-TW','Южный водовод технической чистой воды Ø530 мм',[[40.85079,69.54574],[40.85015,69.54573],[40.85017,69.54521],[40.84923,69.54526],[40.84917,69.54942],[40.84946,69.55042],[40.84912,69.55067],[40.84966,69.55251],[40.84878,69.55612]],'line'],
+['CCW01-LB','Здание ЖБИ Строительная лаборатория',[[40.84821,69.54948],[40.84821,69.54979],[40.84834,69.54951],[40.84833,69.54979]]],
+['WAC01-PS','Насосная станция 2000 м³',[[40.85197,69.54072],[40.85198,69.54150],[40.85262,69.54071],[40.85260,69.54154]]],
 ['CSM01-PR','Подготовительные работы на площадке',[[40.85329,69.54369],[40.85331,69.54531],[40.85417,69.54369],[40.85416,69.54528]]],
 ['CSM01-SA','Склад серной кислоты №5',[[40.85299,69.54292],[40.85300,69.54358],[40.85407,69.54294],[40.85408,69.54358]]],
 ['OXS01-AB','АБК для УСРР на территории МОФ',[[40.85874,69.54720],[40.85875,69.54759],[40.85910,69.54720],[40.85914,69.54758]]],
@@ -732,6 +751,11 @@ document.head.appendChild(st);})();
     var prepStatus={};
     var prepColors={done:'#16a34a',active:'#eab308',none:'#2563eb'};
     var prepPolys={};
+var prepLbls=[];
+function fitLbl(ev){var sc=(ev&&ev.type==='zoomanim')?Math.pow(2,ev.zoom-leafMap.getZoom()):1;prepLbls.forEach(function(x){var t=x.pm.getTooltip&&x.pm.getTooltip();var el=t&&t.getElement&&t.getElement();if(!el){return;}var b=x.poly.getBounds(),p1=leafMap.latLngToContainerPoint(b.getNorthWest()),p2=leafMap.latLngToContainerPoint(b.getSouthEast());var w=Math.abs(p2.x-p1.x)*sc,h=Math.abs(p2.y-p1.y)*sc;var s=x.o[0]+' '+x.o[1];var mw=0;s.split(/\s+/).forEach(function(q){if(q.length>mw){mw=q.length;}});var fs=Math.min(Math.sqrt(0.28*w*h/s.length),0.8*w/(0.65*mw),14);if(fs<6){el.style.setProperty('display','none','important');return;}el.style.removeProperty('display');el.style.setProperty('font-size',fs.toFixed(1)+'px','important');el.style.setProperty('width',(w*0.92).toFixed(0)+'px','important');el.style.setProperty('max-width',(w*0.92).toFixed(0)+'px','important');if(sc===1){try{t._updatePosition();}catch(e){}}});}
+leafMap.on('zoomanim zoom zoomend overlayadd',fitLbl);setTimeout(fitLbl,900);setTimeout(fitLbl,2500);
+function lineTop(c){var best=null;for(var i=1;i<c.length;i++){var a=c[i-1],b=c[i];var dy=Math.abs(a[0]-b[0])*111050,dx=Math.abs(a[1]-b[1])*84376;if(dx>=dy&&dx>3){var lat=(a[0]+b[0])/2;if(!best||lat>best.lat){best={lat:lat,pt:[(a[0]+b[0])/2,(a[1]+b[1])/2]};}}}if(best){return best.pt;}var t=c[0];c.forEach(function(q){if(q[0]>t[0]){t=q;}});return t;}
+(function(){var s=document.createElement('style');s.textContent='.leaflet-tooltip.dsObj.dsLine{white-space:nowrap!important;max-width:none!important;width:auto!important;}';document.head.appendChild(s);})();
     function prepPanel(code,name){
       var isPrep=false;
       PROJECTS.prep.items.forEach(function(it){if(it.code==code) isPrep=true;});
@@ -750,9 +774,9 @@ prepObjs.forEach(function(o){
       
       poly.on('click',function(e){openObj(e.latlng,prepPanel(o[0],o[1]));});
       prepPolys[o[0]]=poly;allPlans.push(poly);
-      var q=o[3]==='line'?c:axisRect(c);var ctr=o[3]==='line'?[(c[(c.length>>1)-1][0]+c[c.length>>1][0])/2,(c[(c.length>>1)-1][1]+c[c.length>>1][1])/2]:[(q[0][0]+q[2][0])/2,(q[0][1]+q[2][1])/2];
-      var pm=L.marker(ctr,{opacity:0}).addTo(prepGroup).bindTooltip(o[0]+' '+o[1],{permanent:true,direction:'center',offset:[0,0],className:'pin-label'}).on('click',function(e){openObj(e.latlng,prepPanel(o[0],o[1]));});
-      pm._grp=prepGroup;pm._code=o[0];allMarkers.push(pm);
+      var q=o[3]==='line'?c:axisRect(c);var ctr=o[3]==='line'?lineTop(c):[(q[0][0]+q[2][0])/2,(q[0][1]+q[2][1])/2];
+      var pm=L.marker(ctr,{opacity:0}).addTo(prepGroup).bindTooltip(o[0]+' '+o[1],o[3]==='line'?{permanent:true,direction:'top',offset:(o[0]==='PSP01-GD'?[164,30]:[-16,24]),className:'pin-label dsLine'}:{permanent:true,direction:'center',offset:[-16,28],className:'pin-label'}).on('click',function(e){openObj(e.latlng,prepPanel(o[0],o[1]));});
+      pm._grp=prepGroup;pm._code=o[0];allMarkers.push(pm);if(o[3]!=='line'){prepLbls.push({pm:pm,poly:poly,o:o});}
     });
     (function(){
       var S=40.86095,N=40.86125,W=69.53909,E=69.53951;
@@ -1143,7 +1167,7 @@ function openSettingsModal(){
   overlay.style.display="block";
   overlay.style.padding="0";
   overlay.style.background="transparent";
-  overlay.innerHTML='<div class="stage-modal" style="position:fixed;left:104px;top:16px;bottom:16px;height:calc(100vh - 32px);width:520px;max-width:calc(100vw - 140px);border-radius:0 20px 20px 0;transform-origin:left center;box-shadow:16px -10px 16px rgba(0,0,0,0.08),20px 0 20px rgba(0,0,0,0.10),16px 10px 16px rgba(0,0,0,0.08);"><div class="obj-modal-header">Добавить пользователя</div><div class="obj-modal-body" style="flex:1;display:flex;flex-direction:column;overflow:hidden;padding:16px;"><div style="flex-shrink:0;margin-bottom:12px;"><input id="settingsUserSearch" type="text" placeholder="Поиск по имени и фамилии" style="width:100%;height:34px;border:1px solid #e5e9ef;border-radius:8px;padding:0 12px;font-size:12px;outline:none;box-sizing:border-box;background:#f7f9fb;color:#1f2937;"></div><div id="settingsUsersBlock" style="flex:1;min-height:0;margin-bottom:16px;background:#fff;border:1px solid #eee;border-radius:12px;overflow-y:auto;box-shadow:0 1px 4px rgba(0,0,0,0.03);scrollbar-width:none;-ms-overflow-style:none;"><style>#settingsUsersBlock::-webkit-scrollbar{display:none;}.settings-role-dropdown{position:fixed;background:#fff;border:1px solid #eee;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:6px;min-width:150px;opacity:0;transform:translateY(-6px) scale(0.96);transform-origin:top left;transition:opacity 0.18s ease,transform 0.18s ease;pointer-events:none;z-index:3000;}.settings-role-dropdown.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}.settings-role-opt:hover{background:#f3f4f6;}</style><div id="settingsUsersList"></div></div></div><div id="settingsAddFooter" style="flex-shrink:0;border-top:1px solid #eee;padding:14px 20px;"></div></div>';
+  overlay.innerHTML='<div class="stage-modal" style="position:fixed;left:104px;top:16px;bottom:16px;height:calc(100vh - 32px);width:640px;max-width:calc(100vw - 140px);border-radius:0 20px 20px 0;transform-origin:left center;box-shadow:16px -10px 16px rgba(0,0,0,0.08),20px 0 20px rgba(0,0,0,0.10),16px 10px 16px rgba(0,0,0,0.08);"><div class="obj-modal-header">Добавить пользователя</div><div class="obj-modal-body" style="flex:1;display:flex;flex-direction:column;overflow:hidden;padding:16px;"><div style="flex-shrink:0;margin-bottom:12px;"><input id="settingsUserSearch" type="text" placeholder="Поиск по имени и фамилии" style="width:100%;height:34px;border:1px solid #e5e9ef;border-radius:8px;padding:0 12px;font-size:12px;outline:none;box-sizing:border-box;background:#f7f9fb;color:#1f2937;"></div><div id="settingsUsersBlock" style="flex:1;min-height:0;margin-bottom:16px;background:#fff;border:1px solid #eee;border-radius:12px;overflow-y:auto;box-shadow:0 1px 4px rgba(0,0,0,0.03);scrollbar-width:none;-ms-overflow-style:none;"><style>#settingsUsersBlock::-webkit-scrollbar{display:none;}.settings-role-dropdown{position:fixed;background:#fff;border:1px solid #eee;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:6px;min-width:150px;opacity:0;transform:translateY(-6px) scale(0.96);transform-origin:top left;transition:opacity 0.18s ease,transform 0.18s ease;pointer-events:none;z-index:3000;}.settings-role-dropdown.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}.settings-role-opt:hover{background:#f3f4f6;}</style><div id="settingsUsersList"></div></div></div><div id="settingsAddFooter" style="flex-shrink:0;border-top:1px solid #eee;padding:14px 20px;"></div></div>';
   document.body.appendChild(overlay);
   const roleLabels={admin:"Администратор",developer:"Разработчик",user:"Пользователь"};
   const canManage=(window.currentUserRole==="admin"||window.currentUserRole==="developer");
@@ -3446,12 +3470,14 @@ el.innerHTML='<div style="font-size:11px;color:rgba(255,255,255,0.85);font-weigh
 <script src="upmo/upmo-data.js"></script>
 <script src="upmo/upmo-map.js"></script>
 <script src="upmo/upmo-icon.js"></script>
-<script src="upmo/upmo-proj.js"></script>
+
+<script src="upmo/upmo-list.js"></script><script src="/upmo/colrz.js"></script>
 <script src="upmo/upmo-cal.js"></script>
 <script src="upmo/upmo-dates.js"></script>
 <script src="upmo/upmo-live.js"></script>
 <script src="upmo/upmo-prog.js"></script>
-<script src="upmo/upmo-win.js"></script><script src="upmo/dust-btn.js"></script>
+<script src="upmo/upmo-win.js"></script><script src="upmo/dust-btn.js"></script><script src="upmo/upmo-proj.js"></script><script src="upmo/upmo-con.js"></script><script src="upmo/upmo-con2.js"></script><script src="upmo/upmo-con3.js"></script><script src="upmo/upmo-acl.js"></script><script src="upmo/upmo-con4.js"></script><script src="upmo/upmo-reg.js"></script>
+<script src="upmo/upmo-pay.js"></script>
 <script src="upmo/upmo-ai.js"></script>
 </body>
 </html>

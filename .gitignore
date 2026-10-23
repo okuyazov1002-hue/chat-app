@@ -3,3 +3,7 @@ node_modules
 server.log
 _old/
 public/*.bak*
+
+*.bak*
+server.log
+_archive*/
