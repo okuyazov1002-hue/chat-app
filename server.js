@@ -42,9 +42,12 @@ app.get('/api/me', async (req, res) => {
     if (req.session.user == null) return res.status(401).json({ error: 'unauthorized' });
     const user = await mongoose.connection.db.collection('users').findOne({ username: req.session.user });
     if (user == null) return res.status(401).json({ error: 'unauthorized' });
-    res.json({ name: user.name, login: user.username, avatar: user.avatar || '', role: user.role || 'user' });
+    res.json({ name: user.name, login: user.username, avatar: user.avatar || '', role: user.role || 'user', features: user.features || [] });
   } catch (err) { res.status(500).json({ error: 'server' }); }
 });
+
+app.get("/api/features", async (req, res) => { try { const me = await meUser(req); if (me == null || me.role != "developer") return res.status(403).json({ error: "forbidden" }); const a = await mongoose.connection.db.collection("users").find({ features: String(req.query.feature || "smeta") }).project({ username: 1 }).toArray(); res.json(a.map(function(x){ return x.username; })); } catch (err) { res.status(500).json({ error: "server" }); } });
+app.put("/api/users/:username/features", async (req, res) => { try { const me = await meUser(req); if (me == null || me.role != "developer") return res.status(403).json({ error: "forbidden" }); const b = req.body || {}; if (!/^[a-z0-9_]{1,30}$/.test(String(b.feature || ""))) return res.status(400).json({ error: "bad feature" }); const col = mongoose.connection.db.collection("users"); const target = await col.findOne({ username: req.params.username }); if (target == null) return res.status(404).json({ error: "not found" }); await col.updateOne({ username: target.username }, b.on ? { $addToSet: { features: b.feature } } : { $pull: { features: b.feature } }); res.json({ message: "OK" }); } catch (err) { res.status(500).json({ error: "server" }); } });
 
 // ===== DASH FROM PREP GRID (single source: prep_grid) =====
 function pgNum(v){if(v===null||v===undefined||v===''){return null;}var s=String(v).replace(/[\s\u00a0]/g,'').replace(',','.');if(s===''||isNaN(Number(s))){return null;}return Number(s);}
