@@ -29,7 +29,7 @@ app.post('/api/login', async (req, res) => {
   try {
     const u = String((req.body && req.body.username) || '').trim();
     const pw = String((req.body && req.body.password) || '');
-    const user = await mongoose.connection.db.collection('users').findOne({ username: u });
+    const user = await mongoose.connection.db.collection('users').findOne({ username: u },{ collation:{ locale:'en', strength:2 } });
     const ok = user ? await bcrypt.compare(pw, user.password) : false;
     if (ok == false) return res.status(401).json({ error: 'bad credentials' });
     req.session.user = user.username;
@@ -1101,12 +1101,12 @@ app.post('/api/users', async (req, res) => {
     const me = await meUser(req);
     if (canManageUsers(me)==false) return res.status(403).json({ error: 'forbidden' });
     const b = req.body || {};
-    const username = String(b.username || '').trim();
+    const username = String(b.username || '').trim().toLowerCase();
     const name = String(b.name || '').trim();
     const pw = String(b.password || '');
     if (username == '' || name == '' || pw == '') return res.status(400).json({ error: 'bad data' });
     const col = mongoose.connection.db.collection('users');
-    const dup = await col.findOne({ username: username });
+    const dup = await col.findOne({ username: username },{ collation:{ locale:'en', strength:2 } });
     if (dup) return res.status(409).json({ error: 'exists' });
     const doc = { username: username, name: name, password: await bcrypt.hash(pw, 10), role: 'user', department: '', position: '', email: '', internalPhone: '', mobilePhone: '', birthday: '', avatar: '', createdAt: new Date() };
     await col.insertOne(doc);
@@ -1134,7 +1134,7 @@ app.put('/api/users/:username/role', async (req, res) => {
     const me = await meUser(req);
     if (canManageUsers(me)==false) return res.status(403).json({ error: 'forbidden' });
     const role = String((req.body || {}).role || '');
-    if (['user', 'admin', 'developer'].indexOf(role) < 0) return res.status(400).json({ error: 'bad role' });
+    if (['user','admin','developer','epoki','dsomk','dcpt','dgtk','project_head','dept_head','specialist','observer','contractor','guest','financier'].indexOf(role) < 0) return res.status(400).json({ error: 'bad role' });
     if (role == 'developer' && (me.role == 'developer')==false) return res.status(403).json({ error: 'forbidden' });
     const col = mongoose.connection.db.collection('users');
     const target = await col.findOne({ username: req.params.username });
@@ -1149,6 +1149,7 @@ app.put('/api/users/:username/password', async (req, res) => {
   try {
     const me = await meUser(req);
     if (canManageUsers(me)==false) return res.status(403).json({ error: 'forbidden' });
+    if (me == null || me.role != 'developer') return res.status(403).json({ error: 'forbidden' });
     const pw = String((req.body || {}).password || '');
     if (pw.length < 6) return res.status(400).json({ error: 'Пароль слишком короткий' });
     const col = mongoose.connection.db.collection('users');
