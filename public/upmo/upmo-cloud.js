@@ -1,0 +1,1 @@
+try{Object.defineProperty(window,"_cloudOff",{configurable:true,get:function(){return false;},set:function(v){}});}catch(e){}setTimeout(function(){window.dispatchEvent(new Event("resize"));},300);

@@ -1,0 +1,1 @@
+(function(){function p(){fetch('/api/ping',{method:'POST',credentials:'same-origin'}).catch(function(){});}p();setInterval(p,30000);document.addEventListener('visibilitychange',function(){if(!document.hidden)p();});})();
